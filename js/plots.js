@@ -98,15 +98,28 @@ async function loadPlotDetail(code) {
   // Transplant: list recent seed batches to pull from
   await populateTransplantOptions();
 
-  // Cycles history
-  const cyclesHtml = cycles?.length
+  // Cycles history — completed cycles + the current in-progress planting
+  const rows = [...(cycles || [])];
+  if (plot.plant_date && !plot.is_harvested) {
+    rows.push({
+      cycle_number: plot.cycle_count || 1,
+      vegetable_type: plot.vegetable_type,
+      plant_date: plot.plant_date,
+      harvest_date: plot.harvest_date || addDays(plot.plant_date, 30),
+      actual_kg: null,
+      _active: true
+    });
+  }
+  rows.sort((a, b) => (a.cycle_number || 0) - (b.cycle_number || 0));
+
+  const cyclesHtml = rows.length
     ? `<table class="data-table"><thead><tr><th>รอบ</th><th>ชนิด</th><th>ปลูก</th><th>เก็บ</th><th>KG จริง</th></tr></thead><tbody>
-        ${cycles.map(c => `<tr>
+        ${rows.map(c => `<tr>
           <td>${c.cycle_number}</td>
           <td>${vegLabel(c.vegetable_type)}</td>
           <td>${formatDateTH(c.plant_date)}</td>
-          <td>${formatDateTH(c.harvest_date)}</td>
-          <td><strong>${c.actual_kg || '-'}</strong></td>
+          <td>${c._active ? '<span class="text-sub">รอเก็บ</span>' : formatDateTH(c.harvest_date)}</td>
+          <td>${c._active ? '<span class="badge badge-green">กำลังปลูก</span>' : '<strong>' + (c.actual_kg || '-') + '</strong>'}</td>
         </tr>`).join('')}
       </tbody></table>`
     : '<div class="text-sub">ยังไม่มีประวัติ</div>';
