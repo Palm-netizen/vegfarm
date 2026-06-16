@@ -6,12 +6,13 @@ function initSeeds() {
   // Set default date to today
   document.getElementById('seed-date').value = new Date().toISOString().split('T')[0];
 
-  // Checkbox veg types
+  // Checkbox veg types — sync the visual .checked class from the real
+  // checkbox state via its change event (clicking the wrapping <label>
+  // toggles the input natively; listening to click here would double-fire).
   document.querySelectorAll('.veg-checkbox').forEach(item => {
-    item.addEventListener('click', () => {
-      item.classList.toggle('checked');
-      const cb = item.querySelector('input');
-      cb.checked = !cb.checked;
+    const cb = item.querySelector('input');
+    cb.addEventListener('change', () => {
+      item.classList.toggle('checked', cb.checked);
     });
   });
 
