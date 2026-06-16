@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#16A34A">
+<title>VegFarm — Smart Farm</title>
+
+<!-- Fonts: Outfit (display) + Inter (body) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== TOP NAV ===== -->
+<div class="top-nav">
+  <div class="top-nav-row">
+    <div class="logo">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22V12"/><path d="M12 12C12 7 8 4 4 4C4 9 7 13 12 13"/>
+          <path d="M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/>
+        </svg>
+      </span>
+      <span>VegFarm<span class="logo-sub">Smart Farm</span></span>
+    </div>
+    <div class="nav-date">
+      <span class="nav-date-label">วันนี้</span>
+      <span id="nav-date">-</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOADER ===== -->
+<div id="loader"><div class="spinner"></div><div id="loader-text">กำลังโหลด...</div></div>
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===========================================================
+     1. DASHBOARD
+     =========================================================== -->
+<div class="page" id="page-dashboard">
+  <div class="page-content">
+    <div class="section-eyebrow">ภาพรวมวันนี้</div>
+    <div class="section-title">
+      <span class="title-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/>
+          <rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>
+        </svg>
+      </span>
+      Dashboard
+    </div>
+    <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12M12 12C12 7 8 4 4 4C4 9 7 13 12 13M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/></svg>
+        </div>
+        <div class="card-title">รอบปลูกตอนนี้</div>
+        <div class="card-value" id="dash-active-plots">–</div>
+        <div class="card-sub">แปลงที่กำลังปลูก</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>
+        </div>
+        <div class="card-title">อัตรารอด เฉลี่ย</div>
+        <div class="card-value" id="dash-survival">–</div>
+        <div class="card-sub">5 รอบเพาะล่าสุด</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86l-8.18 14A1 1 0 003 19.5h18a1 1 0 00.89-1.64l-8.18-14a1 1 0 00-1.72 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17"/></svg>
+        </div>
+        <div class="card-title">แปลงมีปัญหา</div>
+        <div class="card-value" id="dash-problem-plots">–</div>
+        <div class="card-sub" id="dash-problem-list">–</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <div class="card-title">งานวันนี้</div>
+        <div class="card-value" id="dash-todos-today">–</div>
+        <div class="card-sub">รายการที่ต้องทำ</div>
+      </div>
+    </div>
+
+    <div class="growth-divider"><span class="gd-label">ปัญหาล่าสุด</span></div>
+    <div class="card"><div id="dash-recent-problems"></div></div>
+
+    <div class="growth-divider"><span class="gd-label">งานวันนี้</span></div>
+    <div class="card"><div id="dash-todos-list"></div></div>
+
+    <div class="growth-divider"><span class="gd-label">เปรียบเทียบแต่ละรอบ</span></div>
+    <div class="card">
+      <div class="card-title">คาดการณ์ KG &amp; จำนวนเมล็ด</div>
+      <div class="chart-wrap"><canvas id="dashChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     2. บันทึกรอบเพาะเมล็ด
+     =========================================================== -->
+<div class="page" id="page-seeds">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 2</div>
+    <div class="section-title">
+      <span class="title-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22V12M12 12C12 7 8 4 4 4C4 9 7 13 12 13M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/>
+        </svg>
+      </span>
+      เพาะเมล็ด
+    </div>
+    <div class="section-sub">บันทึกการเพาะ ระบบคำนวณอัตรารอดและวันเก็บเกี่ยวให้อัตโนมัติ</div>
+
+    <div class="card" id="seed-form-section">
+      <div class="form-group">
+        <label class="form-label">วันที่เพาะเมล็ด</label>
+        <input type="date" id="seed-date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ชนิดผัก (เลือกได้หลายข้อ)</label>
+        <div class="checkbox-group">
+          <label class="checkbox-item veg-checkbox"><input type="checkbox" value="green_oak"> กรีนโอ๊ค</label>
+          <label class="checkbox-item veg-checkbox"><input type="checkbox" value="red_oak"> เรดโอ๊ค</label>
+          <label class="checkbox-item veg-checkbox"><input type="checkbox" value="finley"> ฟินเลย์</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">จำนวนเมล็ด</label>
+        <input type="number" id="seed-count" class="form-control" placeholder="เช่น 200" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">สภาพอากาศ</label>
+        <div class="weather-options">
+          <label class="weather-option"><input type="radio" name="weather" value="hot"> หน้าร้อน <span class="weather-badge">รอด 70%</span></label>
+          <label class="weather-option"><input type="radio" name="weather" value="rainy"> ฝนตกสลับแดด <span class="weather-badge">รอด 70%</span></label>
+          <label class="weather-option"><input type="radio" name="weather" value="cold"> หนาว <span class="weather-badge">รอด 90%</span></label>
+        </div>
+      </div>
+      <input type="hidden" id="seed-harvest-date">
+
+      <!-- Preview Card -->
+      <div style="background:var(--gradient);border-radius:var(--radius-sm);padding:16px 18px;margin:16px 0 18px;color:#fff">
+        <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;opacity:0.8;margin-bottom:10px">ผลคำนวณ</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+          <span style="font-size:13px;opacity:0.85;font-weight:500">อัตรารอดที่คาด</span>
+          <strong id="seed-survival-preview" style="font-family:var(--font-display);font-size:17px;font-weight:800">-</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+          <span style="font-size:13px;opacity:0.85;font-weight:500">กิโลคาดการณ์</span>
+          <strong id="seed-kg-preview" style="font-family:var(--font-display);font-size:17px;font-weight:800">-</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;opacity:0.85;font-weight:500">วันเก็บเกี่ยว (+45 วัน)</span>
+          <strong id="seed-harvest-preview" style="font-family:var(--font-display);font-size:15px;font-weight:800">-</strong>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">หมายเหตุ</label>
+        <textarea id="seed-notes" class="form-control" placeholder="บันทึกเพิ่มเติม..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="seed-save-btn" onclick="saveSeedBatch()">บันทึกรอบเพาะเมล็ด</button>
+    </div>
+
+    <div class="growth-divider"><span class="gd-label">ประวัติการเพาะเมล็ด</span></div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>วันที่</th><th>ชนิด</th><th>จำนวน</th><th>อากาศ</th><th>รอด%</th><th>KG/วันเก็บ</th><th></th></tr></thead>
+        <tbody id="seed-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     3. บันทึกรอบปลูกลงแปลง
+     =========================================================== -->
+<div class="page" id="page-plots">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 3</div>
+    <div class="section-title">
+      <span class="title-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/>
+        </svg>
+      </span>
+      แปลงปลูก
+    </div>
+    <div class="section-sub">แตะที่แปลง T1–T15 เพื่อบันทึกหรือแก้ไขข้อมูล</div>
+
+    <div class="plot-grid" id="plot-grid"></div>
+
+    <div class="card" id="plot-detail-section" style="display:none">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <div style="background:var(--gradient);color:#fff;border-radius:10px;padding:6px 14px;font-family:var(--font-display);font-size:16px;font-weight:800" id="selected-plot-label">T–</div>
+        <div class="text-sub" id="plot-cycle-count"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ชนิดที่ปลูก</label>
+        <select id="plot-veg-type" class="form-control">
+          <option value="">-- เลือกชนิดผัก --</option>
+          <option value="green_oak">กรีนโอ๊ค</option>
+          <option value="red_oak">เรดโอ๊ค</option>
+          <option value="finley">ฟินเลย์</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">วันที่ปลูก</label>
+        <input type="date" id="plot-plant-date" class="form-control" onchange="document.getElementById('plot-harvest-date-display').textContent = 'วันเก็บเกี่ยว: ' + formatDateTH(addDays(this.value, 30))">
+        <div class="text-sub" id="plot-harvest-date-display" style="margin-top:6px">วันเก็บเกี่ยว: –</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">กิโลที่คาดการณ์</label>
+        <input type="number" id="plot-est-kg" class="form-control" step="0.1" placeholder="เช่น 8.5">
+      </div>
+      <div class="form-group">
+        <label class="checkbox-item" style="width:100%;justify-content:center;border-radius:var(--radius-sm)">
+          <input type="checkbox" id="plot-harvested-cb" onchange="toggleHarvestFields(this.checked)">
+          แปลงนี้เก็บเกี่ยวหมดแล้ว
+        </label>
+      </div>
+      <div id="harvest-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">เก็บเกี่ยวได้กี่กิโล (จริง)</label>
+          <input type="number" id="plot-actual-kg" class="form-control" step="0.1" placeholder="เช่น 9.2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">สรุปการเก็บเกี่ยว</label>
+          <textarea id="plot-harvest-notes" class="form-control" placeholder="บันทึกผลการเก็บเกี่ยว..."></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="savePlot()">บันทึกข้อมูลแปลง</button>
+      <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="startNewCycle()">เริ่มรอบปลูกใหม่</button>
+
+      <div class="growth-divider"><span class="gd-label">QR ประจำแปลง</span></div>
+      <div class="qr-wrap" id="plot-qr"></div>
+
+      <div class="growth-divider"><span class="gd-label">ประวัติรอบปลูก</span></div>
+      <div id="plot-cycles-history"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     4. ระบบบันทึกปัญหา
+     =========================================================== -->
+<div class="page" id="page-problems">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 4</div>
+    <div class="section-title">
+      <span class="title-icon" style="background:linear-gradient(135deg,#EF4444,#F87171);box-shadow:0 8px 20px rgba(239,68,68,0.30)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86l-8.18 14A1 1 0 003 19.5h18a1 1 0 00.89-1.64l-8.18-14a1 1 0 00-1.72 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17"/>
+        </svg>
+      </span>
+      บันทึกปัญหา
+    </div>
+    <div class="section-sub">บันทึกปัญหาพร้อมวิธีแก้ไข สร้างฐานข้อมูลสำหรับค้นหาในอนาคต</div>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">เลือกแปลง</label>
+        <select id="problem-plot-select" class="form-control"></select>
+        <div id="problem-plot-info"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">วันที่</label>
+        <input type="date" id="problem-date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ประเภทปัญหา</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item problem-type-btn" data-value="burned_leaf">ใบไหม้</div>
+          <div class="checkbox-item problem-type-btn" data-value="root_rot">รากเน่า</div>
+          <div class="checkbox-item problem-type-btn" data-value="worm">หนอน</div>
+          <div class="checkbox-item problem-type-btn" data-value="fungus">เชื้อรา</div>
+          <div class="checkbox-item problem-type-btn" data-value="other">อื่นๆ</div>
+        </div>
+        <input type="hidden" id="problem-type-value">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ความรุนแรง</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item severity-btn" data-value="low">เบา</div>
+          <div class="checkbox-item severity-btn" data-value="medium">ปานกลาง</div>
+          <div class="checkbox-item severity-btn" data-value="high">รุนแรง</div>
+        </div>
+        <input type="hidden" id="problem-severity-value">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รายละเอียดอาการ</label>
+        <textarea id="problem-description" class="form-control" placeholder="อธิบายอาการที่พบ..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">วิธีแก้</label>
+        <textarea id="problem-solution" class="form-control" placeholder="วิธีแก้ไขที่ใช้..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ถ่ายรูป (ไม่บังคับ)</label>
+        <input type="file" id="problem-photo-input" class="form-control" accept="image/*" capture="environment">
+        <img id="problem-photo-preview" style="display:none;width:100%;border-radius:var(--radius-sm);margin-top:10px">
+      </div>
+      <button class="btn btn-primary" onclick="saveProblem()" style="background:linear-gradient(135deg,#EF4444,#F87171);box-shadow:0 8px 20px rgba(239,68,68,0.30)">บันทึกปัญหา</button>
+    </div>
+
+    <div class="growth-divider"><span class="gd-label">ฐานข้อมูลปัญหา</span></div>
+    <div id="problem-db-list"></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     5. ปฏิทินภาพรวม
+     =========================================================== -->
+<div class="page" id="page-calendar">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 5</div>
+    <div class="section-title">
+      <span class="title-icon" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);box-shadow:0 8px 20px rgba(139,92,246,0.30)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      ปฏิทิน
+    </div>
+    <div class="section-sub">กิจกรรมเพาะเมล็ด ปลูก เก็บเกี่ยว และปัญหาในแต่ละวัน</div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <button class="btn btn-outline btn-sm" id="cal-prev">‹ ก่อนหน้า</button>
+        <strong id="cal-month-label" style="font-family:var(--font-display);color:var(--ink);font-size:16px;font-weight:800;letter-spacing:-0.5px">–</strong>
+        <button class="btn btn-outline btn-sm" id="cal-next">ถัดไป ›</button>
+      </div>
+      <div class="calendar-grid" id="cal-grid"></div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);font-weight:600">
+        <span><span class="cal-dot dot-seed" style="display:inline-block;margin-right:4px"></span>เพาะเมล็ด</span>
+        <span><span class="cal-dot dot-plant" style="display:inline-block;margin-right:4px"></span>ปลูก</span>
+        <span><span class="cal-dot dot-harvest" style="display:inline-block;margin-right:4px"></span>เก็บเกี่ยว</span>
+        <span><span class="cal-dot dot-problem" style="display:inline-block;margin-right:4px"></span>ปัญหา</span>
+      </div>
+    </div>
+    <div id="cal-detail-panel"></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     6. TO-DO LIST รายวัน
+     =========================================================== -->
+<div class="page" id="page-todos">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 6</div>
+    <div class="section-title">
+      <span class="title-icon" style="background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 8px 20px rgba(245,158,11,0.30)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+      </span>
+      งานวันนี้
+    </div>
+    <div class="section-sub">บันทึกงานที่ต้องทำ สูงสุด 5 ข้อต่อวัน</div>
+
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">เลือกวันที่</label>
+        <input type="date" id="todo-date-picker" class="form-control">
+      </div>
+      <form id="todo-add-form" style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" id="todo-input" class="form-control" placeholder="เพิ่มงาน...">
+        <button type="submit" class="btn btn-primary" style="width:auto;white-space:nowrap;padding:14px 20px;background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 8px 20px rgba(245,158,11,0.30)">เพิ่ม</button>
+      </form>
+      <div class="text-sub" style="margin-bottom:10px;font-weight:700" id="todo-count-label">0/5 งาน</div>
+      <div id="todo-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     7. ระบบการเงิน
+     =========================================================== -->
+<div class="page" id="page-finance">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 7</div>
+    <div class="section-title">
+      <span class="title-icon" style="background:linear-gradient(135deg,#16A34A,#65A30D);box-shadow:0 8px 20px rgba(22,163,74,0.30)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+        </svg>
+      </span>
+      การเงิน
+    </div>
+    <div class="section-sub">บันทึกรายรับ รายจ่าย ดูกำไร และสรุปผลประกอบการ</div>
+
+    <!-- Tabs -->
+    <div class="fin-tabs">
+      <button class="fin-tab active" id="ftab-income"  onclick="switchFinanceTab('income')">รายรับ</button>
+      <button class="fin-tab"        id="ftab-expense" onclick="switchFinanceTab('expense')">รายจ่าย</button>
+      <button class="fin-tab"        id="ftab-summary" onclick="switchFinanceTab('summary')">สรุป &amp; กราฟ</button>
+    </div>
+
+    <!-- ===== INCOME PANEL ===== -->
+    <div id="fpanel-income">
+      <div class="card">
+        <div class="card-title">บันทึกรายรับ — ยอดขาย</div>
+
+        <div class="form-group">
+          <label class="form-label">วันที่ขาย</label>
+          <input type="date" id="finance-date-income" class="form-control">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label class="form-label">น้ำหนัก (kg)</label>
+            <input type="number" id="finance-kg" class="form-control" placeholder="เช่น 8.5" step="0.1" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ราคา / kg (฿)</label>
+            <input type="number" id="finance-price-per-kg" class="form-control" placeholder="เช่น 80" step="0.5" min="0">
+          </div>
+        </div>
+
+        <!-- Total preview -->
+        <div class="income-preview">
+          <span class="preview-label">ยอดรวมที่ได้รับ</span>
+          <span class="preview-val" id="finance-total-preview">-</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ช่องทางการขาย</label>
+          <select id="finance-channel" class="form-control">
+            <option value="">-- เลือกช่องทาง --</option>
+            <option value="regular">ลูกค้าประจำ</option>
+            <option value="new">ลูกค้าใหม่</option>
+            <option value="general">ลูกค้าทั่วไป</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อผู้ซื้อ (ไม่บังคับ)</label>
+          <input type="text" id="finance-buyer" class="form-control" placeholder="เช่น คุณสมชาย, ร้านสลัดดี">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ</label>
+          <textarea id="finance-notes-income" class="form-control" placeholder="บันทึกเพิ่มเติม..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveIncome()">บันทึกรายรับ</button>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">ประวัติรายรับ</span></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV('income')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+      <div id="income-list"></div>
+    </div>
+
+    <!-- ===== EXPENSE PANEL ===== -->
+    <div id="fpanel-expense" class="hidden">
+      <div class="card">
+        <div class="card-title">บันทึกรายจ่าย</div>
+
+        <div class="form-group">
+          <label class="form-label">วันที่จ่าย</label>
+          <input type="date" id="finance-date-expense" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select id="expense-category" class="form-control" onchange="onExpenseCategoryChange()">
+            <option value="">-- เลือกหมวดหมู่ --</option>
+            <option value="seed">เมล็ดพันธุ์</option>
+            <option value="fertilizer">ปุ๋ย / สารเคมี</option>
+            <option value="labor">ค่าแรง (฿350 × 26 วัน)</option>
+            <option value="utility">ค่าไฟ (฿2,000/เดือน)</option>
+            <option value="equipment">อุปกรณ์ / เครื่องมือ</option>
+            <option value="packaging">บรรจุภัณฑ์</option>
+            <option value="transport">ค่าขนส่ง</option>
+            <option value="other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">จำนวนเงิน (฿)</label>
+          <input type="number" id="expense-amount" class="form-control" placeholder="เช่น 500" step="1" min="0">
+          <div class="expense-fixed-note" id="expense-amount-preview"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายละเอียด</label>
+          <input type="text" id="expense-desc" class="form-control" placeholder="เช่น ปุ๋ย NPT 1 ถุง, ค่าแรงเก็บเกี่ยว">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมายเหตุ</label>
+          <textarea id="finance-notes-expense" class="form-control" placeholder="บันทึกเพิ่มเติม..."></textarea>
+        </div>
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 8px 20px rgba(245,158,11,0.30)" onclick="saveExpense()">บันทึกรายจ่าย</button>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">ประวัติรายจ่าย</span></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV('expense')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+      <div id="expense-list"></div>
+    </div>
+
+    <!-- ===== SUMMARY PANEL ===== -->
+    <div id="fpanel-summary" class="hidden">
+
+      <div class="growth-divider" style="margin-top:0"><span class="gd-label">เดือนนี้</span></div>
+      <div class="kpi-grid">
+        <div class="kpi-card income-card">
+          <div class="kpi-label">รายรับ</div>
+          <div class="kpi-val" id="sum-inc-month">–</div>
+          <div class="kpi-sub">ยอดขายรวม</div>
+        </div>
+        <div class="kpi-card expense-card">
+          <div class="kpi-label">รายจ่าย</div>
+          <div class="kpi-val" id="sum-exp-month">–</div>
+          <div class="kpi-sub">ต้นทุนรวม</div>
+        </div>
+        <div class="kpi-card profit-card">
+          <div class="kpi-label">กำไรสุทธิ</div>
+          <div class="kpi-val" id="sum-profit-month">–</div>
+          <div class="kpi-sub">รายรับ – รายจ่าย</div>
+        </div>
+        <div class="kpi-card margin-card">
+          <div class="kpi-label">Margin</div>
+          <div class="kpi-val" id="sum-margin-month">–</div>
+          <div class="kpi-sub">% กำไรต่อรายรับ</div>
+        </div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">สะสมปีนี้</span></div>
+      <div class="year-row">
+        <div class="year-card">
+          <div class="year-label">รายรับ</div>
+          <div class="year-val" id="sum-inc-year" style="color:var(--primary)">–</div>
+        </div>
+        <div class="year-card">
+          <div class="year-label">รายจ่าย</div>
+          <div class="year-val" id="sum-exp-year" style="color:var(--accent)">–</div>
+        </div>
+        <div class="year-card">
+          <div class="year-label">กำไร</div>
+          <div class="year-val" id="sum-profit-year" style="color:#8B5CF6">–</div>
+        </div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">รายจ่ายแยกหมวด (เดือนนี้)</span></div>
+      <div class="card">
+        <div id="expense-breakdown"></div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">กราฟรายรับ vs รายจ่าย (6 เดือน)</span></div>
+      <div class="card">
+        <div id="financeChart"></div>
+      </div>
+
+      <div class="export-row">
+        <button class="btn btn-outline" style="flex:1" onclick="exportCSV('income')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export รายรับ
+        </button>
+        <button class="btn btn-outline" style="flex:1" onclick="exportCSV('expense')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export รายจ่าย
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===========================================================
+     8. รายชื่อลูกค้า
+     =========================================================== -->
+<div class="page" id="page-customers">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 8</div>
+    <div class="section-title">
+      <span class="title-icon" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);box-shadow:0 8px 20px rgba(139,92,246,0.30)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </span>
+      ลูกค้า
+    </div>
+    <div class="section-sub">จัดการรายชื่อลูกค้า ระบบวิเคราะห์และอัปเกรดแท็กอัตโนมัติ</div>
+
+    <!-- Summary -->
+    <div class="csum-grid">
+      <div class="csum-card">
+        <div class="csum-label">รายสัปดาห์</div>
+        <div class="csum-val" id="csum-week-amt" style="color:var(--primary)">–</div>
+        <div class="csum-sub" id="csum-week-cust">–</div>
+      </div>
+      <div class="csum-card">
+        <div class="csum-label">รายเดือน</div>
+        <div class="csum-val" id="csum-month-amt" style="color:var(--primary)">–</div>
+        <div class="csum-sub" id="csum-month-cust">–</div>
+      </div>
+      <div class="csum-card">
+        <div class="csum-label">ทั้งหมด</div>
+        <div class="csum-val" id="csum-all-amt" style="color:var(--primary)">–</div>
+        <div class="csum-sub" id="csum-all-cust">–</div>
+      </div>
+    </div>
+
+    <!-- Tag counts -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px;text-align:center;box-shadow:var(--shadow)">
+        <div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--primary)" id="csum-regular">–</div>
+        <div class="cust-tag tag-regular" style="font-size:10px;margin-top:4px">ประจำ</div>
+      </div>
+      <div style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px;text-align:center;box-shadow:var(--shadow)">
+        <div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--ink)" id="csum-new">–</div>
+        <div class="cust-tag tag-new" style="font-size:10px;margin-top:4px">ใหม่</div>
+      </div>
+      <div style="flex:1;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px;text-align:center;box-shadow:var(--shadow)">
+        <div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--ink-soft)" id="csum-general">–</div>
+        <div class="cust-tag tag-general" style="font-size:10px;margin-top:4px">ทั่วไป</div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="cust-search-input" placeholder="ค้นหาชื่อ ที่อยู่ หรือแท็ก...">
+    </div>
+
+    <!-- Add button + Export -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-primary" style="flex:1" onclick="openAddCustomer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        เพิ่มลูกค้าใหม่
+      </button>
+      <button class="btn btn-outline" onclick="exportCustomersCSV()" style="white-space:nowrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+      </button>
+    </div>
+
+    <!-- List -->
+    <div id="customer-list"></div>
+  </div>
+</div>
+
+<!-- ===== CUSTOMER MODAL ===== -->
+<div class="modal-overlay" id="cust-modal" onclick="if(event.target===this)closeCustomerModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="cust-modal-title">เพิ่มลูกค้าใหม่</div>
+
+    <div class="form-group">
+      <label class="form-label">ชื่อลูกค้า / ร้านค้า *</label>
+      <input type="text" id="cust-name" class="form-control" placeholder="เช่น คุณสมชาย, ร้านสลัดดี">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ที่อยู่ / เบอร์โทร</label>
+      <textarea id="cust-address" class="form-control" placeholder="ที่อยู่หรือเบอร์ติดต่อ..." style="min-height:64px"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label class="form-label">ใช้ผักต่อสัปดาห์ (kg)</label>
+        <input type="number" id="cust-weekly-kg" class="form-control" placeholder="เช่น 5" step="0.5" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ประเภท</label>
+        <select id="cust-type" class="form-control">
+          <option value="customer">ลูกค้า</option>
+          <option value="farm">ฟาร์ม</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">แท็ก</label>
+      <select id="cust-tag-select" class="form-control">
+        <option value="new">ลูกค้าใหม่</option>
+        <option value="regular">ลูกค้าประจำ</option>
+        <option value="general">ลูกค้าทั่วไป</option>
+      </select>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:5px;font-weight:500">
+        ระบบจะอัปเกรดเป็น "ลูกค้าประจำ" อัตโนมัติเมื่อซื้อ ≥ 5 ครั้ง
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveCustomer()">บันทึก</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="closeCustomerModal()">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV — glass floating ===== -->
+<div class="bottom-nav">
+  <a href="#dashboard" id="nav-dashboard" data-page="dashboard">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+    หน้าหลัก
+  </a>
+  <a href="#seeds" id="nav-seeds" data-page="seeds">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12M12 12C12 7 8 4 4 4C4 9 7 13 12 13M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/></svg></span>
+    เพาะเมล็ด
+  </a>
+  <a href="#plots" id="nav-plots" data-page="plots">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/></svg></span>
+    แปลงปลูก
+  </a>
+  <a href="#problems" id="nav-problems" data-page="problems">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86l-8.18 14A1 1 0 003 19.5h18a1 1 0 00.89-1.64l-8.18-14a1 1 0 00-1.72 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17"/></svg></span>
+    ปัญหา
+  </a>
+  <a href="#calendar" id="nav-calendar" data-page="calendar">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+    ปฏิทิน
+  </a>
+  <a href="#todos" id="nav-todos" data-page="todos">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+    To-do
+  </a>
+  <a href="#finance" id="nav-finance" data-page="finance">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
+    การเงิน
+  </a>
+  <a href="#customers" id="nav-customers" data-page="customers">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></span>
+    ลูกค้า
+  </a>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/supabase.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/seeds.js"></script>
+<script src="js/plots.js"></script>
+<script src="js/problems.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/todos.js"></script>
+<script src="js/finance.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
