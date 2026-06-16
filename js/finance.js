@@ -199,6 +199,17 @@ async function loadFinanceSummary() {
   const im=si(incM),em=se(expM),iy=si(incY),ey=se(expY);
   const fmt=n=>`฿${n.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
 
+  // Net-profit hero (this month)
+  const hero=document.getElementById('fin-hero');
+  if (hero) {
+    const profit=im-em;
+    hero.classList.toggle('negative', profit<0);
+    document.getElementById('hero-month-label').textContent = now.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+    document.getElementById('hero-profit').textContent = (profit<0?'-':'')+fmt(Math.abs(profit));
+    document.getElementById('hero-inc').textContent = fmt(im);
+    document.getElementById('hero-exp').textContent = fmt(em);
+  }
+
   document.getElementById('sum-inc-month').textContent   = fmt(im);
   document.getElementById('sum-exp-month').textContent   = fmt(em);
   document.getElementById('sum-profit-month').textContent= fmt(im-em);

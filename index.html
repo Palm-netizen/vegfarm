@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#16A34A">
 <title>VegFarm — Smart Farm</title>
 
-<!-- Fonts: ใช้ฟอนต์ระบบ (กำหนด fallback ใน style.css) ทำงานได้แบบออฟไลน์ -->
+<!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
+<link rel="stylesheet" href="css/fonts.css">
 
 <!-- QRCode.js (vendored — ออฟไลน์) -->
 <script src="js/vendor/qrcode.min.js"></script>
@@ -402,6 +403,19 @@
       การเงิน
     </div>
     <div class="section-sub">บันทึกรายรับ รายจ่าย ดูกำไร และสรุปผลประกอบการ</div>
+
+    <!-- Net-profit hero (this month) -->
+    <div class="fin-hero" id="fin-hero">
+      <div class="fin-hero-top">
+        <span class="fin-hero-label">กำไรสุทธิเดือนนี้</span>
+        <span class="fin-hero-month" id="hero-month-label">–</span>
+      </div>
+      <div class="fin-hero-profit" id="hero-profit">–</div>
+      <div class="fin-hero-stats">
+        <span><span class="dot inc"></span>รายรับ<strong id="hero-inc">–</strong></span>
+        <span><span class="dot exp"></span>รายจ่าย<strong id="hero-exp">–</strong></span>
+      </div>
+    </div>
 
     <!-- Tabs -->
     <div class="fin-tabs">
