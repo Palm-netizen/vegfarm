@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#16A34A">
 <title>VegFarm — Smart Farm</title>
 
-<!-- Apply saved theme before paint (avoids flash) -->
-<script>try{if(localStorage.getItem('vf_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<!-- Apply theme before paint (avoids flash). Default = dark unless user chose light. -->
+<script>try{if(localStorage.getItem('vf_theme')!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
 
 <!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
 <link rel="stylesheet" href="css/fonts.css">
