@@ -49,6 +49,19 @@ async function loadDashboard() {
       .order('seed_date', { ascending: false })
       .limit(6);
 
+    // 7. ใกล้เก็บเกี่ยว — ภายใน 7 วัน หรือเลยกำหนดแล้ว (ยังไม่เก็บ)
+    const { data: pendingPlots } = await db
+      .from('plots')
+      .select('*')
+      .eq('is_harvested', false)
+      .not('harvest_date', 'is', null);
+    const horizon = new Date(); horizon.setDate(horizon.getDate() + 7);
+    const horizonStr = horizon.toISOString().split('T')[0];
+    const upcomingHarvest = (pendingPlots || [])
+      .filter(p => p.harvest_date <= horizonStr)
+      .map(p => ({ ...p, daysLeft: Math.round((new Date(p.harvest_date) - new Date(today)) / 86400000) }))
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+
     // Render
     renderDashboardStats({
       activePlots: activePlots?.length || 0,
@@ -57,7 +70,8 @@ async function loadDashboard() {
       problemPlotsList: uniqueProblemPlots,
       todayTodos: todayTodos || [],
       recentProblems: recentProblems || [],
-      chartBatches: (chartBatches || []).reverse()
+      chartBatches: (chartBatches || []).reverse(),
+      upcomingHarvest
     });
 
   } catch (err) {
@@ -95,6 +109,27 @@ function renderDashboardStats(data) {
         </div>`).join('')
     : '<div class="empty-state">ไม่มีปัญหาล่าสุด</div>';
   el('dash-recent-problems').innerHTML = problemHtml;
+
+  // Upcoming harvest
+  const harvestEl = el('dash-harvest-list');
+  if (harvestEl) {
+    harvestEl.innerHTML = data.upcomingHarvest.length
+      ? data.upcomingHarvest.map(p => {
+          const overdue = p.daysLeft < 0;
+          const label = overdue ? `เลยกำหนด ${Math.abs(p.daysLeft)} วัน`
+                      : p.daysLeft === 0 ? 'วันนี้' : `อีก ${p.daysLeft} วัน`;
+          return `
+        <div class="harvest-item ${overdue ? 'overdue' : ''}">
+          <span class="badge badge-green">${p.plot_code}</span>
+          <div style="flex:1">
+            <div style="font-weight:600">${vegLabel(p.vegetable_type)}</div>
+            <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest_date)}</div>
+          </div>
+          <span class="harvest-tag ${overdue ? 'overdue' : (p.daysLeft <= 2 ? 'soon' : '')}">${label}</span>
+        </div>`;
+        }).join('')
+      : '<div class="empty-state">ยังไม่มีแปลงใกล้เก็บเกี่ยว</div>';
+  }
 
   // Today todos
   const todoHtml = data.todayTodos.length

@@ -92,6 +92,9 @@
       </div>
     </div>
 
+    <div class="growth-divider"><span class="gd-label">ใกล้เก็บเกี่ยว (ภายใน 7 วัน)</span></div>
+    <div class="card"><div id="dash-harvest-list"></div></div>
+
     <div class="growth-divider"><span class="gd-label">ปัญหาล่าสุด</span></div>
     <div class="card"><div id="dash-recent-problems"></div></div>
 
@@ -102,6 +105,23 @@
     <div class="card">
       <div class="card-title">คาดการณ์ KG &amp; จำนวนเมล็ด</div>
       <div class="chart-wrap"><div id="dashChart"></div></div>
+    </div>
+
+    <div class="growth-divider"><span class="gd-label">ข้อมูล</span></div>
+    <div class="card">
+      <div class="card-title">สำรอง / กู้คืนข้อมูล</div>
+      <div class="text-sub" style="margin-bottom:12px">ข้อมูลถูกเก็บในเบราว์เซอร์นี้ — สำรองเป็นไฟล์ไว้กันหาย หรือย้ายไปเครื่องอื่น</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" style="flex:1" onclick="exportAllData()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          สำรอง (Export)
+        </button>
+        <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('vf-import-file').click()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          กู้คืน (Import)
+        </button>
+        <input type="file" id="vf-import-file" accept="application/json" hidden onchange="importAllData(this.files[0])">
+      </div>
     </div>
   </div>
 </div>
@@ -317,6 +337,30 @@
     </div>
 
     <div class="growth-divider"><span class="gd-label">ฐานข้อมูลปัญหา</span></div>
+    <div class="filter-bar">
+      <input type="text" id="prob-search" class="form-control" placeholder="🔍 ค้นหา แปลง / อาการ / วิธีแก้..." oninput="loadProblemDatabase()">
+      <div class="filter-row">
+        <select id="prob-filter-type" class="form-control" onchange="loadProblemDatabase()">
+          <option value="">ทุกประเภท</option>
+          <option value="burned_leaf">ใบไหม้</option>
+          <option value="root_rot">รากเน่า</option>
+          <option value="worm">หนอน</option>
+          <option value="fungus">เชื้อรา</option>
+          <option value="other">อื่นๆ</option>
+        </select>
+        <select id="prob-filter-sev" class="form-control" onchange="loadProblemDatabase()">
+          <option value="">ทุกความรุนแรง</option>
+          <option value="low">เบา</option>
+          <option value="medium">ปานกลาง</option>
+          <option value="high">รุนแรง</option>
+        </select>
+        <select id="prob-filter-status" class="form-control" onchange="loadProblemDatabase()">
+          <option value="">ทุกสถานะ</option>
+          <option value="open">ยังไม่แก้</option>
+          <option value="resolved">แก้แล้ว</option>
+        </select>
+      </div>
+    </div>
     <div id="problem-db-list"></div>
   </div>
 </div>

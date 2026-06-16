@@ -135,14 +135,37 @@ function resetProblemForm() {
 }
 
 async function loadProblemDatabase() {
-  const { data: problems } = await db
+  const { data: all } = await db
     .from('problems')
     .select('*')
     .order('problem_date', { ascending: false });
 
   const container = document.getElementById('problem-db-list');
-  if (!problems?.length) {
+
+  // Read search + filter controls
+  const q = (document.getElementById('prob-search')?.value || '').trim().toLowerCase();
+  const fType = document.getElementById('prob-filter-type')?.value || '';
+  const fSev = document.getElementById('prob-filter-sev')?.value || '';
+  const fStatus = document.getElementById('prob-filter-status')?.value || '';
+
+  const problems = (all || []).filter(p => {
+    if (fType && p.problem_type !== fType) return false;
+    if (fSev && p.severity !== fSev) return false;
+    if (fStatus === 'open' && p.resolved) return false;
+    if (fStatus === 'resolved' && !p.resolved) return false;
+    if (q) {
+      const hay = `${p.plot_code} ${problemTypeLabel(p.problem_type)} ${p.description || ''} ${p.solution || ''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  if (!all?.length) {
     container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>ยังไม่มีบันทึกปัญหา</div>';
+    return;
+  }
+  if (!problems.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>ไม่พบรายการที่ตรงกับเงื่อนไข</div>';
     return;
   }
 

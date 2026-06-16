@@ -856,3 +856,25 @@ select.form-control { cursor: pointer; }
 .fin-hero-stats .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
 .fin-hero-stats .dot.inc { background: #BBF7D0; }
 .fin-hero-stats .dot.exp { background: #FDE68A; }
+
+/* ===== Search & filter bar ===== */
+.filter-bar { margin-bottom: 12px; }
+.filter-bar .form-control { margin-bottom: 8px; }
+.filter-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.filter-row .form-control { font-size: 13px; padding: 8px 10px; margin: 0; }
+@media (max-width: 420px) { .filter-row { grid-template-columns: 1fr; } }
+
+/* ===== Upcoming harvest list ===== */
+.harvest-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--line);
+}
+.harvest-item:last-child { border-bottom: none; }
+.harvest-item.overdue { background: rgba(239,68,68,.04); border-radius: 10px; padding-left: 8px; padding-right: 8px; }
+.harvest-tag {
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--primary-tint); color: var(--primary);
+}
+.harvest-tag.soon { background: #FEF3C7; color: #D97706; }
+.harvest-tag.overdue { background: #FEE2E2; color: #DC2626; }

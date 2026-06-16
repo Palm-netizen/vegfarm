@@ -168,6 +168,43 @@ const db = {
 };
 
 // ============================================================
+//  Backup / Restore — export & import all data as one JSON file
+// ============================================================
+const VF_TABLES = [
+  'plots', 'seed_batches', 'plot_cycles', 'problems', 'todos',
+  'calendar_activities', 'income', 'expenses', 'customers', '_storage_photos'
+];
+
+function exportAllData() {
+  const dump = { _app: 'vegfarm', _version: 'v1', exported_at: new Date().toISOString(), data: {} };
+  VF_TABLES.forEach(t => { dump.data[t] = Store.get(t); });
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vegfarm-backup-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+  showToast('สำรองข้อมูลเป็นไฟล์แล้ว');
+}
+
+async function importAllData(file) {
+  if (!file) return;
+  if (!confirm('การกู้คืนจะเขียนทับข้อมูลปัจจุบันทั้งหมด ดำเนินการต่อหรือไม่?')) return;
+  try {
+    const dump = JSON.parse(await file.text());
+    if (!dump || dump._app !== 'vegfarm' || !dump.data) throw new Error('ไม่ใช่ไฟล์สำรองของ VegFarm');
+    Object.entries(dump.data).forEach(([t, rows]) => Store.set(t, rows));
+    localStorage.setItem(VF_PREFIX + 'seeded', '1');
+    showToast('กู้คืนข้อมูลสำเร็จ — กำลังโหลดใหม่');
+    setTimeout(() => location.reload(), 900);
+  } catch (e) {
+    showToast('กู้คืนไม่สำเร็จ: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
 //  Helpers (เดิม) — declared before seeding because seed uses them
 // ============================================================
 function formatDateTH(dateStr) {
