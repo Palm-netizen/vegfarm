@@ -234,6 +234,13 @@
         <div class="text-sub" id="plot-cycle-count"></div>
       </div>
 
+      <div class="form-group" id="transplant-group">
+        <label class="form-label">ย้ายกล้าจากรอบเพาะ (ถ้ามี)</label>
+        <select id="plot-transplant-batch" class="form-control" onchange="applyTransplant()">
+          <option value="">-- ไม่ย้ายจากรอบเพาะ --</option>
+        </select>
+        <div class="text-sub" id="transplant-hint" style="margin-top:6px"></div>
+      </div>
       <div class="form-group">
         <label class="form-label">ชนิดที่ปลูก</label>
         <select id="plot-veg-type" class="form-control">
@@ -241,6 +248,8 @@
           <option value="green_oak">กรีนโอ๊ค</option>
           <option value="red_oak">เรดโอ๊ค</option>
           <option value="finley">ฟินเลย์</option>
+          <option value="cos">คอส</option>
+          <option value="butterhead">บัตเตอร์เฮด</option>
         </select>
       </div>
       <div class="form-group">
@@ -495,6 +504,26 @@
           </div>
         </div>
 
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label class="form-label">จากแปลง</label>
+            <select id="finance-plot" class="form-control" onchange="autoFillIncomeVeg()">
+              <option value="">ไม่ระบุ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ชนิดผัก</label>
+            <select id="finance-veg" class="form-control">
+              <option value="">ไม่ระบุ</option>
+              <option value="green_oak">กรีนโอ๊ค</option>
+              <option value="red_oak">เรดโอ๊ค</option>
+              <option value="finley">ฟินเลย์</option>
+              <option value="cos">คอส</option>
+              <option value="butterhead">บัตเตอร์เฮด</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Total preview -->
         <div class="income-preview">
           <span class="preview-label">ยอดรวมที่ได้รับ</span>
@@ -626,6 +655,16 @@
       <div class="growth-divider"><span class="gd-label">รายจ่ายแยกหมวด (เดือนนี้)</span></div>
       <div class="card">
         <div id="expense-breakdown"></div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">รายได้ & ผลผลิตรายแปลง (ปีนี้)</span></div>
+      <div class="card">
+        <div id="plot-revenue"></div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">รายได้ตามชนิดผัก (ปีนี้)</span></div>
+      <div class="card">
+        <div id="veg-revenue"></div>
       </div>
 
       <div class="growth-divider"><span class="gd-label">กราฟรายรับ vs รายจ่าย (6 เดือน)</span></div>

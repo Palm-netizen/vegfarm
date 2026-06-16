@@ -12,8 +12,22 @@ function initFinance() {
   document.getElementById('finance-date-expense').value = new Date().toISOString().split('T')[0];
   document.getElementById('finance-kg').addEventListener('input', calcIncomeTotal);
   document.getElementById('finance-price-per-kg').addEventListener('input', calcIncomeTotal);
+
+  // Populate "จากแปลง" T1–T15
+  const plotSel = document.getElementById('finance-plot');
+  if (plotSel) plotSel.innerHTML = '<option value="">ไม่ระบุ</option>' +
+    Array.from({ length: 15 }, (_, i) => `<option value="T${i + 1}">T${i + 1}</option>`).join('');
+
   switchFinanceTab('income');
   loadFinanceSummary();
+}
+
+// When a plot is chosen for an income entry, auto-fill its current crop
+async function autoFillIncomeVeg() {
+  const code = document.getElementById('finance-plot').value;
+  if (!code) return;
+  const { data: plot } = await db.from('plots').select('vegetable_type').eq('plot_code', code).single();
+  if (plot?.vegetable_type) document.getElementById('finance-veg').value = plot.vegetable_type;
 }
 
 function switchFinanceTab(tab) {
@@ -43,6 +57,8 @@ async function saveIncome() {
   const channel = document.getElementById('finance-channel').value;
   const buyer   = document.getElementById('finance-buyer').value.trim();
   const notes   = document.getElementById('finance-notes-income').value;
+  const plotCode = document.getElementById('finance-plot').value || null;
+  const vegType  = document.getElementById('finance-veg').value || null;
 
   if (!date)          return showToast('กรุณาระบุวันที่','error');
   if (!kg || kg<=0)   return showToast('กรุณาระบุน้ำหนัก','error');
@@ -54,6 +70,7 @@ async function saveIncome() {
   try {
     await db.from('income').insert({
       income_date:date, kg_sold:kg, price_per_kg:price, total_amount:total,
+      plot_code:plotCode, vegetable_type:vegType,
       channel, buyer:buyer||null, notes:notes||null
     });
     showToast('บันทึกรายรับสำเร็จ');
@@ -69,6 +86,7 @@ function resetIncomeForm() {
     const el=document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('finance-channel').value='';
+  ['finance-plot','finance-veg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('finance-total-preview').textContent='-';
 }
 
@@ -185,13 +203,14 @@ async function loadFinanceSummary() {
   const monthStart=`${yr}-${mo}-01`, monthEnd=`${yr}-${mo}-31`;
   const yearStart=`${yr}-01-01`, yearEnd=`${yr}-12-31`;
 
-  const [incM,incY,expM,expY,allInc,allExp] = await Promise.all([
+  const [incM,incY,expM,expY,allInc,allExp,incDetail] = await Promise.all([
     db.from('income').select('total_amount').gte('income_date',monthStart).lte('income_date',monthEnd),
     db.from('income').select('total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
     db.from('expenses').select('amount').gte('expense_date',monthStart).lte('expense_date',monthEnd),
     db.from('expenses').select('amount').gte('expense_date',yearStart).lte('expense_date',yearEnd),
     db.from('income').select('income_date,total_amount').order('income_date',{ascending:true}).limit(12),
     db.from('expenses').select('expense_date,amount,category').order('expense_date',{ascending:true}).limit(60),
+    db.from('income').select('plot_code,vegetable_type,kg_sold,total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
   ]);
 
   const si = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.total_amount||0),0)||0;
@@ -233,7 +252,36 @@ async function loadFinanceSummary() {
   }).join('');
   document.getElementById('expense-breakdown').innerHTML=catHtml||'<div class="empty-state" style="padding:16px">ยังไม่มีรายจ่าย</div>';
 
+  // Revenue & yield by plot / by vegetable (this year)
+  renderRevenueRanking('plot-revenue', incDetail.data||[], 'plot_code', v=>v||'ไม่ระบุแปลง');
+  renderRevenueRanking('veg-revenue',  incDetail.data||[], 'vegetable_type', v=>typeof vegLabel==='function'?vegLabel(v):(v||'ไม่ระบุ'));
+
   renderFinanceChart(allInc.data||[],allExp.data||[]);
+}
+
+// Rank a metric by revenue, showing kg + ฿ with a proportional bar
+function renderRevenueRanking(containerId, rows, key, labelFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const fmt = n => `฿${n.toLocaleString('th-TH',{maximumFractionDigits:0})}`;
+  const groups = {};
+  rows.forEach(r => {
+    const k = r[key] || '';
+    if (!groups[k]) groups[k] = { amt: 0, kg: 0 };
+    groups[k].amt += parseFloat(r.total_amount || 0);
+    groups[k].kg  += parseFloat(r.kg_sold || 0);
+  });
+  const entries = Object.entries(groups).sort((a,b)=>b[1].amt-a[1].amt);
+  if (!entries.length) { el.innerHTML = '<div class="empty-state" style="padding:16px">ยังไม่มีข้อมูลรายรับที่ระบุแปลง/ชนิดผัก</div>'; return; }
+  const max = entries[0][1].amt || 1;
+  el.innerHTML = entries.map(([k,v]) => {
+    const pct = ((v.amt/max)*100).toFixed(0);
+    return `<div class="cat-row">
+      <span class="cat-name">${labelFn(k)}<span class="text-sub" style="margin-left:6px">${v.kg.toLocaleString('th-TH',{maximumFractionDigits:1})} kg</span></span>
+      <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%"></div></div>
+      <span class="cat-amt">${fmt(v.amt)}</span>
+    </div>`;
+  }).join('');
 }
 
 function renderFinanceChart(incRows,expRows) {
