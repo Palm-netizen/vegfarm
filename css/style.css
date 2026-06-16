@@ -332,7 +332,16 @@ select.form-control { cursor: pointer; }
   transition: all 0.16s;
   user-select: none;
 }
-.checkbox-item input { display: none; }
+/* Hide the checkbox but keep it activatable by tapping the label.
+   display:none breaks label activation on some mobile browsers (iOS),
+   so use a visually-hidden technique instead. */
+.checkbox-item input {
+  position: absolute;
+  opacity: 0;
+  width: 1px; height: 1px;
+  margin: 0; padding: 0; border: 0;
+  pointer-events: none;
+}
 .checkbox-item.checked {
   background: var(--gradient);
   color: #fff;
