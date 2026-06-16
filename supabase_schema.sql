@@ -1,9 +1,9 @@
 -- ===========================
--- VegFarm App - Supabase Schema
+-- VegFarm App - Supabase Schema (idempotent — รันซ้ำได้ปลอดภัย)
 -- ===========================
 
 -- 1. รอบการเพาะเมล็ด (Seed Batches)
-CREATE TABLE seed_batches (
+CREATE TABLE IF NOT EXISTS seed_batches (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   seed_date DATE NOT NULL,
   vegetable_types TEXT[] NOT NULL, -- ['green_oak', 'red_oak', 'finley']
@@ -18,7 +18,7 @@ CREATE TABLE seed_batches (
 );
 
 -- 2. แปลงปลูก (Plots T1-T15)
-CREATE TABLE plots (
+CREATE TABLE IF NOT EXISTS plots (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   plot_code TEXT UNIQUE NOT NULL, -- T1, T2, ..., T15
   vegetable_type TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE plots (
 );
 
 -- 3. ประวัติการปลูกแต่ละแปลง
-CREATE TABLE plot_cycles (
+CREATE TABLE IF NOT EXISTS plot_cycles (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   plot_code TEXT NOT NULL,
   cycle_number INTEGER NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE plot_cycles (
 );
 
 -- 4. บันทึกปัญหา (Problem Log)
-CREATE TABLE problems (
+CREATE TABLE IF NOT EXISTS problems (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   plot_code TEXT NOT NULL,
   problem_date DATE NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE problems (
 );
 
 -- 5. To-Do รายวัน
-CREATE TABLE todos (
+CREATE TABLE IF NOT EXISTS todos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   todo_date DATE NOT NULL DEFAULT CURRENT_DATE,
   task TEXT NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE todos (
 );
 
 -- 6. กิจกรรมสำหรับปฏิทิน
-CREATE TABLE calendar_activities (
+CREATE TABLE IF NOT EXISTS calendar_activities (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   activity_date DATE NOT NULL,
   activity_type TEXT NOT NULL CHECK (activity_type IN ('seeding', 'planting', 'harvesting', 'problem', 'todo')),
@@ -86,39 +86,8 @@ CREATE TABLE calendar_activities (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ===========================
--- Row Level Security (RLS)
--- ===========================
-ALTER TABLE seed_batches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE plots ENABLE ROW LEVEL SECURITY;
-ALTER TABLE plot_cycles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE problems ENABLE ROW LEVEL SECURITY;
-ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE calendar_activities ENABLE ROW LEVEL SECURITY;
-
--- Allow all for authenticated users (ปรับตามต้องการ)
-CREATE POLICY "Allow all for authenticated" ON seed_batches FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON plots FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON plot_cycles FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON problems FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON todos FOR ALL USING (true);
-CREATE POLICY "Allow all for authenticated" ON calendar_activities FOR ALL USING (true);
-
--- ===========================
--- Initialize Plots T1-T15
--- ===========================
-INSERT INTO plots (plot_code, cycle_count) VALUES
-('T1',1),('T2',1),('T3',1),('T4',1),('T5',1),
-('T6',1),('T7',1),('T8',1),('T9',1),('T10',1),
-('T11',1),('T12',1),('T13',1),('T14',1),('T15',1)
-ON CONFLICT (plot_code) DO NOTHING;
-
--- ===========================
--- Finance Module — เพิ่มเติม
--- ===========================
-
 -- 7. รายรับ (Income)
-CREATE TABLE income (
+CREATE TABLE IF NOT EXISTS income (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   income_date DATE NOT NULL,
   plot_code TEXT,
@@ -133,7 +102,7 @@ CREATE TABLE income (
 );
 
 -- 8. รายจ่าย (Expenses)
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   expense_date DATE NOT NULL,
   category TEXT NOT NULL CHECK (category IN ('seed','fertilizer','labor','utility','equipment','packaging','transport','other')),
@@ -143,19 +112,8 @@ CREATE TABLE expenses (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable RLS
-ALTER TABLE income   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all" ON income   FOR ALL USING (true);
-CREATE POLICY "Allow all" ON expenses FOR ALL USING (true);
-
--- calendar_activities เพิ่ม activity_type ใหม่ (income)
--- ไม่ต้อง migrate เพราะ type เป็น TEXT ธรรมดา
-
--- ===========================
--- Customers Module — เพิ่มเติม
--- ===========================
-CREATE TABLE customers (
+-- 9. ลูกค้า (Customers)
+CREATE TABLE IF NOT EXISTS customers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   address TEXT,
@@ -166,9 +124,42 @@ CREATE TABLE customers (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all" ON customers FOR ALL USING (true);
 
--- Add buyer column to income if not exists (for customer tracking)
--- ALTER TABLE income ADD COLUMN IF NOT EXISTS buyer TEXT;
--- ALTER TABLE income ADD COLUMN IF NOT EXISTS channel TEXT;
+-- ===========================
+-- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
+-- ===========================
+ALTER TABLE seed_batches        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plots               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plot_cycles         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE problems            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE todos               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE calendar_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE income              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers           ENABLE ROW LEVEL SECURITY;
+
+-- Policies (drop ก่อนสร้างใหม่ เพื่อให้รันซ้ำได้)
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'seed_batches','plots','plot_cycles','problems','todos',
+    'calendar_activities','income','expenses','customers'
+  ] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "Allow all" ON %I;', t);
+    EXECUTE format('DROP POLICY IF EXISTS "Allow all for authenticated" ON %I;', t);
+    EXECUTE format('CREATE POLICY "Allow all" ON %I FOR ALL USING (true) WITH CHECK (true);', t);
+  END LOOP;
+END $$;
+
+-- ===========================
+-- Initialize Plots T1-T15
+-- ===========================
+INSERT INTO plots (plot_code, cycle_count) VALUES
+('T1',1),('T2',1),('T3',1),('T4',1),('T5',1),
+('T6',1),('T7',1),('T8',1),('T9',1),('T10',1),
+('T11',1),('T12',1),('T13',1),('T14',1),('T15',1)
+ON CONFLICT (plot_code) DO NOTHING;
+
+-- รีโหลด schema cache ของ PostgREST (กัน error "table not found in schema cache")
+NOTIFY pgrst, 'reload schema';
