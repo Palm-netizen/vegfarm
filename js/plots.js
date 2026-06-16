@@ -25,6 +25,25 @@ async function loadAllPlots() {
 
   const problemSet = new Set(problems?.map(p => p.plot_code) || []);
 
+  // Summary strip
+  const counts = { empty: 0, active: 0, harvested: 0, problem: problemSet.size };
+  (plots || []).forEach(p => {
+    if (p.is_harvested) counts.harvested++;
+    else if (p.plant_date) counts.active++;
+    else counts.empty++;
+  });
+  const summary = document.getElementById('plots-summary');
+  if (summary) {
+    summary.innerHTML = [
+      ['active', counts.active, 'กำลังปลูก'],
+      ['harvested', counts.harvested, 'เก็บแล้ว'],
+      ['empty', counts.empty, 'ว่าง'],
+      ['problem', counts.problem, 'มีปัญหา'],
+    ].map(([cls, num, label]) =>
+      `<div class="ps-item ${cls}"><div class="ps-num">${num}</div><div class="ps-label">${label}</div></div>`
+    ).join('');
+  }
+
   plots?.forEach(p => {
     const card = document.getElementById(`plot-card-${p.plot_code}`);
     const info = document.getElementById(`plot-info-${p.plot_code}`);

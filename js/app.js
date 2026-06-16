@@ -45,7 +45,22 @@ function showPage(pageId) {
   location.hash = pageId;
 }
 
+// ===== Theme (light/dark) =====
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (dark) document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', 'dark');
+  try { localStorage.setItem('vf_theme', dark ? 'light' : 'dark'); } catch (e) {}
+  updateThemeToggleIcon();
+}
+function updateThemeToggleIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  updateThemeToggleIcon();
+
   // Set today's date in nav
   const today = new Date();
   document.getElementById('nav-date').textContent = today.toLocaleDateString('th-TH', {

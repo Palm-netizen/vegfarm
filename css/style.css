@@ -878,3 +878,49 @@ select.form-control { cursor: pointer; }
 }
 .harvest-tag.soon { background: #FEF3C7; color: #D97706; }
 .harvest-tag.overdue { background: #FEE2E2; color: #DC2626; }
+
+/* ===== Theme toggle (top nav) ===== */
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle {
+  width: 38px; height: 38px; flex: none;
+  border: none; border-radius: 12px; cursor: pointer;
+  background: rgba(255,255,255,.18); color: #fff; font-size: 17px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s ease, background .15s ease;
+}
+.theme-toggle:hover { background: rgba(255,255,255,.28); }
+.theme-toggle:active { transform: scale(.9); }
+
+/* ===== Plots summary strip ===== */
+.plots-summary { display: flex; gap: 8px; margin-bottom: 14px; }
+.plots-summary .ps-item {
+  flex: 1; background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 11px 6px; text-align: center;
+  box-shadow: var(--shadow);
+}
+.ps-num { font-family: var(--font-display); font-size: 22px; font-weight: 800; line-height: 1; color: var(--ink); }
+.ps-label { font-size: 11px; color: var(--ink-soft); font-weight: 600; margin-top: 4px; }
+.ps-item.active .ps-num    { color: var(--primary); }
+.ps-item.harvested .ps-num { color: var(--accent); }
+.ps-item.empty .ps-num     { color: var(--ink-faint); }
+.ps-item.problem .ps-num   { color: var(--danger); }
+
+/* ===== Dark mode ===== */
+[data-theme="dark"] {
+  --primary-tint: #14271C;
+  --primary-tint-strong: #1C3A2A;
+  --accent-tint: #2C2210;
+  --danger-tint: #2C1717;
+  --gradient-soft: linear-gradient(135deg, #13241B 0%, #15251A 100%);
+  --ink: #E7EEEB;
+  --ink-soft: #9DB0A9;
+  --ink-faint: #6E817A;
+  --bg: #0E1513;
+  --paper: #18211D;
+  --line: #27332C;
+  --shadow:    0 1px 2px rgba(0,0,0,.40), 0 10px 28px rgba(0,0,0,.50);
+  --shadow-lg: 0 8px 16px rgba(0,0,0,.50), 0 24px 48px rgba(0,0,0,.65);
+}
+[data-theme="dark"] .bottom-nav { background: rgba(24,33,29,.85); border: 1px solid var(--line); }
+[data-theme="dark"] .fin-tab.active { background: var(--primary-tint); color: var(--ink); }
+[data-theme="dark"] img { filter: brightness(.92); }

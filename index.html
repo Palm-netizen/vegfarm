@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#16A34A">
 <title>VegFarm — Smart Farm</title>
 
+<!-- Apply saved theme before paint (avoids flash) -->
+<script>try{if(localStorage.getItem('vf_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+
 <!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
 <link rel="stylesheet" href="css/fonts.css">
 
@@ -28,9 +31,12 @@
       </span>
       <span>VegFarm<span class="logo-sub">Smart Farm</span></span>
     </div>
-    <div class="nav-date">
-      <span class="nav-date-label">วันนี้</span>
-      <span id="nav-date">-</span>
+    <div class="nav-right">
+      <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="สลับธีมสว่าง/มืด">🌙</button>
+      <div class="nav-date">
+        <span class="nav-date-label">วันนี้</span>
+        <span id="nav-date">-</span>
+      </div>
     </div>
   </div>
 </div>
@@ -219,6 +225,7 @@
     </div>
     <div class="section-sub">แตะที่แปลง T1–T15 เพื่อบันทึกหรือแก้ไขข้อมูล</div>
 
+    <div class="plots-summary" id="plots-summary"></div>
     <div class="plot-grid" id="plot-grid"></div>
 
     <div class="card" id="plot-detail-section" style="display:none">
