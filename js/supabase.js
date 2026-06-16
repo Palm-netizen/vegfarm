@@ -162,10 +162,29 @@ const StorageBucket = (bucket) => ({
   }
 });
 
-const db = {
+// Local (offline) client — the localStorage-backed mock above
+const localDb = {
   from: (table) => new Query(table),
   storage: { from: (bucket) => StorageBucket(bucket) }
 };
+
+// ============================================================
+//  Choose backend: Supabase cloud if configured, else local
+//  Configure in js/config.js (window.VF_CONFIG). Falls back to
+//  offline localStorage when no config or supabase-js isn't loaded.
+// ============================================================
+const VF_CFG = (typeof window !== 'undefined' && window.VF_CONFIG) || {};
+const VF_USE_CLOUD = !!(VF_CFG.SUPABASE_URL && VF_CFG.SUPABASE_ANON_KEY &&
+  typeof window !== 'undefined' && window.supabase && window.supabase.createClient);
+
+const db = VF_USE_CLOUD
+  ? window.supabase.createClient(VF_CFG.SUPABASE_URL, VF_CFG.SUPABASE_ANON_KEY)
+  : localDb;
+
+// Small badge so it's obvious which mode is live (helps debugging)
+if (typeof console !== 'undefined') {
+  console.info(`[VegFarm] data backend: ${VF_USE_CLOUD ? 'Supabase cloud ☁️' : 'local (offline) 💾'}`);
+}
 
 // ============================================================
 //  Backup / Restore — export & import all data as one JSON file
@@ -247,6 +266,7 @@ function setLoading(show) {
 //  SEED DATA — runs once so the UI has content to display
 // ============================================================
 (function seedOnce() {
+  if (VF_USE_CLOUD) return;                                  // never seed a real cloud DB
   if (localStorage.getItem(VF_PREFIX + 'seeded')) return;
 
   const today = new Date();
