@@ -6,17 +6,10 @@
 <meta name="theme-color" content="#16A34A">
 <title>VegFarm — Smart Farm</title>
 
-<!-- Fonts: Outfit (display) + Inter (body) -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Fonts: ใช้ฟอนต์ระบบ (กำหนด fallback ใน style.css) ทำงานได้แบบออฟไลน์ -->
 
-<!-- Chart.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<!-- QRCode.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- QRCode.js (vendored — ออฟไลน์) -->
+<script src="js/vendor/qrcode.min.js"></script>
 
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -107,7 +100,7 @@
     <div class="growth-divider"><span class="gd-label">เปรียบเทียบแต่ละรอบ</span></div>
     <div class="card">
       <div class="card-title">คาดการณ์ KG &amp; จำนวนเมล็ด</div>
-      <div class="chart-wrap"><canvas id="dashChart"></canvas></div>
+      <div class="chart-wrap"><div id="dashChart"></div></div>
     </div>
   </div>
 </div>

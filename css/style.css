@@ -35,8 +35,8 @@
   --shadow-lg: 0 8px 16px rgba(11,20,20,0.05), 0 24px 48px rgba(11,20,20,0.12);
   --shadow-primary: 0 8px 20px rgba(22,163,74,0.30);
 
-  --font-display: 'Outfit', 'Inter', -apple-system, sans-serif;
-  --font-body:    'Inter', -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', 'Helvetica Neue', Arial, sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', 'Helvetica Neue', Arial, sans-serif;
 
   --nav-h: 64px;
   --bottom-nav-h: 78px;
@@ -800,3 +800,9 @@ select.form-control { cursor: pointer; }
 .expense-fixed-note {
   font-size:12px; color:var(--primary); font-weight:600; margin-top:5px;
 }
+
+/* Inline SVG charts — give height:auto an aspect ratio so they don't
+   collapse to 0px height in Chromium (width:100% + height:auto alone
+   resolves to height 0 for inline <svg>). */
+#dashChart svg    { width:100%; height:auto; aspect-ratio: 600 / 280; }
+#financeChart svg { width:100%; height:auto; aspect-ratio: 600 / 260; }

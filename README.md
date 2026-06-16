@@ -10,15 +10,42 @@ vegfarm/
 ├── css/
 │   └── style.css           # สไตล์ทั้งหมด
 ├── js/
-│   ├── supabase.js         # config + helper functions
+│   ├── supabase.js         # data layer (ออฟไลน์ localStorage) + helper functions
 │   ├── app.js               # router/navigation
 │   ├── dashboard.js         # เมนู 1: Dashboard
 │   ├── seeds.js             # เมนู 2: บันทึกรอบเพาะเมล็ด
 │   ├── plots.js              # เมนู 3: บันทึกรอบปลูกลงแปลง
 │   ├── problems.js           # เมนู 4: ระบบบันทึกปัญหา
 │   ├── calendar.js           # เมนู 5: ปฏิทินภาพรวม
-│   └── todos.js              # เมนู 6: To-do list รายวัน
+│   ├── todos.js              # เมนู 6: To-do list รายวัน
+│   ├── finance.js            # เมนู 7: การเงิน (รายรับ/รายจ่าย/กราฟ)
+│   ├── customers.js          # เมนู 8: ลูกค้า
+│   └── vendor/
+│       └── qrcode.min.js     # ไลบรารี QR (vendored — ทำงานออฟไลน์)
+├── tools/
+│   └── screenshot.cjs       # รันเว็บแล้วถ่าย screenshot ทุกหน้า (Playwright)
 └── supabase_schema.sql      # SQL สำหรับสร้างตารางใน Supabase
+```
+
+## รันแบบออฟไลน์ (ค่าเริ่มต้น)
+
+แอปนี้ทำงานได้ทันทีโดยไม่ต้องต่อเน็ตหรือตั้งค่า Supabase — `js/supabase.js`
+มี data layer ที่เก็บข้อมูลลง **localStorage** และเลียนแบบ query builder ของ
+supabase-js พร้อม **ข้อมูลตัวอย่าง** (แปลง T1–T15, รอบเพาะเมล็ด, ปัญหา,
+การเงิน, ลูกค้า) ที่ seed ให้ครั้งแรกที่เปิด ทำให้กราฟ/QR/ตารางมีข้อมูลแสดงเลย
+
+```bash
+python3 -m http.server 8080        # จาก root ของโปรเจกต์
+# เปิด http://localhost:8080
+```
+
+ล้างข้อมูลตัวอย่าง/รีเซ็ต: เคลียร์ localStorage ของไซต์ (DevTools → Application
+→ Local Storage) แล้วรีเฟรช ระบบจะ seed ใหม่
+
+### ถ่าย screenshot อัตโนมัติ
+```bash
+python3 -m http.server 8080 &
+node tools/screenshot.cjs           # ผลอยู่ในโฟลเดอร์ ./screenshots
 ```
 
 ## ขั้นตอนติดตั้ง
@@ -28,13 +55,17 @@ vegfarm/
 2. เปิด **SQL Editor** → รัน `supabase_schema.sql` เพื่อสร้างตารางทั้งหมด (รวมถึงสร้างแปลง T1-T15 อัตโนมัติ)
 3. ไปที่ **Storage** → สร้าง bucket ชื่อ `photos` (ตั้งเป็น Public) สำหรับเก็บรูปปัญหา
 
-### 2. เชื่อมต่อ Supabase กับเว็บแอป
-แก้ไขไฟล์ `js/supabase.js`:
-
-```js
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
-```
+### 2. เชื่อมต่อ Supabase กับเว็บแอป (ทางเลือก — ถ้าต้องการใช้คลาวด์แทนออฟไลน์)
+1. ใส่สคริปต์ supabase-js กลับเข้า `<head>` ของ `index.html`:
+   ```html
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   ```
+2. ในไฟล์ `js/supabase.js` แทนที่บล็อก **LOCAL DB** (ตัวแปร `db`) ด้วย:
+   ```js
+   const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+   const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+   ```
 
 หาค่าได้จาก Supabase Dashboard → Project Settings → API
 
