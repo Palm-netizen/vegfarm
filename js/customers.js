@@ -27,6 +27,17 @@ function typeLabel(t) {
   return { customer: 'ลูกค้า', farm: 'ฟาร์ม' }[t] || t;
 }
 
+// Auto-add a buyer (from an income entry) to the customer list if not there.
+// Returns true if a new customer was created.
+async function ensureCustomerFromBuyer(name) {
+  const n = (name || '').trim();
+  if (!n) return false;
+  const { data: existing } = await db.from('customers').select('id').eq('name', n).limit(1);
+  if (existing && existing.length) return false;
+  const { error } = await db.from('customers').insert({ name: n, type: 'customer', tag: 'new' });
+  return !error;
+}
+
 // ===== LOAD =====
 async function loadCustomers() {
   setLoading(true);

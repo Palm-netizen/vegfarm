@@ -74,7 +74,9 @@ async function saveIncome() {
       channel, buyer:buyer||null, notes:notes||null
     });
     if (error) throw error;
-    showToast('บันทึกรายรับสำเร็จ');
+    // Auto-add the buyer to the customer list (skips if already there)
+    const addedCustomer = buyer ? await ensureCustomerFromBuyer(buyer) : false;
+    showToast(addedCustomer ? `บันทึกรายรับ + เพิ่ม "${buyer}" เข้ารายชื่อลูกค้า` : 'บันทึกรายรับสำเร็จ');
     resetIncomeForm();
     loadIncomeList(); loadFinanceSummary();
   } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
