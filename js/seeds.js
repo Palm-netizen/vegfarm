@@ -80,11 +80,13 @@ async function saveSeedBatch() {
   setLoading(true);
   try {
     if (editSeedId) {
-      await db.from('seed_batches').update(payload).eq('id', editSeedId);
+      const { error } = await db.from('seed_batches').update(payload).eq('id', editSeedId);
+      if (error) throw error;
       showToast('แก้ไขข้อมูลสำเร็จ');
       editSeedId = null;
     } else {
-      await db.from('seed_batches').insert(payload);
+      const { error } = await db.from('seed_batches').insert(payload);
+      if (error) throw error;
       showToast('บันทึกรอบเพาะเมล็ดสำเร็จ');
 
       // Log to calendar
@@ -98,7 +100,7 @@ async function saveSeedBatch() {
     loadSeedBatches();
   } catch (err) {
     console.error(err);
-    showToast('บันทึกไม่สำเร็จ', 'error');
+    showToast('บันทึกไม่สำเร็จ: ' + (err.message || err), 'error');
   } finally {
     setLoading(false);
   }

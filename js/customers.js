@@ -173,15 +173,17 @@ async function saveCustomer() {
   try {
     const payload = { name, address: address||null, weekly_kg: weeklyKg, type, tag };
     if (editCustomerId) {
-      await db.from('customers').update(payload).eq('id', editCustomerId);
+      const { error } = await db.from('customers').update(payload).eq('id', editCustomerId);
+      if (error) throw error;
       showToast('แก้ไขข้อมูลสำเร็จ');
     } else {
-      await db.from('customers').insert(payload);
+      const { error } = await db.from('customers').insert(payload);
+      if (error) throw error;
       showToast('เพิ่มลูกค้าสำเร็จ');
     }
     closeCustomerModal();
     loadCustomers();
-  } catch(e) { showToast('บันทึกไม่สำเร็จ','error'); }
+  } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
   finally { setLoading(false); }
 }
 

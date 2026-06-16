@@ -90,7 +90,7 @@ async function saveProblem() {
 
     const { data: plot } = await db.from('plots').select('cycle_count').eq('plot_code', plotCode).single();
 
-    await db.from('problems').insert({
+    const { error } = await db.from('problems').insert({
       plot_code: plotCode,
       problem_date: date,
       problem_type: type,
@@ -100,6 +100,7 @@ async function saveProblem() {
       photo_url: photoUrl,
       cycle_number: plot?.cycle_count || 1
     });
+    if (error) throw error;
 
     await db.from('calendar_activities').insert({
       activity_date: date,
@@ -113,7 +114,7 @@ async function saveProblem() {
     loadProblemDatabase();
   } catch (err) {
     console.error(err);
-    showToast('บันทึกไม่สำเร็จ', 'error');
+    showToast('บันทึกไม่สำเร็จ: ' + (err.message || err), 'error');
   } finally {
     setLoading(false);
   }

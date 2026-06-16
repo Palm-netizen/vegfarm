@@ -50,7 +50,8 @@ async function addTodo() {
 
   setLoading(true);
   try {
-    await db.from('todos').insert({ todo_date: date, task, sort_order: count });
+    const { error } = await db.from('todos').insert({ todo_date: date, task, sort_order: count });
+    if (error) throw error;
 
     await db.from('calendar_activities').insert({
       activity_date: date,
@@ -61,7 +62,8 @@ async function addTodo() {
     input.value = '';
     loadTodos();
   } catch (err) {
-    showToast('เพิ่มไม่สำเร็จ', 'error');
+    showToast('เพิ่มไม่สำเร็จ: ' + (err.message || err), 'error');
+    console.error(err);
   } finally {
     setLoading(false);
   }

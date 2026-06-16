@@ -190,7 +190,8 @@ async function savePlot() {
 
   setLoading(true);
   try {
-    await db.from('plots').update(payload).eq('plot_code', selectedPlotCode);
+    const { error } = await db.from('plots').update(payload).eq('plot_code', selectedPlotCode);
+    if (error) throw error;
 
     // If newly harvested, save to cycle history
     if (isHarvested && !current?.is_harvested) {
@@ -230,7 +231,7 @@ async function savePlot() {
     loadPlotDetail(selectedPlotCode);
   } catch (err) {
     console.error(err);
-    showToast('บันทึกไม่สำเร็จ', 'error');
+    showToast('บันทึกไม่สำเร็จ: ' + (err.message || err), 'error');
   } finally {
     setLoading(false);
   }

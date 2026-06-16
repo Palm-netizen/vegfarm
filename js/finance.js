@@ -68,15 +68,16 @@ async function saveIncome() {
   const total = parseFloat((kg*price).toFixed(2));
   setLoading(true);
   try {
-    await db.from('income').insert({
+    const { error } = await db.from('income').insert({
       income_date:date, kg_sold:kg, price_per_kg:price, total_amount:total,
       plot_code:plotCode, vegetable_type:vegType,
       channel, buyer:buyer||null, notes:notes||null
     });
+    if (error) throw error;
     showToast('บันทึกรายรับสำเร็จ');
     resetIncomeForm();
     loadIncomeList(); loadFinanceSummary();
-  } catch(e) { showToast('บันทึกไม่สำเร็จ','error'); console.error(e); }
+  } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
   finally { setLoading(false); }
 }
 
@@ -94,12 +95,12 @@ async function loadIncomeList() {
   const {data} = await db.from('income').select('*').order('income_date',{ascending:false}).limit(40);
   const el = document.getElementById('income-list');
   if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายรับ</div>'; return; }
-  const chLbl = { regular:'ลูกค้าประจำ', new:'ลูกค้าใหม่', general:'ลูกค้าทั่วไป' };
+  const chLbl = { market:'ตลาด', delivery:'เดลิเวอรี', direct:'ขายตรง', wholesale:'ขายส่ง', other:'อื่นๆ' };
   el.innerHTML = data.map(r=>`
     <div class="card fin-card">
       <div class="fin-row">
         <div>
-          <span class="cust-tag ${r.channel==='regular'?'tag-regular':r.channel==='new'?'tag-new':'tag-general'}">${chLbl[r.channel]||r.channel||'–'}</span>
+          <span class="badge badge-accent">${chLbl[r.channel]||r.channel||'–'}</span>
           ${r.buyer?`<strong style="margin-left:6px">${r.buyer}</strong>`:''}
         </div>
         <div class="fin-amount income-amount">฿${parseFloat(r.total_amount).toLocaleString()}</div>
@@ -132,12 +133,13 @@ async function saveExpense() {
 
   setLoading(true);
   try {
-    await db.from('expenses').insert({
+    const { error } = await db.from('expenses').insert({
       expense_date:date, category, amount, description:desc||null, notes:notes||null
     });
+    if (error) throw error;
     showToast('บันทึกรายจ่ายสำเร็จ');
     resetExpenseForm(); loadExpenseList(); loadFinanceSummary();
-  } catch(e) { showToast('บันทึกไม่สำเร็จ','error'); console.error(e); }
+  } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
   finally { setLoading(false); }
 }
 
@@ -338,7 +340,7 @@ async function exportCSV(type) {
     const r=await db.from('income').select('*').order('income_date',{ascending:false});
     data=r.data; filename='vegfarm_income.csv';
     if(!data?.length) return showToast('ไม่มีข้อมูล','error');
-    const chLbl={regular:'ลูกค้าประจำ',new:'ลูกค้าใหม่',general:'ลูกค้าทั่วไป'};
+    const chLbl={market:'ตลาด',delivery:'เดลิเวอรี',direct:'ขายตรง',wholesale:'ขายส่ง',other:'อื่นๆ'};
     headers=['วันที่','ช่องทาง','ผู้ซื้อ','น้ำหนัก(kg)','ราคา/kg','ยอดรวม','หมายเหตุ'];
     rows=data.map(r=>[r.income_date,chLbl[r.channel]||r.channel||'',r.buyer||'',r.kg_sold,r.price_per_kg,r.total_amount,r.notes||'']);
   } else {
