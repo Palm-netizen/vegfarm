@@ -8,6 +8,6 @@
 //
 // หมายเหตุ: anon key ปลอดภัยที่จะอยู่ฝั่ง client เพราะถูกจำกัดด้วย RLS
 window.VF_CONFIG = {
-  SUPABASE_URL: '',       // เช่น 'https://abcdxyz.supabase.co'
-  SUPABASE_ANON_KEY: ''   // เช่น 'eyJhbGciOi...'
+  SUPABASE_URL: 'https://tdlbfnlnygxcgmwadcvj.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_mlR1qPTt-zguvXgavoc8WQ_OE7Y8PZ5'
 };
