@@ -15,7 +15,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=5">
+<link rel="stylesheet" href="css/style.css?v=6">
 </head>
 <body>
 
@@ -471,9 +471,10 @@
 
     <!-- Tabs -->
     <div class="fin-tabs">
-      <button class="fin-tab active" id="ftab-income"  onclick="switchFinanceTab('income')">รายรับ</button>
-      <button class="fin-tab"        id="ftab-expense" onclick="switchFinanceTab('expense')">รายจ่าย</button>
-      <button class="fin-tab"        id="ftab-summary" onclick="switchFinanceTab('summary')">สรุป &amp; กราฟ</button>
+      <button class="fin-tab active" id="ftab-income"   onclick="switchFinanceTab('income')">รายรับ</button>
+      <button class="fin-tab"        id="ftab-expense"  onclick="switchFinanceTab('expense')">รายจ่าย</button>
+      <button class="fin-tab"        id="ftab-personal" onclick="switchFinanceTab('personal')">ส่วนตัว</button>
+      <button class="fin-tab"        id="ftab-summary"  onclick="switchFinanceTab('summary')">สรุป</button>
     </div>
 
     <!-- ===== INCOME PANEL ===== -->
@@ -566,6 +567,43 @@
       <div id="expense-list"></div>
     </div>
 
+    <!-- ===== PERSONAL PANEL ===== -->
+    <div id="fpanel-personal" class="hidden">
+      <div class="card">
+        <div class="card-title">บันทึกรายจ่ายส่วนตัว</div>
+        <div class="text-sub" style="margin-bottom:12px">แยกจากบัญชีฟาร์ม — ไม่กระทบกำไรฟาร์ม ใช้ดู “เงินเหลือเก็บ” จริง</div>
+
+        <div class="form-group">
+          <label class="form-label">วันที่</label>
+          <input type="date" id="personal-date" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หมวดหมู่</label>
+          <select id="personal-category" class="form-control">
+            <option value="">-- เลือกหมวดหมู่ --</option>
+            <option value="food">กิน / อาหาร</option>
+            <option value="living">ของใช้ในบ้าน</option>
+            <option value="loan">ผ่อน / หนี้</option>
+            <option value="health">สุขภาพ</option>
+            <option value="transport">เดินทางส่วนตัว</option>
+            <option value="other">อื่นๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">จำนวนเงิน (฿)</label>
+          <input type="number" id="personal-amount" class="form-control" placeholder="เช่น 300" step="1" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รายละเอียด</label>
+          <input type="text" id="personal-desc" class="form-control" placeholder="เช่น ค่ากับข้าว, ผ่อนมอเตอร์ไซค์">
+        </div>
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);box-shadow:0 8px 20px rgba(139,92,246,0.30)" onclick="savePersonal()">บันทึกรายจ่ายส่วนตัว</button>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">ประวัติรายจ่ายส่วนตัว</span></div>
+      <div id="personal-list"></div>
+    </div>
+
     <!-- ===== SUMMARY PANEL ===== -->
     <div id="fpanel-summary" class="hidden">
 
@@ -591,6 +629,14 @@
           <div class="kpi-val" id="sum-margin-month">–</div>
           <div class="kpi-sub">% กำไรต่อรายรับ</div>
         </div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">เงินเหลือเก็บ (หลังหักส่วนตัว)</span></div>
+      <div class="card savings-card">
+        <div class="savings-row"><span>กำไรฟาร์มเดือนนี้</span><span id="sum-farm-profit" class="sv-pos">–</span></div>
+        <div class="savings-row"><span>− รายจ่ายส่วนตัว</span><span id="sum-personal-month" class="sv-neg">–</span></div>
+        <div class="savings-divider"></div>
+        <div class="savings-row savings-total"><span>เงินเหลือเก็บ</span><span id="sum-savings-month">–</span></div>
       </div>
 
       <div class="growth-divider"><span class="gd-label">สะสมปีนี้</span></div>
@@ -808,7 +854,7 @@
 <script src="js/problems.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/todos.js"></script>
-<script src="js/finance.js?v=4"></script>
+<script src="js/finance.js?v=5"></script>
 <script src="js/customers.js?v=3"></script>
 <script src="js/app.js"></script>
 </body>

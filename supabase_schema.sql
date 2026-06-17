@@ -125,6 +125,17 @@ CREATE TABLE IF NOT EXISTS customers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 10. รายจ่ายส่วนตัว (Personal expenses) — แยกบัญชีจากฟาร์ม
+CREATE TABLE IF NOT EXISTS personal_expenses (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  expense_date DATE NOT NULL,
+  category TEXT NOT NULL CHECK (category IN ('food','living','loan','health','transport','other')),
+  amount NUMERIC(10,2) NOT NULL,
+  description TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
 -- ===========================
@@ -137,6 +148,7 @@ ALTER TABLE calendar_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE income              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE personal_expenses   ENABLE ROW LEVEL SECURITY;
 
 -- Policies (drop ก่อนสร้างใหม่ เพื่อให้รันซ้ำได้)
 DO $$
@@ -144,7 +156,7 @@ DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'seed_batches','plots','plot_cycles','problems','todos',
-    'calendar_activities','income','expenses','customers'
+    'calendar_activities','income','expenses','customers','personal_expenses'
   ] LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Allow all" ON %I;', t);
     EXECUTE format('DROP POLICY IF EXISTS "Allow all for authenticated" ON %I;', t);

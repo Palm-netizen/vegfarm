@@ -191,7 +191,7 @@ if (typeof console !== 'undefined') {
 // ============================================================
 const VF_TABLES = [
   'plots', 'seed_batches', 'plot_cycles', 'problems', 'todos',
-  'calendar_activities', 'income', 'expenses', 'customers', '_storage_photos'
+  'calendar_activities', 'income', 'expenses', 'personal_expenses', 'customers', '_storage_photos'
 ];
 
 function exportAllData() {

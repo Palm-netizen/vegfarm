@@ -10,8 +10,10 @@ const FIXED_MONTHLY = LABOR_FIXED + UTILITY_FIXED;  // ค่าใช้จ่�
 const INCOME_PRICE_PER_KG = 100;  // ราคาขายคงที่ ฿/กก.
 
 function initFinance() {
-  document.getElementById('finance-date-income').value  = new Date().toISOString().split('T')[0];
-  document.getElementById('finance-date-expense').value = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('finance-date-income').value  = today;
+  document.getElementById('finance-date-expense').value = today;
+  const pd = document.getElementById('personal-date'); if (pd) pd.value = today;
   document.getElementById('finance-kg').addEventListener('input', calcIncomeTotal);
 
   switchFinanceTab('income');
@@ -20,13 +22,14 @@ function initFinance() {
 
 function switchFinanceTab(tab) {
   financeTab = tab;
-  ['income','expense','summary'].forEach(t => {
+  ['income','expense','personal','summary'].forEach(t => {
     document.getElementById(`ftab-${t}`)?.classList.toggle('active', t===tab);
     document.getElementById(`fpanel-${t}`)?.classList.toggle('hidden', t!==tab);
   });
-  if (tab==='income')  loadIncomeList();
-  if (tab==='expense') loadExpenseList();
-  if (tab==='summary') loadFinanceSummary();
+  if (tab==='income')   loadIncomeList();
+  if (tab==='expense')  loadExpenseList();
+  if (tab==='personal') loadPersonalList();
+  if (tab==='summary')  loadFinanceSummary();
 }
 
 function calcIncomeTotal() {
@@ -176,19 +179,72 @@ async function deleteExpense(id) {
   showToast('ลบแล้ว'); loadExpenseList(); loadFinanceSummary();
 }
 
+// ===== PERSONAL EXPENSES (แยกบัญชีจากฟาร์ม) =====
+const PERSONAL_CAT = { food:'กิน/อาหาร', living:'ของใช้ในบ้าน', loan:'ผ่อน/หนี้', health:'สุขภาพ', transport:'เดินทาง', other:'อื่นๆ' };
+
+async function savePersonal() {
+  const date     = document.getElementById('personal-date').value;
+  const category = document.getElementById('personal-category').value;
+  const amount   = parseFloat(document.getElementById('personal-amount').value);
+  const desc     = document.getElementById('personal-desc').value;
+
+  if (!date)              return showToast('กรุณาระบุวันที่','error');
+  if (!category)          return showToast('กรุณาเลือกหมวดหมู่','error');
+  if (!amount||amount<=0) return showToast('กรุณาระบุจำนวนเงิน','error');
+
+  setLoading(true);
+  try {
+    const { error } = await db.from('personal_expenses').insert({
+      expense_date:date, category, amount, description:desc||null
+    });
+    if (error) throw error;
+    showToast('บันทึกรายจ่ายส่วนตัวสำเร็จ');
+    document.getElementById('personal-amount').value='';
+    document.getElementById('personal-desc').value='';
+    loadPersonalList(); loadFinanceSummary();
+  } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
+  finally { setLoading(false); }
+}
+
+async function loadPersonalList() {
+  const { data } = await db.from('personal_expenses').select('*').order('expense_date',{ascending:false}).limit(40);
+  const el = document.getElementById('personal-list');
+  if (!el) return;
+  if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายจ่ายส่วนตัว</div>'; return; }
+  el.innerHTML = data.map(r=>`
+    <div class="card fin-card">
+      <div class="fin-row">
+        <div><span class="badge badge-accent" style="background:#EDE9FE;color:#7C3AED">${PERSONAL_CAT[r.category]||r.category}</span>
+          ${r.description?`<strong style="margin-left:6px">${r.description}</strong>`:''}</div>
+        <div class="fin-amount" style="color:#8B5CF6">฿${parseFloat(r.amount).toLocaleString()}</div>
+      </div>
+      <div class="fin-meta">${formatDateTH(r.expense_date)}</div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-danger btn-sm" onclick="deletePersonal('${r.id}')">ลบ</button>
+      </div>
+    </div>`).join('');
+}
+
+async function deletePersonal(id) {
+  if (!confirm('ลบรายจ่ายส่วนตัวนี้?')) return;
+  await db.from('personal_expenses').delete().eq('id',id);
+  showToast('ลบแล้ว'); loadPersonalList(); loadFinanceSummary();
+}
+
 // ===== SUMMARY =====
 async function loadFinanceSummary() {
   const now=new Date(), yr=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0');
   const monthStart=`${yr}-${mo}-01`, monthEnd=`${yr}-${mo}-31`;
   const yearStart=`${yr}-01-01`, yearEnd=`${yr}-12-31`;
 
-  const [incM,incY,expM,expY,allInc,allExp] = await Promise.all([
+  const [incM,incY,expM,expY,allInc,allExp,persM] = await Promise.all([
     db.from('income').select('total_amount').gte('income_date',monthStart).lte('income_date',monthEnd),
     db.from('income').select('total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
     db.from('expenses').select('amount').gte('expense_date',monthStart).lte('expense_date',monthEnd),
     db.from('expenses').select('amount').gte('expense_date',yearStart).lte('expense_date',yearEnd),
     db.from('income').select('income_date,total_amount').order('income_date',{ascending:true}).limit(12),
     db.from('expenses').select('expense_date,amount,category').order('expense_date',{ascending:true}).limit(60),
+    db.from('personal_expenses').select('amount').gte('expense_date',monthStart).lte('expense_date',monthEnd),
   ]);
 
   const si = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.total_amount||0),0)||0;
@@ -221,6 +277,20 @@ async function loadFinanceSummary() {
   document.getElementById('sum-inc-year').textContent    = fmt(iy);
   document.getElementById('sum-exp-year').textContent    = fmt(ey);
   document.getElementById('sum-profit-year').textContent = fmt(iy-ey);
+
+  // เงินเหลือเก็บ = กำไรฟาร์ม − รายจ่ายส่วนตัว (ฟาร์มไม่เพี้ยน)
+  const farmProfit = im - em;
+  const personalM = se(persM);
+  const savings = farmProfit - personalM;
+  const elFp = document.getElementById('sum-farm-profit');
+  if (elFp) {
+    elFp.textContent = fmt(farmProfit);
+    elFp.className = farmProfit>=0 ? 'sv-pos' : 'sv-neg';
+    document.getElementById('sum-personal-month').textContent = '−'+fmt(personalM);
+    const elSv = document.getElementById('sum-savings-month');
+    elSv.textContent = (savings<0?'-':'')+fmt(Math.abs(savings));
+    elSv.style.color = savings>=0 ? 'var(--primary)' : 'var(--danger)';
+  }
 
   // Expense breakdown — รวมค่าแรง/ค่าไฟคงที่อัตโนมัติ
   const catTotals={};
