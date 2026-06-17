@@ -113,20 +113,45 @@ async function loadPlotDetail(code) {
   rows.sort((a, b) => (a.cycle_number || 0) - (b.cycle_number || 0));
 
   const cyclesHtml = rows.length
-    ? `<table class="data-table"><thead><tr><th>รอบ</th><th>ชนิด</th><th>ปลูก</th><th>เก็บ</th><th>KG จริง</th></tr></thead><tbody>
-        ${rows.map(c => `<tr>
-          <td>${c.cycle_number}</td>
-          <td>${vegLabel(c.vegetable_type)}</td>
-          <td>${formatDateTH(c.plant_date)}</td>
-          <td>${c._active ? '<span class="text-sub">รอเก็บ</span>' : formatDateTH(c.harvest_date)}</td>
-          <td>${c._active ? '<span class="badge badge-green">กำลังปลูก</span>' : '<strong>' + (c.actual_kg || '-') + '</strong>'}</td>
-        </tr>`).join('')}
-      </tbody></table>`
-    : '<div class="text-sub">ยังไม่มีประวัติ</div>';
+    ? rows.map(c => {
+        const active = c._active;
+        return `<div class="seed-hist-card">
+          <div class="shc-top">
+            <div class="shc-veg">รอบ ${c.cycle_number} · ${vegLabel(c.vegetable_type)}</div>
+            <div class="shc-actions">${active
+              ? '<span class="harvest-tag soon">กำลังปลูก</span>'
+              : `<button class="btn btn-outline btn-sm" onclick="editCycle('${c.id}')">แก้ไข</button>
+                 <button class="btn btn-danger btn-sm" onclick="deleteCycle('${c.id}')">ลบ</button>`}
+            </div>
+          </div>
+          <div class="shc-meta">ปลูก ${formatDateTH(c.plant_date)} · เก็บ ${active ? 'รอเก็บ' : formatDateTH(c.harvest_date)}</div>
+          <div class="shc-result">${active ? '<span class="text-sub">ยังไม่เก็บเกี่ยว</span>' : `เก็บได้จริง <b>${c.actual_kg || '-'} kg</b>`}</div>
+        </div>`;
+      }).join('')
+    : '<div class="empty-state">ยังไม่มีประวัติ</div>';
   document.getElementById('plot-cycles-history').innerHTML = cyclesHtml;
+}
 
-  // QR
-  generateQR(code);
+// Edit / delete a completed cycle in the plot history
+async function editCycle(id) {
+  const { data: c } = await db.from('plot_cycles').select('*').eq('id', id).single();
+  if (!c) return;
+  const kgStr = prompt('แก้ไข KG จริงที่เก็บได้:', c.actual_kg ?? '');
+  if (kgStr === null) return;
+  const kg = parseFloat(kgStr);
+  if (isNaN(kg)) return showToast('กรุณาใส่ตัวเลข', 'error');
+  const { error } = await db.from('plot_cycles').update({ actual_kg: kg }).eq('id', id);
+  if (error) return showToast('แก้ไขไม่สำเร็จ: ' + (error.message || error), 'error');
+  showToast('แก้ไขแล้ว');
+  if (selectedPlotCode) loadPlotDetail(selectedPlotCode);
+}
+
+async function deleteCycle(id) {
+  if (!confirm('ลบรอบนี้ออกจากประวัติ?')) return;
+  const { error } = await db.from('plot_cycles').delete().eq('id', id);
+  if (error) return showToast('ลบไม่สำเร็จ: ' + (error.message || error), 'error');
+  showToast('ลบแล้ว');
+  if (selectedPlotCode) loadPlotDetail(selectedPlotCode);
 }
 
 function toggleHarvestFields(show) {
@@ -279,14 +304,6 @@ async function startNewCycle() {
   } finally {
     setLoading(false);
   }
-}
-
-function generateQR(code) {
-  const qrDiv = document.getElementById('plot-qr');
-  if (!qrDiv) return;
-  qrDiv.innerHTML = '';
-  const url = `${window.location.origin}${window.location.pathname}?plot=${code}`;
-  new QRCode(qrDiv, { text: url, width: 100, height: 100 });
 }
 
 function vegLabel(type) {

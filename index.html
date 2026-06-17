@@ -12,9 +12,6 @@
 <!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
 <link rel="stylesheet" href="css/fonts.css">
 
-<!-- QRCode.js (vendored — ออฟไลน์) -->
-<script src="js/vendor/qrcode.min.js"></script>
-
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -278,11 +275,8 @@
       <button class="btn btn-primary" onclick="savePlot()">บันทึกข้อมูลแปลง</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="startNewCycle()">เริ่มรอบปลูกใหม่</button>
 
-      <div class="growth-divider"><span class="gd-label">QR ประจำแปลง</span></div>
-      <div class="qr-wrap" id="plot-qr"></div>
-
       <div class="growth-divider"><span class="gd-label">ประวัติรอบปลูก</span></div>
-      <div id="plot-cycles-history"></div>
+      <div class="hist-list" id="plot-cycles-history"></div>
     </div>
   </div>
 </div>
@@ -810,7 +804,7 @@
 <script src="js/supabase.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/seeds.js?v=3"></script>
-<script src="js/plots.js?v=2"></script>
+<script src="js/plots.js?v=3"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/todos.js"></script>
