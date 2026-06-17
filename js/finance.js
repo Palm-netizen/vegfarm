@@ -6,6 +6,7 @@ const LABOR_DAILY  = 350;   // ฿/วัน
 const LABOR_DAYS   = 26;    // วัน/เดือน
 const LABOR_FIXED  = LABOR_DAILY * LABOR_DAYS; // 9,100
 const UTILITY_FIXED = 2000;  // ฿/เดือน
+const FIXED_MONTHLY = LABOR_FIXED + UTILITY_FIXED;  // ค่าใช้จ่ายคงที่อัตโนมัติ/เดือน = 11,100
 const INCOME_PRICE_PER_KG = 100;  // ราคาขายคงที่ ฿/กก.
 
 function initFinance() {
@@ -192,8 +193,14 @@ async function loadFinanceSummary() {
 
   const si = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.total_amount||0),0)||0;
   const se = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.amount||0),0)||0;
-  const im=si(incM),em=se(expM),iy=si(incY),ey=se(expY);
   const fmt=n=>`฿${n.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
+
+  // ค่าใช้จ่ายคงที่อัตโนมัติทุกเดือน (ไม่ต้องกรอกเอง) — FIXED_MONTHLY = 11,100
+  const monthsElapsed = now.getMonth() + 1;            // ม.ค.=1 ... เดือนปัจจุบัน
+
+  const im=si(incM), iy=si(incY);
+  const em=se(expM)+FIXED_MONTHLY;                      // เดือนนี้ + ค่าคงที่ 1 เดือน
+  const ey=se(expY)+FIXED_MONTHLY*monthsElapsed;        // สะสมปี + ค่าคงที่ตามจำนวนเดือน
 
   // Net-profit hero (this month)
   const hero=document.getElementById('fin-hero');
@@ -215,18 +222,22 @@ async function loadFinanceSummary() {
   document.getElementById('sum-exp-year').textContent    = fmt(ey);
   document.getElementById('sum-profit-year').textContent = fmt(iy-ey);
 
-  // Expense breakdown
+  // Expense breakdown — รวมค่าแรง/ค่าไฟคงที่อัตโนมัติ
   const catTotals={};
   expM.data?.forEach(r=>{catTotals[r.category]=(catTotals[r.category]||0)+parseFloat(r.amount||0);});
+  catTotals['labor']   = (catTotals['labor']||0)   + LABOR_FIXED;
+  catTotals['utility'] = (catTotals['utility']||0) + UTILITY_FIXED;
   const catLbl={seed:'เมล็ดพันธุ์',fertilizer:'ปุ๋ย',labor:'ค่าแรง',utility:'ค่าไฟ',equipment:'อุปกรณ์',packaging:'บรรจุภัณฑ์',transport:'ขนส่ง',other:'อื่นๆ'};
-  const catHtml=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
+  const catRows=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
     const pct=em>0?((amt/em)*100).toFixed(0):0;
+    const fixedNote=(cat==='labor')?' <span class="text-sub">(฿350×26 อัตโนมัติ)</span>':(cat==='utility')?' <span class="text-sub">(คงที่/เดือน)</span>':'';
     return `<div class="cat-row">
-      <span class="cat-name">${catLbl[cat]||cat}</span>
+      <span class="cat-name">${catLbl[cat]||cat}${fixedNote}</span>
       <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%"></div></div>
       <span class="cat-amt">${fmt(amt)}</span>
     </div>`;
   }).join('');
+  const catHtml = catRows + '<div class="text-sub" style="margin-top:10px">* ค่าแรง ฿9,100 + ค่าไฟ ฿2,000 ถูกรวมให้อัตโนมัติทุกเดือน</div>';
   document.getElementById('expense-breakdown').innerHTML=catHtml||'<div class="empty-state" style="padding:16px">ยังไม่มีรายจ่าย</div>';
 
   renderFinanceChart(allInc.data||[],allExp.data||[]);
@@ -244,6 +255,7 @@ function renderFinanceChart(incRows,expRows) {
   }
   incRows.forEach(r=>{const k=r.income_date?.slice(0,7);if(months[k])months[k].inc+=parseFloat(r.total_amount||0);});
   expRows.forEach(r=>{const k=r.expense_date?.slice(0,7);if(months[k])months[k].exp+=parseFloat(r.amount||0);});
+  Object.values(months).forEach(m=>m.exp+=FIXED_MONTHLY);  // ค่าคงที่อัตโนมัติทุกเดือน
   const mArr=Object.values(months);
   const maxVal=Math.max(...mArr.map(m=>Math.max(m.inc,m.exp)),1000)*1.2;
   const W=600,H=260,padL=60,padR=20,padT=20,padB=48;
