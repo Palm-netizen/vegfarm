@@ -84,7 +84,7 @@ function renderCustomerList() {
   }
 
   el.innerHTML = filtered.map(c => `
-    <div class="card cust-card">
+    <div class="card cust-card" onclick="openCustomerDetail('${c.id}')" style="cursor:pointer">
       <div class="cust-header">
         <div class="cust-avatar">${(c.name||'?')[0].toUpperCase()}</div>
         <div class="cust-info">
@@ -102,8 +102,8 @@ function renderCustomerList() {
       ${c.address ? `<div class="cust-address"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> ${c.address}</div>` : ''}
       ${c.weekly_kg ? `<div class="cust-kg"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 4.9L21 15.5"/><path d="M6 7l3.5-1M6 7L5 3M21 7v8"/></svg> ใช้ผัก ${c.weekly_kg} kg/สัปดาห์</div>` : ''}
       <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end">
-        <button class="btn btn-outline btn-sm" onclick="openEditCustomer('${c.id}')">แก้ไข</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">ลบ</button>
+        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditCustomer('${c.id}')">แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${c.id}')">ลบ</button>
       </div>
     </div>`).join('');
 }
@@ -138,6 +138,58 @@ async function loadCustomerSummary() {
   document.getElementById('csum-regular').textContent = tagCounts.regular;
   document.getElementById('csum-new').textContent     = tagCounts.new;
   document.getElementById('csum-general').textContent = tagCounts.general;
+}
+
+// ===== DETAIL (purchase history) =====
+async function openCustomerDetail(id) {
+  const c = allCustomers.find(x => x.id === id);
+  if (!c) return;
+
+  const now = new Date();
+  const weekAgo  = new Date(now - 7*24*60*60*1000).toISOString().split('T')[0];
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+
+  const { data: rows } = await db.from('income')
+    .select('income_date,kg_sold,total_amount,buyer').eq('buyer', c.name);
+  const all = rows || [];
+
+  const agg = list => list.reduce((a, r) => {
+    a.kg += parseFloat(r.kg_sold || 0);
+    a.amt += parseFloat(r.total_amount || 0);
+    a.count += 1;
+    return a;
+  }, { kg: 0, amt: 0, count: 0 });
+
+  const wk = agg(all.filter(r => r.income_date >= weekAgo));
+  const mo = agg(all.filter(r => r.income_date >= monthStart));
+  const tot = agg(all);
+  const months = new Set(all.map(r => (r.income_date || '').slice(0, 7)).filter(Boolean)).size;
+
+  const fmt = n => `฿${n.toLocaleString('th-TH', { maximumFractionDigits: 0 })}`;
+  const kg  = n => `${n.toLocaleString('th-TH', { maximumFractionDigits: 1 })} กก.`;
+  const row = (label, a) => `
+    <div class="cust-detail-row">
+      <span class="cdr-label">${label}</span>
+      <span class="cdr-kg">${kg(a.kg)}</span>
+      <span class="cdr-amt">${fmt(a.amt)}</span>
+      <span class="cdr-cnt">${a.count} ครั้ง</span>
+    </div>`;
+
+  document.getElementById('cust-detail-name').textContent = c.name;
+  document.getElementById('cust-detail-body').innerHTML = `
+    <div class="cust-detail-sub">${tagLabel(c.tag)} · ${typeLabel(c.type)}${c.address ? ' · ' + c.address : ''}</div>
+    <div class="cust-detail-head">
+      <span></span><span>กิโล</span><span>เงิน</span><span>ครั้ง</span>
+    </div>
+    ${row('สัปดาห์นี้', wk)}
+    ${row('เดือนนี้', mo)}
+    ${row('ทั้งหมด', tot)}
+    <div class="cust-detail-note">ซื้อมาแล้ว ${months} เดือน · รวม ${kg(tot.kg)} · ${fmt(tot.amt)}</div>`;
+  document.getElementById('cust-detail-modal').style.display = 'flex';
+}
+
+function closeCustomerDetail() {
+  document.getElementById('cust-detail-modal').style.display = 'none';
 }
 
 // ===== ADD / EDIT =====

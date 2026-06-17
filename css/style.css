@@ -888,6 +888,24 @@ select.form-control { cursor: pointer; }
 .harvest-tag.soon { background: #FEF3C7; color: #D97706; }
 .harvest-tag.overdue { background: #FEE2E2; color: #DC2626; }
 
+/* ===== Customer detail modal ===== */
+.cust-detail-sub { font-size: 13px; color: var(--ink-soft); font-weight: 600; margin-bottom: 14px; }
+.cust-detail-head, .cust-detail-row {
+  display: grid; grid-template-columns: 1.1fr 1fr 1fr 0.9fr; gap: 6px; align-items: center;
+}
+.cust-detail-head { font-size: 11px; color: var(--ink-faint); font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; padding: 0 4px 8px; text-align: right; }
+.cust-detail-head span:first-child { text-align: left; }
+.cust-detail-row {
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm);
+  padding: 12px 12px; margin-bottom: 8px; text-align: right;
+}
+.cdr-label { text-align: left; font-weight: 700; color: var(--ink); }
+.cdr-kg  { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
+.cdr-amt { font-family: var(--font-display); font-weight: 800; color: var(--primary); }
+.cdr-cnt { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+.cust-detail-note { margin-top: 12px; font-size: 13px; color: var(--ink-soft); font-weight: 600; text-align: center; }
+
 /* ===== Theme toggle (top nav) ===== */
 .nav-right { display: flex; align-items: center; gap: 12px; }
 .theme-toggle {

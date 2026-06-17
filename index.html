@@ -18,7 +18,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -764,6 +764,16 @@
   </div>
 </div>
 
+<!-- ===== CUSTOMER DETAIL MODAL ===== -->
+<div class="modal-overlay" id="cust-detail-modal" onclick="if(event.target===this)closeCustomerDetail()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="cust-detail-name">ลูกค้า</div>
+    <div id="cust-detail-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px" onclick="closeCustomerDetail()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== BOTTOM NAV — glass floating ===== -->
 <div class="bottom-nav">
   <a href="#dashboard" id="nav-dashboard" data-page="dashboard">
@@ -810,7 +820,7 @@
 <script src="js/calendar.js"></script>
 <script src="js/todos.js"></script>
 <script src="js/finance.js?v=4"></script>
-<script src="js/customers.js?v=2"></script>
+<script src="js/customers.js?v=3"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
