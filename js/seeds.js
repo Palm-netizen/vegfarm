@@ -128,30 +128,27 @@ async function loadSeedBatches() {
     .select('*')
     .order('seed_date', { ascending: false });
 
-  const tbody = document.getElementById('seed-table-body');
+  const list = document.getElementById('seed-history-list');
   if (!batches || !batches.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-sub)">ยังไม่มีข้อมูล</td></tr>';
+    list.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูล</div>';
     return;
   }
 
   const weatherLabel = { hot: '☀️ ร้อน', rainy: '🌧️ ฝน/แดด', cold: '❄️ หนาว' };
-  const vegLabel = { green_oak: 'กรีนโอ๊ค', red_oak: 'เรดโอ๊ค', finley: 'ฟินเลย์' };
+  const vegName = { green_oak: 'กรีนโอ๊ค', red_oak: 'เรดโอ๊ค', finley: 'ฟินเลย์', cos: 'คอส', butterhead: 'บัตเตอร์เฮด' };
 
-  tbody.innerHTML = batches.map(b => `
-    <tr>
-      <td>${formatDateTH(b.seed_date)}</td>
-      <td>${(b.vegetable_types || []).map(v => vegLabel[v] || v).join(', ')}</td>
-      <td style="text-align:center">${b.seed_count}</td>
-      <td>${weatherLabel[b.weather_condition] || b.weather_condition}</td>
-      <td style="text-align:center">${b.survival_rate}%</td>
-      <td><strong>${b.estimated_kg} kg</strong><br><span class="text-sub">${formatDateTH(b.harvest_date)}</span></td>
-      <td>
-        <div style="display:flex;gap:5px">
+  list.innerHTML = batches.map(b => `
+    <div class="seed-hist-card">
+      <div class="shc-top">
+        <div class="shc-veg">🌱 ${(b.vegetable_types || []).map(v => vegName[v] || v).join(', ')}</div>
+        <div class="shc-actions">
           <button class="btn btn-outline btn-sm" onclick="editSeedBatch('${b.id}')">แก้ไข</button>
           <button class="btn btn-danger btn-sm" onclick="deleteSeedBatch('${b.id}')">ลบ</button>
         </div>
-      </td>
-    </tr>`).join('');
+      </div>
+      <div class="shc-meta">${formatDateTH(b.seed_date)} · ${weatherLabel[b.weather_condition] || b.weather_condition} · ${b.seed_count} เมล็ด · รอด ${b.survival_rate}%</div>
+      <div class="shc-result">คาดได้ <b>${b.estimated_kg} kg</b> · เก็บ ${formatDateTH(b.harvest_date)}</div>
+    </div>`).join('');
 }
 
 async function editSeedBatch(id) {

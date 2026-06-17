@@ -18,7 +18,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -203,12 +203,7 @@
     </div>
 
     <div class="growth-divider"><span class="gd-label">ประวัติการเพาะเมล็ด</span></div>
-    <div class="table-wrap">
-      <table class="data-table">
-        <thead><tr><th>วันที่</th><th>ชนิด</th><th>จำนวน</th><th>อากาศ</th><th>รอด%</th><th>KG/วันเก็บ</th><th></th></tr></thead>
-        <tbody id="seed-table-body"></tbody>
-      </table>
-    </div>
+    <div class="hist-list" id="seed-history-list"></div>
   </div>
 </div>
 
@@ -814,7 +809,7 @@
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/dashboard.js"></script>
-<script src="js/seeds.js?v=2"></script>
+<script src="js/seeds.js?v=3"></script>
 <script src="js/plots.js?v=2"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js"></script>
