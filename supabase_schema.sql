@@ -129,12 +129,14 @@ CREATE TABLE IF NOT EXISTS customers (
 CREATE TABLE IF NOT EXISTS personal_expenses (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   expense_date DATE NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('food','living','loan','health','transport','other')),
+  category TEXT NOT NULL,   -- หมวดยืดหยุ่น (food/coffee/living/loan/health/transport/other หรือกำหนดเอง)
   amount NUMERIC(10,2) NOT NULL,
   description TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- เผื่อเคยสร้างตารางแบบมี CHECK เดิมไว้ ให้ปลดออกเพื่อรองรับหมวดใหม่ (เช่น กาแฟ)
+ALTER TABLE personal_expenses DROP CONSTRAINT IF EXISTS personal_expenses_category_check;
 
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)

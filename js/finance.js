@@ -180,7 +180,9 @@ async function deleteExpense(id) {
 }
 
 // ===== PERSONAL EXPENSES (แยกบัญชีจากฟาร์ม) =====
-const PERSONAL_CAT = { food:'กิน/อาหาร', living:'ของใช้ในบ้าน', loan:'ผ่อน/หนี้', health:'สุขภาพ', transport:'เดินทาง', other:'อื่นๆ' };
+const PERSONAL_CAT = { food:'กิน/อาหาร', coffee:'กาแฟ', living:'ของใช้ในบ้าน', loan:'ผ่อน/หนี้', health:'สุขภาพ', transport:'เดินทาง', other:'อื่นๆ' };
+let allPersonal = [];
+let personalSearch = '';
 
 async function savePersonal() {
   const date     = document.getElementById('personal-date').value;
@@ -207,22 +209,40 @@ async function savePersonal() {
 }
 
 async function loadPersonalList() {
-  const { data } = await db.from('personal_expenses').select('*').order('expense_date',{ascending:false}).limit(40);
+  const { data } = await db.from('personal_expenses').select('*').order('expense_date',{ascending:false}).limit(200);
+  allPersonal = data || [];
+  personalSearch = (document.getElementById('personal-search')?.value || '').trim().toLowerCase();
+  renderPersonalList();
+}
+
+function renderPersonalList() {
   const el = document.getElementById('personal-list');
   if (!el) return;
-  if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายจ่ายส่วนตัว</div>'; return; }
-  el.innerHTML = data.map(r=>`
-    <div class="card fin-card">
-      <div class="fin-row">
-        <div><span class="badge badge-accent" style="background:#EDE9FE;color:#7C3AED">${PERSONAL_CAT[r.category]||r.category}</span>
-          ${r.description?`<strong style="margin-left:6px">${r.description}</strong>`:''}</div>
-        <div class="fin-amount" style="color:#8B5CF6">฿${parseFloat(r.amount).toLocaleString()}</div>
-      </div>
-      <div class="fin-meta">${formatDateTH(r.expense_date)}</div>
-      <div style="display:flex;justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-danger btn-sm" onclick="deletePersonal('${r.id}')">ลบ</button>
-      </div>
-    </div>`).join('');
+  personalSearch = (document.getElementById('personal-search')?.value || '').trim().toLowerCase();
+
+  const rows = allPersonal.filter(r => {
+    if (!personalSearch) return true;
+    const hay = `${PERSONAL_CAT[r.category] || r.category} ${r.description || ''}`.toLowerCase();
+    return hay.includes(personalSearch);
+  });
+
+  // สรุปยอดตามที่ค้นหา
+  const total = rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
+  const totalEl = document.getElementById('personal-search-total');
+  if (totalEl) totalEl.innerHTML = allPersonal.length
+    ? `${personalSearch ? 'ผลค้นหา' : 'รวมทั้งหมด'}: <b style="color:#8B5CF6">฿${total.toLocaleString('th-TH',{maximumFractionDigits:0})}</b> · ${rows.length} รายการ`
+    : '';
+
+  if (!allPersonal.length) { el.innerHTML = '<div class="empty-state">ยังไม่มีรายจ่ายส่วนตัว</div>'; return; }
+  if (!rows.length) { el.innerHTML = '<div class="empty-state">ไม่พบรายการที่ค้นหา</div>'; return; }
+
+  el.innerHTML = '<div class="card" style="padding:4px 14px">' + rows.map(r => `
+    <div class="pe-row">
+      <span class="pe-cat">${PERSONAL_CAT[r.category] || r.category}</span>
+      <span class="pe-desc">${r.description || '-'} <span class="pe-date">${formatDateTH(r.expense_date)}</span></span>
+      <span class="pe-amt">฿${parseFloat(r.amount).toLocaleString()}</span>
+      <button class="pe-del" onclick="deletePersonal('${r.id}')" aria-label="ลบ">×</button>
+    </div>`).join('') + '</div>';
 }
 
 async function deletePersonal(id) {
@@ -234,17 +254,19 @@ async function deletePersonal(id) {
 // ===== SUMMARY =====
 async function loadFinanceSummary() {
   const now=new Date(), yr=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0');
-  const monthStart=`${yr}-${mo}-01`, monthEnd=`${yr}-${mo}-31`;
+  const monthStart=`${yr}-${mo}-01`;
+  const nm = new Date(yr, now.getMonth()+1, 1);
+  const nextMonthStart = `${nm.getFullYear()}-${String(nm.getMonth()+1).padStart(2,'0')}-01`;
   const yearStart=`${yr}-01-01`, yearEnd=`${yr}-12-31`;
 
   const [incM,incY,expM,expY,allInc,allExp,persM] = await Promise.all([
-    db.from('income').select('total_amount').gte('income_date',monthStart).lte('income_date',monthEnd),
+    db.from('income').select('total_amount').gte('income_date',monthStart).lt('income_date',nextMonthStart),
     db.from('income').select('total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
-    db.from('expenses').select('amount').gte('expense_date',monthStart).lte('expense_date',monthEnd),
+    db.from('expenses').select('amount').gte('expense_date',monthStart).lt('expense_date',nextMonthStart),
     db.from('expenses').select('amount').gte('expense_date',yearStart).lte('expense_date',yearEnd),
     db.from('income').select('income_date,total_amount').order('income_date',{ascending:true}).limit(12),
     db.from('expenses').select('expense_date,amount,category').order('expense_date',{ascending:true}).limit(60),
-    db.from('personal_expenses').select('amount').gte('expense_date',monthStart).lte('expense_date',monthEnd),
+    db.from('personal_expenses').select('amount').gte('expense_date',monthStart).lt('expense_date',nextMonthStart),
   ]);
 
   const si = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.total_amount||0),0)||0;
