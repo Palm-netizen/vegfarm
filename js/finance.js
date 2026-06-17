@@ -6,28 +6,15 @@ const LABOR_DAILY  = 350;   // ฿/วัน
 const LABOR_DAYS   = 26;    // วัน/เดือน
 const LABOR_FIXED  = LABOR_DAILY * LABOR_DAYS; // 9,100
 const UTILITY_FIXED = 2000;  // ฿/เดือน
+const INCOME_PRICE_PER_KG = 100;  // ราคาขายคงที่ ฿/กก.
 
 function initFinance() {
   document.getElementById('finance-date-income').value  = new Date().toISOString().split('T')[0];
   document.getElementById('finance-date-expense').value = new Date().toISOString().split('T')[0];
   document.getElementById('finance-kg').addEventListener('input', calcIncomeTotal);
-  document.getElementById('finance-price-per-kg').addEventListener('input', calcIncomeTotal);
-
-  // Populate "จากแปลง" T1–T15
-  const plotSel = document.getElementById('finance-plot');
-  if (plotSel) plotSel.innerHTML = '<option value="">ไม่ระบุ</option>' +
-    Array.from({ length: 15 }, (_, i) => `<option value="T${i + 1}">T${i + 1}</option>`).join('');
 
   switchFinanceTab('income');
   loadFinanceSummary();
-}
-
-// When a plot is chosen for an income entry, auto-fill its current crop
-async function autoFillIncomeVeg() {
-  const code = document.getElementById('finance-plot').value;
-  if (!code) return;
-  const { data: plot } = await db.from('plots').select('vegetable_type').eq('plot_code', code).single();
-  if (plot?.vegetable_type) document.getElementById('finance-veg').value = plot.vegetable_type;
 }
 
 function switchFinanceTab(tab) {
@@ -43,8 +30,7 @@ function switchFinanceTab(tab) {
 
 function calcIncomeTotal() {
   const kg    = parseFloat(document.getElementById('finance-kg')?.value) || 0;
-  const price = parseFloat(document.getElementById('finance-price-per-kg')?.value) || 0;
-  const total = kg * price;
+  const total = kg * INCOME_PRICE_PER_KG;
   const el = document.getElementById('finance-total-preview');
   if (el) el.textContent = total > 0 ? `฿${total.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '-';
 }
@@ -53,25 +39,19 @@ function calcIncomeTotal() {
 async function saveIncome() {
   const date    = document.getElementById('finance-date-income').value;
   const kg      = parseFloat(document.getElementById('finance-kg').value);
-  const price   = parseFloat(document.getElementById('finance-price-per-kg').value);
-  const channel = document.getElementById('finance-channel').value;
+  const price   = INCOME_PRICE_PER_KG;   // ราคาคงที่
   const buyer   = document.getElementById('finance-buyer').value.trim();
   const notes   = document.getElementById('finance-notes-income').value;
-  const plotCode = document.getElementById('finance-plot').value || null;
-  const vegType  = document.getElementById('finance-veg').value || null;
 
   if (!date)          return showToast('กรุณาระบุวันที่','error');
   if (!kg || kg<=0)   return showToast('กรุณาระบุน้ำหนัก','error');
-  if (!price||price<=0) return showToast('กรุณาระบุราคา/kg','error');
-  if (!channel)       return showToast('กรุณาเลือกช่องทางการขาย','error');
 
   const total = parseFloat((kg*price).toFixed(2));
   setLoading(true);
   try {
     const { error } = await db.from('income').insert({
       income_date:date, kg_sold:kg, price_per_kg:price, total_amount:total,
-      plot_code:plotCode, vegetable_type:vegType,
-      channel, buyer:buyer||null, notes:notes||null
+      buyer:buyer||null, notes:notes||null
     });
     if (error) throw error;
     // Auto-add the buyer to the customer list (skips if already there)
@@ -85,11 +65,9 @@ async function saveIncome() {
 
 function resetIncomeForm() {
   document.getElementById('finance-date-income').value = new Date().toISOString().split('T')[0];
-  ['finance-kg','finance-price-per-kg','finance-buyer','finance-notes-income'].forEach(id=>{
+  ['finance-kg','finance-buyer','finance-notes-income'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
-  document.getElementById('finance-channel').value='';
-  ['finance-plot','finance-veg'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('finance-total-preview').textContent='-';
 }
 
@@ -97,14 +75,10 @@ async function loadIncomeList() {
   const {data} = await db.from('income').select('*').order('income_date',{ascending:false}).limit(40);
   const el = document.getElementById('income-list');
   if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายรับ</div>'; return; }
-  const chLbl = { market:'ตลาด', delivery:'เดลิเวอรี', direct:'ขายตรง', wholesale:'ขายส่ง', other:'อื่นๆ' };
   el.innerHTML = data.map(r=>`
     <div class="card fin-card">
       <div class="fin-row">
-        <div>
-          <span class="badge badge-accent">${chLbl[r.channel]||r.channel||'–'}</span>
-          ${r.buyer?`<strong style="margin-left:6px">${r.buyer}</strong>`:''}
-        </div>
+        <div><strong>${r.buyer || 'ขายผัก'}</strong></div>
         <div class="fin-amount income-amount">฿${parseFloat(r.total_amount).toLocaleString()}</div>
       </div>
       <div class="fin-meta">${formatDateTH(r.income_date)} · ${r.kg_sold} kg · ฿${r.price_per_kg}/kg</div>
@@ -207,14 +181,13 @@ async function loadFinanceSummary() {
   const monthStart=`${yr}-${mo}-01`, monthEnd=`${yr}-${mo}-31`;
   const yearStart=`${yr}-01-01`, yearEnd=`${yr}-12-31`;
 
-  const [incM,incY,expM,expY,allInc,allExp,incDetail] = await Promise.all([
+  const [incM,incY,expM,expY,allInc,allExp] = await Promise.all([
     db.from('income').select('total_amount').gte('income_date',monthStart).lte('income_date',monthEnd),
     db.from('income').select('total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
     db.from('expenses').select('amount').gte('expense_date',monthStart).lte('expense_date',monthEnd),
     db.from('expenses').select('amount').gte('expense_date',yearStart).lte('expense_date',yearEnd),
     db.from('income').select('income_date,total_amount').order('income_date',{ascending:true}).limit(12),
     db.from('expenses').select('expense_date,amount,category').order('expense_date',{ascending:true}).limit(60),
-    db.from('income').select('plot_code,vegetable_type,kg_sold,total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
   ]);
 
   const si = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.total_amount||0),0)||0;
@@ -256,36 +229,7 @@ async function loadFinanceSummary() {
   }).join('');
   document.getElementById('expense-breakdown').innerHTML=catHtml||'<div class="empty-state" style="padding:16px">ยังไม่มีรายจ่าย</div>';
 
-  // Revenue & yield by plot / by vegetable (this year)
-  renderRevenueRanking('plot-revenue', incDetail.data||[], 'plot_code', v=>v||'ไม่ระบุแปลง');
-  renderRevenueRanking('veg-revenue',  incDetail.data||[], 'vegetable_type', v=>typeof vegLabel==='function'?vegLabel(v):(v||'ไม่ระบุ'));
-
   renderFinanceChart(allInc.data||[],allExp.data||[]);
-}
-
-// Rank a metric by revenue, showing kg + ฿ with a proportional bar
-function renderRevenueRanking(containerId, rows, key, labelFn) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const fmt = n => `฿${n.toLocaleString('th-TH',{maximumFractionDigits:0})}`;
-  const groups = {};
-  rows.forEach(r => {
-    const k = r[key] || '';
-    if (!groups[k]) groups[k] = { amt: 0, kg: 0 };
-    groups[k].amt += parseFloat(r.total_amount || 0);
-    groups[k].kg  += parseFloat(r.kg_sold || 0);
-  });
-  const entries = Object.entries(groups).sort((a,b)=>b[1].amt-a[1].amt);
-  if (!entries.length) { el.innerHTML = '<div class="empty-state" style="padding:16px">ยังไม่มีข้อมูลรายรับที่ระบุแปลง/ชนิดผัก</div>'; return; }
-  const max = entries[0][1].amt || 1;
-  el.innerHTML = entries.map(([k,v]) => {
-    const pct = ((v.amt/max)*100).toFixed(0);
-    return `<div class="cat-row">
-      <span class="cat-name">${labelFn(k)}<span class="text-sub" style="margin-left:6px">${v.kg.toLocaleString('th-TH',{maximumFractionDigits:1})} kg</span></span>
-      <div class="cat-bar-wrap"><div class="cat-bar" style="width:${pct}%"></div></div>
-      <span class="cat-amt">${fmt(v.amt)}</span>
-    </div>`;
-  }).join('');
 }
 
 function renderFinanceChart(incRows,expRows) {
@@ -342,9 +286,8 @@ async function exportCSV(type) {
     const r=await db.from('income').select('*').order('income_date',{ascending:false});
     data=r.data; filename='vegfarm_income.csv';
     if(!data?.length) return showToast('ไม่มีข้อมูล','error');
-    const chLbl={market:'ตลาด',delivery:'เดลิเวอรี',direct:'ขายตรง',wholesale:'ขายส่ง',other:'อื่นๆ'};
-    headers=['วันที่','ช่องทาง','ผู้ซื้อ','น้ำหนัก(kg)','ราคา/kg','ยอดรวม','หมายเหตุ'];
-    rows=data.map(r=>[r.income_date,chLbl[r.channel]||r.channel||'',r.buyer||'',r.kg_sold,r.price_per_kg,r.total_amount,r.notes||'']);
+    headers=['วันที่','ผู้ซื้อ','น้ำหนัก(kg)','ราคา/kg','ยอดรวม','หมายเหตุ'];
+    rows=data.map(r=>[r.income_date,r.buyer||'',r.kg_sold,r.price_per_kg,r.total_amount,r.notes||'']);
   } else {
     const r=await db.from('expenses').select('*').order('expense_date',{ascending:false});
     data=r.data; filename='vegfarm_expenses.csv';

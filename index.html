@@ -496,54 +496,17 @@
           <label class="form-label">วันที่ขาย</label>
           <input type="date" id="finance-date-income" class="form-control">
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="form-group">
-            <label class="form-label">น้ำหนัก (kg)</label>
-            <input type="number" id="finance-kg" class="form-control" placeholder="เช่น 8.5" step="0.1" min="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">ราคา / kg (฿)</label>
-            <input type="number" id="finance-price-per-kg" class="form-control" placeholder="เช่น 80" step="0.5" min="0">
-          </div>
+        <div class="form-group">
+          <label class="form-label">น้ำหนัก (kg)</label>
+          <input type="number" id="finance-kg" class="form-control" placeholder="เช่น 8.5" step="0.1" min="0">
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="form-group">
-            <label class="form-label">จากแปลง</label>
-            <select id="finance-plot" class="form-control" onchange="autoFillIncomeVeg()">
-              <option value="">ไม่ระบุ</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">ชนิดผัก</label>
-            <select id="finance-veg" class="form-control">
-              <option value="">ไม่ระบุ</option>
-              <option value="green_oak">กรีนโอ๊ค</option>
-              <option value="red_oak">เรดโอ๊ค</option>
-              <option value="finley">ฟินเลย์</option>
-              <option value="cos">คอส</option>
-              <option value="butterhead">บัตเตอร์เฮด</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Total preview -->
+        <!-- Total preview (ราคาคงที่ ฿100/กก.) -->
         <div class="income-preview">
-          <span class="preview-label">ยอดรวมที่ได้รับ</span>
+          <span class="preview-label">ยอดรวมที่ได้รับ (กก.ละ ฿100)</span>
           <span class="preview-val" id="finance-total-preview">-</span>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">ช่องทางการขาย</label>
-          <select id="finance-channel" class="form-control">
-            <option value="">-- เลือกช่องทาง --</option>
-            <option value="market">ขายที่ตลาด</option>
-            <option value="delivery">เดลิเวอรี</option>
-            <option value="direct">ขายตรง</option>
-            <option value="wholesale">ขายส่ง</option>
-            <option value="other">อื่นๆ</option>
-          </select>
-        </div>
         <div class="form-group">
           <label class="form-label">ชื่อผู้ซื้อ (ไม่บังคับ)</label>
           <input type="text" id="finance-buyer" class="form-control" placeholder="เช่น คุณสมชาย, ร้านสลัดดี">
@@ -660,16 +623,6 @@
       <div class="growth-divider"><span class="gd-label">รายจ่ายแยกหมวด (เดือนนี้)</span></div>
       <div class="card">
         <div id="expense-breakdown"></div>
-      </div>
-
-      <div class="growth-divider"><span class="gd-label">รายได้ & ผลผลิตรายแปลง (ปีนี้)</span></div>
-      <div class="card">
-        <div id="plot-revenue"></div>
-      </div>
-
-      <div class="growth-divider"><span class="gd-label">รายได้ตามชนิดผัก (ปีนี้)</span></div>
-      <div class="card">
-        <div id="veg-revenue"></div>
       </div>
 
       <div class="growth-divider"><span class="gd-label">กราฟรายรับ vs รายจ่าย (6 เดือน)</span></div>
@@ -856,7 +809,7 @@
 <script src="js/problems.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/todos.js"></script>
-<script src="js/finance.js?v=2"></script>
+<script src="js/finance.js?v=3"></script>
 <script src="js/customers.js?v=2"></script>
 <script src="js/app.js"></script>
 </body>
