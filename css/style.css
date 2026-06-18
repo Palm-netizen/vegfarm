@@ -942,6 +942,20 @@ select.form-control { cursor: pointer; }
 .lead-badge { background: #DBEAFE; color: #2563EB; }
 [data-theme="dark"] .lead-badge { background: #15314F; color: #93C5FD; }
 
+/* ===== Compact customer card ===== */
+.cust-card.cust-compact { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.cust-compact .cust-avatar { width: 38px; height: 38px; border-radius: 11px; font-size: 16px; }
+.cust-compact .cust-info { flex: 1; min-width: 0; }
+.cust-compact .cust-name { font-size: 15px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; line-height: 1.2; }
+.cust-compact .cust-name .cust-tag { font-size: 10px; padding: 1px 7px; }
+.cc-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-end { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.cc-count { font-size: 11px; color: var(--ink-soft); font-weight: 700; white-space: nowrap; }
+.cc-count b { font-family: var(--font-display); font-size: 16px; color: var(--primary); }
+.cc-actions { display: flex; gap: 5px; }
+.mini-btn { border: 1px solid var(--line); background: var(--bg); color: var(--ink-soft); border-radius: 8px; padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
+.mini-btn.danger { color: var(--danger); border-color: transparent; background: var(--danger-tint); }
+
 /* ===== Seed history — compact cards (fits mobile, no horizontal scroll) ===== */
 .hist-list { display: flex; flex-direction: column; gap: 10px; }
 .seed-hist-card {

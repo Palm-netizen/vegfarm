@@ -96,30 +96,24 @@ function renderCustomerList() {
 
   el.innerHTML = filtered.map(c => {
     const isLead = !(c.purchaseCount > 0);
+    const sub = [c.address, c.weekly_kg ? `ใช้ ${c.weekly_kg} kg/สัปดาห์` : ''].filter(Boolean).join(' · ') || typeLabel(c.type);
     return `
-    <div class="card cust-card" onclick="openCustomerDetail('${c.id}')" style="cursor:pointer">
-      <div class="cust-header">
-        <div class="cust-avatar">${(c.name||'?')[0].toUpperCase()}</div>
-        <div class="cust-info">
-          <div class="cust-name">${c.name || '-'}</div>
-          <div class="cust-meta">
-            ${isLead
-              ? '<span class="cust-tag lead-badge">ว่าที่ลูกค้า</span>'
-              : `<span class="cust-tag ${tagClass(c.tag)}">${tagLabel(c.tag)}</span>`}
-            <span class="cust-type-badge">${typeLabel(c.type)}</span>
-          </div>
-        </div>
-        <div class="cust-buy-count">
+    <div class="card cust-card cust-compact" onclick="openCustomerDetail('${c.id}')" style="cursor:pointer">
+      <div class="cust-avatar">${(c.name||'?')[0].toUpperCase()}</div>
+      <div class="cust-info">
+        <div class="cust-name">${c.name || '-'}
           ${isLead
-            ? '<div class="buy-label" style="color:var(--ink-faint)">ยังไม่ซื้อ</div>'
-            : `<div class="buy-num">${c.purchaseCount}</div><div class="buy-label">ครั้ง</div>`}
+            ? '<span class="cust-tag lead-badge">ว่าที่ลูกค้า</span>'
+            : `<span class="cust-tag ${tagClass(c.tag)}">${tagLabel(c.tag)}</span>`}
         </div>
+        <div class="cc-sub">${sub}</div>
       </div>
-      ${c.address ? `<div class="cust-address"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> ${c.address}</div>` : ''}
-      ${c.weekly_kg ? `<div class="cust-kg"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 4.9L21 15.5"/><path d="M6 7l3.5-1M6 7L5 3M21 7v8"/></svg> ใช้ผัก ${c.weekly_kg} kg/สัปดาห์</div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end">
-        <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditCustomer('${c.id}')">แก้ไข</button>
-        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${c.id}')">ลบ</button>
+      <div class="cc-end">
+        <div class="cc-count">${isLead ? '<span style="color:var(--ink-faint)">ยังไม่ซื้อ</span>' : `<b>${c.purchaseCount}</b> ครั้ง`}</div>
+        <div class="cc-actions">
+          <button class="mini-btn" onclick="event.stopPropagation();openEditCustomer('${c.id}')">แก้ไข</button>
+          <button class="mini-btn danger" onclick="event.stopPropagation();deleteCustomer('${c.id}')">ลบ</button>
+        </div>
       </div>
     </div>`;
   }).join('');

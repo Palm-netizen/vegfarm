@@ -76,21 +76,15 @@ function resetIncomeForm() {
 }
 
 async function loadIncomeList() {
-  const {data} = await db.from('income').select('*').order('income_date',{ascending:false}).limit(40);
+  const {data} = await db.from('income').select('*').order('income_date',{ascending:false}).limit(200);
   const el = document.getElementById('income-list');
   if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายรับ</div>'; return; }
-  el.innerHTML = data.map(r=>`
-    <div class="card fin-card">
-      <div class="fin-row">
-        <div><strong>${r.buyer || 'ขายผัก'}</strong></div>
-        <div class="fin-amount income-amount">฿${parseFloat(r.total_amount).toLocaleString()}</div>
-      </div>
-      <div class="fin-meta">${formatDateTH(r.income_date)} · ${r.kg_sold} kg · ฿${r.price_per_kg}/kg</div>
-      ${r.notes?`<div class="fin-notes">${r.notes}</div>`:''}
-      <div style="display:flex;justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-danger btn-sm" onclick="deleteIncome('${r.id}')">ลบ</button>
-      </div>
-    </div>`).join('');
+  el.innerHTML = '<div class="card" style="padding:4px 14px">' + data.map(r=>`
+    <div class="pe-row">
+      <span class="pe-desc"><strong>${r.buyer || 'ขายผัก'}</strong> <span class="pe-date">${formatDateTH(r.income_date)} · ${r.kg_sold} kg</span></span>
+      <span class="pe-amt" style="color:var(--primary)">฿${parseFloat(r.total_amount).toLocaleString()}</span>
+      <button class="pe-del" onclick="deleteIncome('${r.id}')" aria-label="ลบ">×</button>
+    </div>`).join('') + '</div>';
 }
 
 async function deleteIncome(id) {
@@ -156,21 +150,13 @@ async function loadExpenseList() {
   const el = document.getElementById('expense-list');
   if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายจ่าย</div>'; return; }
   const catLbl={seed:'เมล็ดพันธุ์',fertilizer:'ปุ๋ย/สารเคมี',labor:'ค่าแรง',utility:'ค่าไฟ',equipment:'อุปกรณ์',packaging:'บรรจุภัณฑ์',transport:'ขนส่ง',other:'อื่นๆ'};
-  el.innerHTML = data.map(r=>`
-    <div class="card fin-card">
-      <div class="fin-row">
-        <div>
-          <span class="badge badge-warn">${catLbl[r.category]||r.category}</span>
-          ${r.description?`<strong style="margin-left:6px">${r.description}</strong>`:''}
-        </div>
-        <div class="fin-amount expense-amount">฿${parseFloat(r.amount).toLocaleString()}</div>
-      </div>
-      <div class="fin-meta">${formatDateTH(r.expense_date)}</div>
-      ${r.notes?`<div class="fin-notes">${r.notes}</div>`:''}
-      <div style="display:flex;justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-danger btn-sm" onclick="deleteExpense('${r.id}')">ลบ</button>
-      </div>
-    </div>`).join('');
+  el.innerHTML = '<div class="card" style="padding:4px 14px">' + data.map(r=>`
+    <div class="pe-row">
+      <span class="pe-cat" style="background:var(--accent-tint);color:var(--accent)">${catLbl[r.category]||r.category}</span>
+      <span class="pe-desc">${r.description||'-'} <span class="pe-date">${formatDateTH(r.expense_date)}</span></span>
+      <span class="pe-amt" style="color:var(--accent)">฿${parseFloat(r.amount).toLocaleString()}</span>
+      <button class="pe-del" onclick="deleteExpense('${r.id}')" aria-label="ลบ">×</button>
+    </div>`).join('') + '</div>';
 }
 
 async function deleteExpense(id) {
