@@ -122,7 +122,7 @@ function renderDashboardStats(data) {
         <div class="harvest-item ${overdue ? 'overdue' : ''}">
           <span class="badge badge-green">${p.plot_code}</span>
           <div style="flex:1">
-            <div style="font-weight:600">${vegLabel(p.vegetable_type)}</div>
+            <div style="font-weight:600">${(typeof vegLabelMulti==='function'?vegLabelMulti:vegLabel)(p.vegetable_type)}</div>
             <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest_date)}</div>
           </div>
           <span class="harvest-tag ${overdue ? 'overdue' : (p.daysLeft <= 2 ? 'soon' : '')}">${label}</span>

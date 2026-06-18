@@ -237,15 +237,14 @@
         <div class="text-sub" id="transplant-hint" style="margin-top:6px"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">ชนิดที่ปลูก</label>
-        <select id="plot-veg-type" class="form-control">
-          <option value="">-- เลือกชนิดผัก --</option>
-          <option value="green_oak">กรีนโอ๊ค</option>
-          <option value="red_oak">เรดโอ๊ค</option>
-          <option value="finley">ฟินเลย์</option>
-          <option value="cos">คอส</option>
-          <option value="butterhead">บัตเตอร์เฮด</option>
-        </select>
+        <label class="form-label">ชนิดที่ปลูก (เลือกได้หลายชนิด)</label>
+        <div class="checkbox-group" id="plot-veg-group">
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="green_oak"> กรีนโอ๊ค</label>
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="red_oak"> เรดโอ๊ค</label>
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="finley"> ฟินเลย์</label>
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="cos"> คอส</label>
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="butterhead"> บัตเตอร์เฮด</label>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">วันที่ปลูก</label>
@@ -858,9 +857,9 @@
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
-<script src="js/dashboard.js"></script>
+<script src="js/dashboard.js?v=2"></script>
 <script src="js/seeds.js?v=3"></script>
-<script src="js/plots.js?v=3"></script>
+<script src="js/plots.js?v=4"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/todos.js"></script>
