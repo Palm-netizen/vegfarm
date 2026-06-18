@@ -2,6 +2,14 @@
 
 let allCustomers = [];
 let customerSearch = '';
+let customerFilter = 'all';  // all | buyers (ซื้อแล้ว) | leads (ว่าที่ลูกค้า)
+
+function setCustomerFilter(f, btn) {
+  customerFilter = f;
+  document.querySelectorAll('.cust-filter-chips .cust-chip').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderCustomerList();
+}
 
 function initCustomers() {
   document.getElementById('cust-search-input').addEventListener('input', e => {
@@ -70,33 +78,41 @@ async function loadCustomers() {
 
 // ===== RENDER LIST =====
 function renderCustomerList() {
-  const filtered = allCustomers.filter(c =>
-    !customerSearch ||
-    c.name?.toLowerCase().includes(customerSearch) ||
-    c.address?.toLowerCase().includes(customerSearch) ||
-    tagLabel(c.tag).includes(customerSearch)
-  );
+  const filtered = allCustomers.filter(c => {
+    // buyers = ซื้อแล้ว, leads = ว่าที่ลูกค้า (ยังไม่ซื้อ)
+    if (customerFilter === 'buyers' && !(c.purchaseCount > 0)) return false;
+    if (customerFilter === 'leads'  &&  (c.purchaseCount > 0)) return false;
+    if (!customerSearch) return true;
+    return c.name?.toLowerCase().includes(customerSearch) ||
+      c.address?.toLowerCase().includes(customerSearch) ||
+      tagLabel(c.tag).includes(customerSearch);
+  });
 
   const el = document.getElementById('customer-list');
   if (!filtered.length) {
-    el.innerHTML = '<div class="empty-state">ไม่พบลูกค้า</div>';
+    el.innerHTML = `<div class="empty-state">${customerFilter==='leads' ? 'ยังไม่มีว่าที่ลูกค้า — เพิ่มรายชื่อไว้ติดต่อได้' : 'ไม่พบลูกค้า'}</div>`;
     return;
   }
 
-  el.innerHTML = filtered.map(c => `
+  el.innerHTML = filtered.map(c => {
+    const isLead = !(c.purchaseCount > 0);
+    return `
     <div class="card cust-card" onclick="openCustomerDetail('${c.id}')" style="cursor:pointer">
       <div class="cust-header">
         <div class="cust-avatar">${(c.name||'?')[0].toUpperCase()}</div>
         <div class="cust-info">
           <div class="cust-name">${c.name || '-'}</div>
           <div class="cust-meta">
-            <span class="cust-tag ${tagClass(c.tag)}">${tagLabel(c.tag)}</span>
+            ${isLead
+              ? '<span class="cust-tag lead-badge">ว่าที่ลูกค้า</span>'
+              : `<span class="cust-tag ${tagClass(c.tag)}">${tagLabel(c.tag)}</span>`}
             <span class="cust-type-badge">${typeLabel(c.type)}</span>
           </div>
         </div>
         <div class="cust-buy-count">
-          <div class="buy-num">${c.purchaseCount}</div>
-          <div class="buy-label">ครั้ง</div>
+          ${isLead
+            ? '<div class="buy-label" style="color:var(--ink-faint)">ยังไม่ซื้อ</div>'
+            : `<div class="buy-num">${c.purchaseCount}</div><div class="buy-label">ครั้ง</div>`}
         </div>
       </div>
       ${c.address ? `<div class="cust-address"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg> ${c.address}</div>` : ''}
@@ -105,7 +121,8 @@ function renderCustomerList() {
         <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditCustomer('${c.id}')">แก้ไข</button>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCustomer('${c.id}')">ลบ</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // ===== SUMMARY =====
