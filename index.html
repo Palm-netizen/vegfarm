@@ -15,7 +15,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=11">
+<link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 
@@ -156,6 +156,7 @@
       </div>
       <div class="goal-bar"><div class="goal-bar-fill" id="seed-goal-fill"></div></div>
       <div class="goal-status" id="seed-goal-status"></div>
+      <div class="goal-season" id="seed-season"></div>
     </div>
 
     <div class="card" id="seed-form-section">
@@ -182,10 +183,6 @@
           <label class="weather-option"><input type="radio" name="weather" value="rainy"> ฝนตกสลับแดด <span class="weather-badge">รอด 70%</span></label>
           <label class="weather-option"><input type="radio" name="weather" value="cold"> หนาว <span class="weather-badge">รอด 90%</span></label>
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">อัตรารอด (%) — ปรับได้ตามจริง</label>
-        <input type="number" id="seed-survival" class="form-control" min="0" max="100" step="1" placeholder="เลือกฤดูแล้วระบบเติมให้ หรือพิมพ์เอง" oninput="updateSeedCalc()">
       </div>
       <input type="hidden" id="seed-harvest-date">
 
@@ -877,7 +874,7 @@
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/dashboard.js?v=3"></script>
-<script src="js/seeds.js?v=5"></script>
+<script src="js/seeds.js?v=6"></script>
 <script src="js/plots.js?v=6"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js?v=2"></script>

@@ -9,8 +9,21 @@ function onSeedGoalChange() {
   renderSeedGoal();
 }
 
+// ฤดูปัจจุบันตามเดือน (ไทย) + อัตรารอด (ฟิกตามฤดู)
+function currentSeason(d = new Date()) {
+  const m = d.getMonth() + 1;
+  if (m >= 11 || m <= 2) return { key: 'cold',  label: 'หน้าหนาว',      rate: getSurvivalRate('cold') };
+  if (m >= 3 && m <= 5)  return { key: 'hot',   label: 'หน้าร้อน',      rate: getSurvivalRate('hot') };
+  return { key: 'rainy', label: 'หน้าฝน (ฝนสลับแดด)', rate: getSurvivalRate('rainy') };
+}
+
 // แถบความคืบหน้าเป้าหมายเพาะเดือนนี้ — ใช้กิโลคาดการณ์ (คำนวณตามฤดูแล้ว)
 async function renderSeedGoal() {
+  const ssEl = document.getElementById('seed-season');
+  if (ssEl) {
+    const s = currentSeason();
+    ssEl.innerHTML = `🌤️ ฤดูนี้: <b>${s.label}</b> · อัตรารอด <b style="color:var(--primary)">${s.rate}%</b>`;
+  }
   const goal = parseFloat(localStorage.getItem(SEED_GOAL_KEY)) || 0;
   const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
   const start = `${yr}-${mo}-01`;
@@ -58,8 +71,6 @@ function initSeeds() {
     radio.addEventListener('change', () => {
       document.querySelectorAll('.weather-option').forEach(o => o.classList.remove('selected'));
       radio.closest('.weather-option').classList.add('selected');
-      // เติมอัตรารอดเริ่มต้นตามฤดู (ผู้ใช้แก้ทับได้)
-      document.getElementById('seed-survival').value = getSurvivalRate(radio.value);
       updateSeedCalc();
     });
   });
@@ -81,8 +92,7 @@ function updateSeedCalc() {
   const weather = document.querySelector('input[name="weather"]:checked')?.value || 'hot';
   const dateVal = document.getElementById('seed-date').value;
 
-  const survivalInput = parseFloat(document.getElementById('seed-survival').value);
-  const survivalRate = (!isNaN(survivalInput) && survivalInput > 0) ? survivalInput : getSurvivalRate(weather);
+  const survivalRate = getSurvivalRate(weather);
   const estKg = calcEstimatedKg(count, weather, survivalRate);
   const harvestDate = dateVal ? addDays(dateVal, 45) : '-';
 
@@ -108,8 +118,7 @@ async function saveSeedBatch() {
   if (!countVal || countVal < 1) return showToast('กรุณาระบุจำนวนเมล็ด', 'error');
   if (!weather) return showToast('กรุณาเลือกสภาพอากาศ', 'error');
 
-  const survivalInput = parseFloat(document.getElementById('seed-survival').value);
-  const survivalRate = (!isNaN(survivalInput) && survivalInput > 0) ? survivalInput : getSurvivalRate(weather);
+  const survivalRate = getSurvivalRate(weather);
   const estKg = calcEstimatedKg(countVal, weather, survivalRate);
   const harvestDate = addDays(dateVal, 45);
 
@@ -162,7 +171,6 @@ function resetSeedForm() {
   document.querySelectorAll('.veg-checkbox').forEach(i => { i.classList.remove('checked'); i.querySelector('input').checked = false; });
   document.querySelectorAll('input[name="weather"]').forEach(r => r.checked = false);
   document.querySelectorAll('.weather-option').forEach(o => o.classList.remove('selected'));
-  document.getElementById('seed-survival').value = '';
   document.getElementById('seed-survival-preview').textContent = '-';
   document.getElementById('seed-kg-preview').textContent = '-';
   document.getElementById('seed-harvest-preview').textContent = '-';
@@ -228,7 +236,6 @@ async function editSeedBatch(id) {
     weatherRadio.checked = true;
     weatherRadio.closest('.weather-option').classList.add('selected');
   }
-  document.getElementById('seed-survival').value = b.survival_rate || '';
 
   updateSeedCalc();
   document.getElementById('seed-save-btn').textContent = 'บันทึกการแก้ไข';
