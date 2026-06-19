@@ -22,7 +22,7 @@ function initFinance() {
 
 function switchFinanceTab(tab) {
   financeTab = tab;
-  ['income','expense','personal','summary'].forEach(t => {
+  ['income','expense','personal','summary','report'].forEach(t => {
     document.getElementById(`ftab-${t}`)?.classList.toggle('active', t===tab);
     document.getElementById(`fpanel-${t}`)?.classList.toggle('hidden', t!==tab);
   });
@@ -30,6 +30,13 @@ function switchFinanceTab(tab) {
   if (tab==='expense')  loadExpenseList();
   if (tab==='personal') loadPersonalList();
   if (tab==='summary')  loadFinanceSummary();
+  if (tab==='report')   openSalesReport();
+}
+
+function openSalesReport() {
+  populateReportBuyers();
+  if (!document.getElementById('rep-from')?.value) setReportRange('month');
+  else runSalesReport();
 }
 
 function calcIncomeTotal() {
@@ -449,11 +456,6 @@ async function loadFinanceSummary() {
   document.getElementById('expense-breakdown').innerHTML=catHtml||'<div class="empty-state" style="padding:16px">ยังไม่มีรายจ่าย</div>';
 
   renderFinanceChart(allInc.data||[],allExp.data||[]);
-
-  // Sales report — populate buyers + default to this month on first open
-  populateReportBuyers();
-  if (!document.getElementById('rep-from')?.value) setReportRange('month');
-  else runSalesReport();
 }
 
 function renderFinanceChart(incRows,expRows) {

@@ -15,7 +15,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=15">
+<link rel="stylesheet" href="css/style.css?v=16">
 </head>
 <body>
 
@@ -483,6 +483,7 @@
       <button class="fin-tab"        id="ftab-expense"  onclick="switchFinanceTab('expense')">รายจ่าย</button>
       <button class="fin-tab"        id="ftab-personal" onclick="switchFinanceTab('personal')">ส่วนตัว</button>
       <button class="fin-tab"        id="ftab-summary"  onclick="switchFinanceTab('summary')">สรุป</button>
+      <button class="fin-tab"        id="ftab-report"   onclick="switchFinanceTab('report')">รายงาน</button>
     </div>
 
     <!-- ===== INCOME PANEL ===== -->
@@ -616,10 +617,10 @@
     </div>
 
     <!-- ===== SUMMARY PANEL ===== -->
-    <div id="fpanel-summary" class="hidden">
-
-      <div class="growth-divider" style="margin-top:0"><span class="gd-label">รายงานยอดขาย</span></div>
+    <!-- ===== REPORT PANEL ===== -->
+    <div id="fpanel-report" class="hidden">
       <div class="card">
+        <div class="card-title">รายงานยอดขาย</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="form-group" style="margin:0">
             <label class="form-label">จากวันที่</label>
@@ -636,8 +637,8 @@
           <button class="btn btn-outline btn-sm" onclick="setReportRange('all')">ทั้งหมด</button>
         </div>
         <div class="form-group">
-          <label class="form-label">ผู้ซื้อ</label>
-          <select id="rep-buyer" class="form-control"><option value="">ลูกค้าทั้งหมด</option></select>
+          <label class="form-label">ผู้ซื้อ (เลือกชื่อเพื่อดูว่าซื้อวันไหนบ้าง)</label>
+          <select id="rep-buyer" class="form-control" onchange="runSalesReport()"><option value="">ลูกค้าทั้งหมด</option></select>
         </div>
         <button class="btn btn-primary" onclick="runSalesReport()">ดูรายงาน</button>
         <div id="rep-result"></div>
@@ -652,8 +653,11 @@
           </button>
         </div>
       </div>
+    </div>
 
-      <div class="growth-divider"><span class="gd-label">เดือนนี้</span></div>
+    <div id="fpanel-summary" class="hidden">
+
+      <div class="growth-divider" style="margin-top:0"><span class="gd-label">เดือนนี้</span></div>
       <div class="kpi-grid">
         <div class="kpi-card income-card">
           <div class="kpi-label">รายรับ</div>
@@ -919,7 +923,7 @@
 <script src="js/problems.js?v=2"></script>
 <script src="js/calendar.js?v=2"></script>
 <script src="js/todos.js"></script>
-<script src="js/finance.js?v=10"></script>
+<script src="js/finance.js?v=11"></script>
 <script src="js/customers.js?v=6"></script>
 <script src="js/app.js"></script>
 </body>

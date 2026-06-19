@@ -630,15 +630,16 @@ select.form-control { cursor: pointer; }
    Finance Module Styles
    ============================================================= */
 .fin-tabs {
-  display: flex; gap: 6px; margin-bottom: 16px;
+  display: flex; gap: 4px; margin-bottom: 16px;
   background: var(--bg); border-radius: var(--radius-sm);
-  padding: 5px;
+  padding: 4px;
 }
 .fin-tab {
-  flex: 1; padding: 10px 8px; border: none; cursor: pointer;
+  flex: 1; padding: 9px 4px; border: none; cursor: pointer;
   border-radius: 10px; font-family: var(--font-body);
-  font-size: 13px; font-weight: 700; color: var(--ink-soft);
-  background: transparent; transition: all 0.18s; letter-spacing: -0.1px;
+  font-size: 12px; font-weight: 700; color: var(--ink-soft);
+  background: transparent; transition: all 0.18s; letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 .fin-tab.active {
   background: var(--paper); color: var(--ink);
