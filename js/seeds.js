@@ -1,6 +1,43 @@
 // js/seeds.js — บันทึกรอบเพาะเมล็ด
 
 let editSeedId = null;
+const SEED_GOAL_KEY = 'vf_seed_goal_kg';
+
+function onSeedGoalChange() {
+  const v = parseFloat(document.getElementById('seed-goal-input').value) || 0;
+  try { localStorage.setItem(SEED_GOAL_KEY, v); } catch (e) {}
+  renderSeedGoal();
+}
+
+// แถบความคืบหน้าเป้าหมายเพาะเดือนนี้ — ใช้กิโลคาดการณ์ (คำนวณตามฤดูแล้ว)
+async function renderSeedGoal() {
+  const goal = parseFloat(localStorage.getItem(SEED_GOAL_KEY)) || 0;
+  const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
+  const start = `${yr}-${mo}-01`;
+  const nm = new Date(yr, now.getMonth() + 1, 1);
+  const next = `${nm.getFullYear()}-${String(nm.getMonth() + 1).padStart(2, '0')}-01`;
+
+  const { data } = await db.from('seed_batches').select('estimated_kg,seed_date')
+    .gte('seed_date', start).lt('seed_date', next);
+  const done = (data || []).reduce((s, b) => s + parseFloat(b.estimated_kg || 0), 0);
+
+  const fill = document.getElementById('seed-goal-fill');
+  const status = document.getElementById('seed-goal-status');
+  if (!fill || !status) return;
+
+  const pct = goal > 0 ? Math.min(100, (done / goal) * 100) : 0;
+  fill.style.width = pct + '%';
+  fill.classList.toggle('done', goal > 0 && done >= goal);
+
+  const fmt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  if (goal <= 0) {
+    status.innerHTML = `<span class="text-sub">เพาะแล้ว ${fmt(done)} กก. · ตั้งเป้าหมายเพื่อดูความคืบหน้า</span>`;
+  } else if (done >= goal) {
+    status.innerHTML = `เพาะแล้ว <b style="color:var(--primary)">${fmt(done)}</b> / ${fmt(goal)} กก. · <b style="color:var(--primary)">ครบเป้าแล้ว 🎉</b>`;
+  } else {
+    status.innerHTML = `เพาะแล้ว <b style="color:var(--primary)">${fmt(done)}</b> / ${fmt(goal)} กก. · ขาดอีก <b style="color:var(--accent)">${fmt(goal - done)}</b> กก. (${pct.toFixed(0)}%)`;
+  }
+}
 
 function initSeeds() {
   // Set default date to today
@@ -28,6 +65,11 @@ function initSeeds() {
   // Seed count input
   document.getElementById('seed-count').addEventListener('input', updateSeedCalc);
   document.getElementById('seed-date').addEventListener('change', updateSeedCalc);
+
+  // Monthly seeding goal
+  const savedGoal = parseFloat(localStorage.getItem(SEED_GOAL_KEY)) || 0;
+  if (savedGoal > 0) document.getElementById('seed-goal-input').value = savedGoal;
+  renderSeedGoal();
 
   loadSeedBatches();
 }
@@ -131,6 +173,7 @@ async function loadSeedBatches() {
   const list = document.getElementById('seed-history-list');
   if (!batches || !batches.length) {
     list.innerHTML = '<div class="empty-state">ยังไม่มีข้อมูล</div>';
+    renderSeedGoal();
     return;
   }
 
@@ -149,6 +192,8 @@ async function loadSeedBatches() {
       <div class="shc-meta">${formatDateTH(b.seed_date)} · ${weatherLabel[b.weather_condition] || b.weather_condition} · ${b.seed_count} เมล็ด · รอด ${b.survival_rate}%</div>
       <div class="shc-result">คาดได้ <b>${b.estimated_kg} kg</b> · เก็บ ${formatDateTH(b.harvest_date)}</div>
     </div>`).join('');
+
+  renderSeedGoal();
 }
 
 async function editSeedBatch(id) {

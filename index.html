@@ -15,7 +15,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 
@@ -147,6 +147,16 @@
       เพาะเมล็ด
     </div>
     <div class="section-sub">บันทึกการเพาะ ระบบคำนวณอัตรารอดและวันเก็บเกี่ยวให้อัตโนมัติ</div>
+
+    <!-- เป้าหมายเพาะรายเดือน (กิโลคาดการณ์) -->
+    <div class="card seed-goal-card">
+      <div class="goal-head">
+        <span class="card-title" style="margin:0">เป้าหมายเพาะเดือนนี้ (กก. คาดการณ์)</span>
+        <input type="number" id="seed-goal-input" class="goal-input" min="0" placeholder="เช่น 100" oninput="onSeedGoalChange()">
+      </div>
+      <div class="goal-bar"><div class="goal-bar-fill" id="seed-goal-fill"></div></div>
+      <div class="goal-status" id="seed-goal-status"></div>
+    </div>
 
     <div class="card" id="seed-form-section">
       <div class="form-group">
@@ -863,7 +873,7 @@
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/dashboard.js?v=3"></script>
-<script src="js/seeds.js?v=3"></script>
+<script src="js/seeds.js?v=4"></script>
 <script src="js/plots.js?v=6"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js?v=2"></script>

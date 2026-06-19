@@ -968,6 +968,31 @@ select.form-control { cursor: pointer; }
 .status-pill.growing { background: #FEF3C7; color: #D97706; }
 [data-theme="dark"] .status-pill.growing { background: #3A2E10; color: #FBBF24; }
 
+/* ===== Seed monthly goal — animated green progress bar ===== */
+.seed-goal-card { margin-bottom: 14px; }
+.goal-head { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+.goal-input {
+  width: 120px; flex: none; text-align: right;
+  border: 1.5px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: var(--radius-sm); padding: 8px 12px; font-size: 15px;
+  font-family: var(--font-display); font-weight: 800; -webkit-appearance: none;
+}
+.goal-input:focus { outline: none; border-color: var(--primary); background: var(--paper); }
+.goal-bar {
+  height: 14px; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 999px; overflow: hidden; margin: 14px 0 8px;
+}
+.goal-bar-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: repeating-linear-gradient(45deg, #16A34A, #16A34A 10px, #22C55E 10px, #22C55E 20px);
+  background-size: 28px 28px;
+  animation: goalStripes 0.8s linear infinite;
+  transition: width 0.6s ease;
+}
+.goal-bar-fill.done { background: repeating-linear-gradient(45deg, #15803D, #15803D 10px, #16A34A 10px, #16A34A 20px); }
+@keyframes goalStripes { to { background-position: 28px 0; } }
+.goal-status { font-size: 13px; font-weight: 700; color: var(--ink); }
+
 /* ===== Seed history — compact cards (fits mobile, no horizontal scroll) ===== */
 .hist-list { display: flex; flex-direction: column; gap: 10px; }
 .seed-hist-card {
