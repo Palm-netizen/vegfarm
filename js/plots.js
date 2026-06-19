@@ -31,6 +31,21 @@ function setPlotVeg(value) {
   });
 }
 
+// วันเก็บเกี่ยว = วันปลูก + (45 − อายุต้นกล้า)  (ครบ 45 วันจากเพาะเมล็ด)
+const CROP_DAYS = 45;
+function plotHarvestDate(plantDate, age) {
+  return addDays(plantDate, Math.max(0, CROP_DAYS - (parseInt(age) || 0)));
+}
+function updatePlotHarvestDisplay() {
+  const pd = document.getElementById('plot-plant-date').value;
+  const age = document.getElementById('plot-seedling-age').value;
+  document.getElementById('plot-harvest-date-display').textContent =
+    'วันเก็บเกี่ยว: ' + (pd ? formatDateTH(plotHarvestDate(pd, age)) : '–');
+}
+function scrollToPlotForm() {
+  document.getElementById('selected-plot-label').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function renderPlotGrid() {
   const grid = document.getElementById('plot-grid');
   const plots = [];
@@ -106,6 +121,7 @@ async function loadPlotDetail(code) {
   // Fill form
   setPlotVeg(plot.vegetable_type);
   document.getElementById('plot-plant-date').value = plot.plant_date || '';
+  document.getElementById('plot-seedling-age').value = plot.plant_age_days || 0;
   document.getElementById('plot-est-kg').value = plot.estimated_kg || '';
   document.getElementById('plot-harvested-cb').checked = plot.is_harvested || false;
 
@@ -118,9 +134,7 @@ async function loadPlotDetail(code) {
       ? ` · <span style="color:var(--primary);font-weight:700">เก็บรวม ${totalKg.toLocaleString('th-TH',{maximumFractionDigits:1})} กก. · ฿${totalBaht.toLocaleString('th-TH',{maximumFractionDigits:0})}</span>`
       : '');
 
-  if (plot.plant_date) {
-    document.getElementById('plot-harvest-date-display').textContent = `วันเก็บเกี่ยว: ${formatDateTH(addDays(plot.plant_date, 30))}`;
-  }
+  updatePlotHarvestDisplay();
 
   toggleHarvestFields(plot.is_harvested);
 
@@ -148,7 +162,8 @@ async function loadPlotDetail(code) {
           <div class="shc-top">
             <div class="shc-veg">รอบ ${c.cycle_number} · ${vegLabelMulti(c.vegetable_type)}</div>
             <div class="shc-actions">${active
-              ? '<span class="harvest-tag soon">กำลังปลูก</span>'
+              ? `<span class="harvest-tag soon">กำลังปลูก</span>
+                 <button class="btn btn-outline btn-sm" onclick="scrollToPlotForm()">แก้ไข</button>`
               : `<button class="btn btn-outline btn-sm" onclick="editCycle('${c.id}')">แก้ไข</button>
                  <button class="btn btn-danger btn-sm" onclick="deleteCycle('${c.id}')">ลบ</button>`}
             </div>
@@ -220,11 +235,14 @@ function applyTransplant() {
 
   const vegs = batch.vegetable_types || [];
   const today = new Date().toISOString().split('T')[0];
+  // อายุต้นกล้า = จำนวนวันตั้งแต่วันเพาะเมล็ดถึงวันนี้
+  const age = Math.max(0, Math.round((new Date(today) - new Date(batch.seed_date)) / 86400000));
   setPlotVeg(vegs.join(','));
   document.getElementById('plot-plant-date').value = today;
-  document.getElementById('plot-harvest-date-display').textContent = 'วันเก็บเกี่ยว: ' + formatDateTH(addDays(today, 30));
+  document.getElementById('plot-seedling-age').value = age;
   if (batch.estimated_kg) document.getElementById('plot-est-kg').value = batch.estimated_kg;
-  hint.textContent = `เติมชนิดผัก/วันปลูก/ประมาณการจากรอบเพาะให้แล้ว (${vegLabelMulti(vegs.join(','))})`;
+  updatePlotHarvestDisplay();
+  hint.textContent = `เติมชนิดผัก/วันปลูก/อายุต้นกล้า ${age} วัน จากรอบเพาะให้แล้ว (${vegLabelMulti(vegs.join(','))})`;
 }
 
 async function savePlot() {
@@ -232,6 +250,7 @@ async function savePlot() {
 
   const vegType = getPlotVegSelected().join(',');
   const plantDate = document.getElementById('plot-plant-date').value;
+  const seedlingAge = parseInt(document.getElementById('plot-seedling-age').value) || 0;
   const estKg = parseFloat(document.getElementById('plot-est-kg').value) || null;
   const isHarvested = document.getElementById('plot-harvested-cb').checked;
   const actualKg = parseFloat(document.getElementById('plot-actual-kg').value) || null;
@@ -240,12 +259,13 @@ async function savePlot() {
   if (!vegType) return showToast('กรุณาเลือกชนิดผัก', 'error');
   if (!plantDate) return showToast('กรุณาระบุวันที่ปลูก', 'error');
 
-  const harvestDate = addDays(plantDate, 30);
+  const harvestDate = plotHarvestDate(plantDate, seedlingAge);
   const { data: current } = await db.from('plots').select('*').eq('plot_code', selectedPlotCode).single();
 
   const payload = {
     vegetable_type: vegType,
     plant_date: plantDate,
+    plant_age_days: seedlingAge,
     harvest_date: harvestDate,
     estimated_kg: estKg,
     is_harvested: isHarvested,

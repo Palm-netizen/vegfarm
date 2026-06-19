@@ -49,17 +49,17 @@ async function loadDashboard() {
       .order('seed_date', { ascending: false })
       .limit(6);
 
-    // 7. ใกล้เก็บเกี่ยว — ภายใน 7 วัน หรือเลยกำหนดแล้ว (ยังไม่เก็บ)
+    // 7. แปลงที่กำลังปลูก — แสดงทั้งหมด พร้อมวันเก็บเกี่ยว (วันปลูก + 45 − อายุต้นกล้า)
     const { data: pendingPlots } = await db
       .from('plots')
       .select('*')
       .eq('is_harvested', false)
-      .not('harvest_date', 'is', null);
-    const horizon = new Date(); horizon.setDate(horizon.getDate() + 7);
-    const horizonStr = horizon.toISOString().split('T')[0];
-    const upcomingHarvest = (pendingPlots || [])
-      .filter(p => p.harvest_date <= horizonStr)
-      .map(p => ({ ...p, daysLeft: Math.round((new Date(p.harvest_date) - new Date(today)) / 86400000) }))
+      .not('plant_date', 'is', null);
+    const growingPlots = (pendingPlots || [])
+      .map(p => {
+        const harvest = p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0)));
+        return { ...p, harvest, daysLeft: Math.round((new Date(harvest) - new Date(today)) / 86400000) };
+      })
       .sort((a, b) => a.daysLeft - b.daysLeft);
 
     // Render
@@ -71,7 +71,7 @@ async function loadDashboard() {
       todayTodos: todayTodos || [],
       recentProblems: recentProblems || [],
       chartBatches: (chartBatches || []).reverse(),
-      upcomingHarvest
+      growingPlots
     });
 
   } catch (err) {
@@ -110,25 +110,25 @@ function renderDashboardStats(data) {
     : '<div class="empty-state">ไม่มีปัญหาล่าสุด</div>';
   el('dash-recent-problems').innerHTML = problemHtml;
 
-  // Upcoming harvest
+  // แปลงที่กำลังปลูก + วันเก็บเกี่ยว
   const harvestEl = el('dash-harvest-list');
   if (harvestEl) {
-    harvestEl.innerHTML = data.upcomingHarvest.length
-      ? data.upcomingHarvest.map(p => {
+    harvestEl.innerHTML = data.growingPlots.length
+      ? data.growingPlots.map(p => {
           const overdue = p.daysLeft < 0;
           const label = overdue ? `เลยกำหนด ${Math.abs(p.daysLeft)} วัน`
-                      : p.daysLeft === 0 ? 'วันนี้' : `อีก ${p.daysLeft} วัน`;
+                      : p.daysLeft === 0 ? 'เก็บวันนี้' : `อีก ${p.daysLeft} วัน`;
           return `
         <div class="harvest-item ${overdue ? 'overdue' : ''}">
           <span class="badge badge-green">${p.plot_code}</span>
           <div style="flex:1">
             <div style="font-weight:600">${(typeof vegLabelMulti==='function'?vegLabelMulti:vegLabel)(p.vegetable_type)}</div>
-            <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest_date)}</div>
+            <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest)}</div>
           </div>
           <span class="harvest-tag ${overdue ? 'overdue' : (p.daysLeft <= 2 ? 'soon' : '')}">${label}</span>
         </div>`;
         }).join('')
-      : '<div class="empty-state">ยังไม่มีแปลงใกล้เก็บเกี่ยว</div>';
+      : '<div class="empty-state">ยังไม่มีแปลงที่กำลังปลูก</div>';
   }
 
   // Today todos

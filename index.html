@@ -98,7 +98,7 @@
       </div>
     </div>
 
-    <div class="growth-divider"><span class="gd-label">ใกล้เก็บเกี่ยว (ภายใน 7 วัน)</span></div>
+    <div class="growth-divider"><span class="gd-label">แปลงที่กำลังปลูก (กำหนดเก็บเกี่ยว)</span></div>
     <div class="card"><div id="dash-harvest-list"></div></div>
 
     <div class="growth-divider"><span class="gd-label">ปัญหาล่าสุด</span></div>
@@ -247,8 +247,13 @@
         </div>
       </div>
       <div class="form-group">
+        <label class="form-label">อายุต้นกล้าตอนลงปลูก (วัน)</label>
+        <input type="number" id="plot-seedling-age" class="form-control" min="0" value="0" placeholder="เช่น 15" oninput="updatePlotHarvestDisplay()">
+        <div class="text-sub" style="margin-top:4px">เก็บเกี่ยวครบ 45 วันจากเพาะเมล็ด → วันเก็บ = วันปลูก + (45 − อายุต้นกล้า)</div>
+      </div>
+      <div class="form-group">
         <label class="form-label">วันที่ปลูก</label>
-        <input type="date" id="plot-plant-date" class="form-control" onchange="document.getElementById('plot-harvest-date-display').textContent = 'วันเก็บเกี่ยว: ' + formatDateTH(addDays(this.value, 30))">
+        <input type="date" id="plot-plant-date" class="form-control" onchange="updatePlotHarvestDisplay()">
         <div class="text-sub" id="plot-harvest-date-display" style="margin-top:6px">วันเก็บเกี่ยว: –</div>
       </div>
       <div class="form-group">
@@ -857,9 +862,9 @@
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
-<script src="js/dashboard.js?v=2"></script>
+<script src="js/dashboard.js?v=3"></script>
 <script src="js/seeds.js?v=3"></script>
-<script src="js/plots.js?v=4"></script>
+<script src="js/plots.js?v=5"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/todos.js"></script>
