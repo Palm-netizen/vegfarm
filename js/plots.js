@@ -156,22 +156,18 @@ async function loadPlotDetail(code) {
   rows.sort((a, b) => (a.cycle_number || 0) - (b.cycle_number || 0));
 
   const cyclesHtml = rows.length
-    ? rows.map(c => {
+    ? '<div class="card" style="padding:4px 14px">' + rows.map(c => {
         const active = c._active;
-        return `<div class="seed-hist-card">
-          <div class="shc-top">
-            <div class="shc-veg">รอบ ${c.cycle_number} · ${vegLabelMulti(c.vegetable_type)}</div>
-            <div class="shc-actions">${active
-              ? `<span class="harvest-tag soon">กำลังปลูก</span>
-                 <button class="btn btn-outline btn-sm" onclick="scrollToPlotForm()">แก้ไข</button>`
-              : `<button class="btn btn-outline btn-sm" onclick="editCycle('${c.id}')">แก้ไข</button>
-                 <button class="btn btn-danger btn-sm" onclick="deleteCycle('${c.id}')">ลบ</button>`}
-            </div>
+        return `<div class="cyc-card">
+          <div class="cyc-main">
+            <div class="cyc-title">รอบ ${c.cycle_number} · ${vegLabelMulti(c.vegetable_type)}${active ? ' <span class="status-pill growing">กำลังปลูก</span>' : ''}</div>
+            <div class="cyc-sub">ปลูก ${formatDateTH(c.plant_date)} · เก็บ ${active ? 'รอเก็บ' : formatDateTH(c.harvest_date)}${active ? '' : ` · <b>${c.actual_kg || '-'} kg</b>`}</div>
           </div>
-          <div class="shc-meta">ปลูก ${formatDateTH(c.plant_date)} · เก็บ ${active ? 'รอเก็บ' : formatDateTH(c.harvest_date)}</div>
-          <div class="shc-result">${active ? '<span class="text-sub">ยังไม่เก็บเกี่ยว</span>' : `เก็บได้จริง <b>${c.actual_kg || '-'} kg</b>`}</div>
+          <div class="cyc-act">${active
+            ? '<button class="mini-btn" onclick="scrollToPlotForm()">แก้ไข</button>'
+            : `<button class="mini-btn" onclick="editCycle('${c.id}')">แก้ไข</button><button class="mini-btn danger" onclick="deleteCycle('${c.id}')">ลบ</button>`}</div>
         </div>`;
-      }).join('')
+      }).join('') + '</div>'
     : '<div class="empty-state">ยังไม่มีประวัติ</div>';
   document.getElementById('plot-cycles-history').innerHTML = cyclesHtml;
 }
