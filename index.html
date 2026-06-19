@@ -183,6 +183,10 @@
           <label class="weather-option"><input type="radio" name="weather" value="cold"> หนาว <span class="weather-badge">รอด 90%</span></label>
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">อัตรารอด (%) — ปรับได้ตามจริง</label>
+        <input type="number" id="seed-survival" class="form-control" min="0" max="100" step="1" placeholder="เลือกฤดูแล้วระบบเติมให้ หรือพิมพ์เอง" oninput="updateSeedCalc()">
+      </div>
       <input type="hidden" id="seed-harvest-date">
 
       <!-- Preview Card -->
@@ -873,7 +877,7 @@
 <script src="js/config.js"></script>
 <script src="js/supabase.js"></script>
 <script src="js/dashboard.js?v=3"></script>
-<script src="js/seeds.js?v=4"></script>
+<script src="js/seeds.js?v=5"></script>
 <script src="js/plots.js?v=6"></script>
 <script src="js/problems.js"></script>
 <script src="js/calendar.js?v=2"></script>
