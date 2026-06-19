@@ -109,14 +109,14 @@ function showDayDetail(dateStr) {
   const typeIcon = { seeding: '🌱', planting: '🪴', harvesting: '🧺', problem: '⚠️', todo: '📋' };
   const typeLabel = { seeding: 'เพาะเมล็ด', planting: 'ปลูกผัก', harvesting: 'เก็บเกี่ยว', problem: 'ปัญหา', todo: 'งาน' };
 
-  panel.innerHTML = `<div class="card">
-    <div class="card-title">${formatDateTH(dateStr)}</div>
+  panel.innerHTML = `<div class="card" style="padding:8px 14px">
+    <div class="card-title" style="margin:6px 0 4px">${formatDateTH(dateStr)}</div>
     ${events.map(e => `
-      <div class="todo-item" style="border-left:3px solid ${e.activity_type === 'problem' ? 'var(--danger)' : 'var(--primary)'}">
-        <span style="font-size:20px">${typeIcon[e.activity_type] || '📌'}</span>
-        <div style="flex:1">
-          <div style="font-weight:600">${typeLabel[e.activity_type] || e.activity_type}</div>
-          <div class="text-sub">${e.summary || ''}</div>
+      <div class="cyc-card">
+        <span style="font-size:18px;flex:none">${typeIcon[e.activity_type] || '📌'}</span>
+        <div class="cyc-main">
+          <div class="cyc-title">${typeLabel[e.activity_type] || e.activity_type}</div>
+          <div class="cyc-sub">${e.summary || ''}</div>
         </div>
       </div>`).join('')}
   </div>`;
