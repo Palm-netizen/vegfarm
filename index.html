@@ -618,7 +618,42 @@
     <!-- ===== SUMMARY PANEL ===== -->
     <div id="fpanel-summary" class="hidden">
 
-      <div class="growth-divider" style="margin-top:0"><span class="gd-label">เดือนนี้</span></div>
+      <div class="growth-divider" style="margin-top:0"><span class="gd-label">รายงานยอดขาย</span></div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group" style="margin:0">
+            <label class="form-label">จากวันที่</label>
+            <input type="date" id="rep-from" class="form-control">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label class="form-label">ถึงวันที่</label>
+            <input type="date" id="rep-to" class="form-control">
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('month')">เดือนนี้</button>
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('year')">ปีนี้</button>
+          <button class="btn btn-outline btn-sm" onclick="setReportRange('all')">ทั้งหมด</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ผู้ซื้อ</label>
+          <select id="rep-buyer" class="form-control"><option value="">ลูกค้าทั้งหมด</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="runSalesReport()">ดูรายงาน</button>
+        <div id="rep-result"></div>
+        <div id="rep-export" style="display:none; gap:8px; margin-top:12px">
+          <button class="btn btn-outline" style="flex:1" onclick="exportReportExcel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Excel
+          </button>
+          <button class="btn btn-outline" style="flex:1" onclick="exportReportPDF()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a0 0 0 0 1 0 0H6a0 0 0 0 1 0 0z"/><polyline points="14 2 14 8 20 8"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="growth-divider"><span class="gd-label">เดือนนี้</span></div>
       <div class="kpi-grid">
         <div class="kpi-card income-card">
           <div class="kpi-label">รายรับ</div>
@@ -884,7 +919,7 @@
 <script src="js/problems.js?v=2"></script>
 <script src="js/calendar.js?v=2"></script>
 <script src="js/todos.js"></script>
-<script src="js/finance.js?v=9"></script>
+<script src="js/finance.js?v=10"></script>
 <script src="js/customers.js?v=6"></script>
 <script src="js/app.js"></script>
 </body>

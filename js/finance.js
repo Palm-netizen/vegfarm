@@ -39,6 +39,113 @@ function calcIncomeTotal() {
   if (el) el.textContent = total > 0 ? `฿${total.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '-';
 }
 
+// ===== SALES REPORT =====
+let lastReportRows = [];
+let lastReportMeta = {};
+
+function setReportRange(preset) {
+  const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
+  let from, to = now.toISOString().split('T')[0];
+  if (preset === 'month') from = `${yr}-${mo}-01`;
+  else if (preset === 'year') from = `${yr}-01-01`;
+  else { from = '2000-01-01'; to = '2999-12-31'; }
+  document.getElementById('rep-from').value = from === '2000-01-01' ? '' : from;
+  document.getElementById('rep-to').value = to === '2999-12-31' ? '' : to;
+  runSalesReport();
+}
+
+async function populateReportBuyers() {
+  const sel = document.getElementById('rep-buyer');
+  if (!sel) return;
+  const { data } = await db.from('income').select('buyer');
+  const buyers = [...new Set((data || []).map(r => r.buyer).filter(Boolean))].sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">ลูกค้าทั้งหมด</option>' + buyers.map(b => `<option value="${b}">${b}</option>`).join('');
+  sel.value = cur;
+}
+
+async function runSalesReport() {
+  const from = document.getElementById('rep-from').value || '2000-01-01';
+  const to   = document.getElementById('rep-to').value || '2999-12-31';
+  const buyer = document.getElementById('rep-buyer').value;
+
+  let q = db.from('income').select('*').gte('income_date', from).lte('income_date', to).order('income_date', { ascending: false });
+  if (buyer) q = q.eq('buyer', buyer);
+  const { data } = await q;
+  lastReportRows = data || [];
+  lastReportMeta = { from, to, buyer };
+
+  const total = lastReportRows.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0);
+  const kg = lastReportRows.reduce((s, r) => s + parseFloat(r.kg_sold || 0), 0);
+  const fmt = n => `฿${n.toLocaleString('th-TH', { maximumFractionDigits: 0 })}`;
+  const el = document.getElementById('rep-result');
+  const exp = document.getElementById('rep-export');
+
+  if (!lastReportRows.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:14px">ไม่พบยอดขายในช่วงนี้</div>';
+    if (exp) exp.style.display = 'none';
+    return;
+  }
+  el.innerHTML = `
+    <div class="savings-card" style="margin-top:12px;padding:14px 0">
+      <div class="savings-row"><span>จำนวนรายการ</span><b>${lastReportRows.length}</b></div>
+      <div class="savings-row"><span>น้ำหนักรวม</span><b>${kg.toLocaleString('th-TH',{maximumFractionDigits:1})} กก.</b></div>
+      <div class="savings-divider"></div>
+      <div class="savings-row savings-total"><span>ยอดขายรวม</span><span style="color:var(--primary)">${fmt(total)}</span></div>
+    </div>
+    <div class="card" style="padding:4px 14px;margin-top:8px">
+      ${lastReportRows.slice(0, 100).map(r => `
+        <div class="pe-row">
+          <span class="pe-desc"><strong>${r.buyer || 'ขายผัก'}</strong> <span class="pe-date">${formatDateTH(r.income_date)} · ${r.kg_sold} kg</span></span>
+          <span class="pe-amt" style="color:var(--primary)">${fmt(parseFloat(r.total_amount))}</span>
+        </div>`).join('')}
+    </div>`;
+  if (exp) exp.style.display = 'flex';
+}
+
+function exportReportExcel() {
+  if (!lastReportRows.length) return showToast('ไม่มีข้อมูล', 'error');
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const rows = lastReportRows.map(r =>
+    `<tr><td>${r.income_date}</td><td>${esc(r.buyer)}</td><td>${r.kg_sold}</td><td>${r.price_per_kg}</td><td>${r.total_amount}</td></tr>`).join('');
+  const total = lastReportRows.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0);
+  const kg = lastReportRows.reduce((s, r) => s + parseFloat(r.kg_sold || 0), 0);
+  const html = `<html><head><meta charset="utf-8"></head><body><table border="1">
+    <thead><tr><th>วันที่</th><th>ผู้ซื้อ</th><th>น้ำหนัก(กก.)</th><th>ราคา/กก.</th><th>ยอดรวม</th></tr></thead>
+    <tbody>${rows}<tr><td colspan="2">รวม ${lastReportRows.length} รายการ</td><td>${kg}</td><td></td><td>${total}</td></tr></tbody>
+    </table></body></html>`;
+  const blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `รายงานยอดขาย_${lastReportMeta.from}_${lastReportMeta.to}.xls`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  showToast('ส่งออก Excel แล้ว');
+}
+
+function exportReportPDF() {
+  if (!lastReportRows.length) return showToast('ไม่มีข้อมูล', 'error');
+  const fmt = n => '฿' + parseFloat(n).toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  const total = lastReportRows.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0);
+  const kg = lastReportRows.reduce((s, r) => s + parseFloat(r.kg_sold || 0), 0);
+  const rows = lastReportRows.map(r =>
+    `<tr><td>${formatDateTH(r.income_date)}</td><td>${r.buyer || '-'}</td><td class="r">${r.kg_sold}</td><td class="r">${fmt(r.total_amount)}</td></tr>`).join('');
+  const range = `${formatDateTH(lastReportMeta.from === '2000-01-01' ? lastReportRows[lastReportRows.length-1].income_date : lastReportMeta.from)} – ${formatDateTH(lastReportMeta.to === '2999-12-31' ? lastReportRows[0].income_date : lastReportMeta.to)}`;
+  const win = window.open('', '_blank');
+  if (!win) return showToast('เบราว์เซอร์บล็อกป๊อปอัป', 'error');
+  win.document.write(`<html><head><meta charset="utf-8"><title>รายงานยอดขาย</title>
+    <style>body{font-family:'Sarabun',sans-serif;padding:24px;color:#111}h2{margin:0 0 4px}.sub{color:#666;margin-bottom:16px;font-size:13px}
+    table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px 9px;font-size:13px}th{background:#16A34A;color:#fff;text-align:left}
+    .r{text-align:right}tfoot td{font-weight:bold;background:#f3f6f3}</style></head><body>
+    <h2>รายงานยอดขาย — VegFarm</h2>
+    <div class="sub">ช่วง ${range} · ${lastReportMeta.buyer || 'ลูกค้าทั้งหมด'}</div>
+    <table><thead><tr><th>วันที่</th><th>ผู้ซื้อ</th><th class="r">น้ำหนัก</th><th class="r">ยอดรวม</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="2">รวม ${lastReportRows.length} รายการ</td><td class="r">${kg.toLocaleString('th-TH',{maximumFractionDigits:1})} กก.</td><td class="r">${fmt(total)}</td></tr></tfoot>
+    </table>
+    <script>setTimeout(function(){window.print();},400);<\/script></body></html>`);
+  win.document.close();
+}
+
 // ===== INCOME =====
 let editIncomeId = null;
 
@@ -342,6 +449,11 @@ async function loadFinanceSummary() {
   document.getElementById('expense-breakdown').innerHTML=catHtml||'<div class="empty-state" style="padding:16px">ยังไม่มีรายจ่าย</div>';
 
   renderFinanceChart(allInc.data||[],allExp.data||[]);
+
+  // Sales report — populate buyers + default to this month on first open
+  populateReportBuyers();
+  if (!document.getElementById('rep-from')?.value) setReportRange('month');
+  else runSalesReport();
 }
 
 function renderFinanceChart(incRows,expRows) {
