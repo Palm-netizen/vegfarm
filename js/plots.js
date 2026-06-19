@@ -1,8 +1,6 @@
 // js/plots.js — บันทึกรอบปลูกลงแปลง
 
 let selectedPlotCode = null;
-let availableBatches = [];
-let selectedTransplantBatchId = null;
 
 function initPlots() {
   renderPlotGrid();
@@ -138,9 +136,6 @@ async function loadPlotDetail(code) {
 
   toggleHarvestFields(plot.is_harvested);
 
-  // Transplant: list recent seed batches to pull from
-  await populateTransplantOptions();
-
   // Cycles history — completed cycles + the current in-progress planting
   const rows = [...(cycles || [])];
   if (plot.plant_date && !plot.is_harvested) {
@@ -198,49 +193,6 @@ function toggleHarvestFields(show) {
   document.getElementById('harvest-fields').style.display = show ? 'block' : 'none';
 }
 
-// ===== Transplant: seed batch -> plot =====
-async function populateTransplantOptions() {
-  const sel = document.getElementById('plot-transplant-batch');
-  if (!sel) return;
-  selectedTransplantBatchId = null;
-  document.getElementById('transplant-hint').textContent = '';
-
-  const { data: batches } = await db
-    .from('seed_batches')
-    .select('*')
-    .order('seed_date', { ascending: false })
-    .limit(10);
-  availableBatches = batches || [];
-
-  sel.innerHTML = '<option value="">-- ไม่ย้ายจากรอบเพาะ --</option>' +
-    availableBatches.map(b => {
-      const vegs = (b.vegetable_types || []).map(vegLabel).join(', ');
-      return `<option value="${b.id}">เพาะ ${formatDateTH(b.seed_date)} · ${vegs} · ${b.seed_count} เมล็ด</option>`;
-    }).join('');
-  sel.value = '';
-}
-
-function applyTransplant() {
-  const id = document.getElementById('plot-transplant-batch').value;
-  selectedTransplantBatchId = id || null;
-  const hint = document.getElementById('transplant-hint');
-  if (!id) { hint.textContent = ''; return; }
-
-  const batch = availableBatches.find(b => b.id === id);
-  if (!batch) return;
-
-  const vegs = batch.vegetable_types || [];
-  const today = new Date().toISOString().split('T')[0];
-  // อายุต้นกล้า = จำนวนวันตั้งแต่วันเพาะเมล็ดถึงวันนี้
-  const age = Math.max(0, Math.round((new Date(today) - new Date(batch.seed_date)) / 86400000));
-  setPlotVeg(vegs.join(','));
-  document.getElementById('plot-plant-date').value = today;
-  document.getElementById('plot-seedling-age').value = age;
-  if (batch.estimated_kg) document.getElementById('plot-est-kg').value = batch.estimated_kg;
-  updatePlotHarvestDisplay();
-  hint.textContent = `เติมชนิดผัก/วันปลูก/อายุต้นกล้า ${age} วัน จากรอบเพาะให้แล้ว (${vegLabelMulti(vegs.join(','))})`;
-}
-
 async function savePlot() {
   if (!selectedPlotCode) return showToast('กรุณาเลือกแปลงก่อน', 'error');
 
@@ -269,7 +221,6 @@ async function savePlot() {
     harvest_notes: isHarvested ? harvestNotes : null,
     updated_at: new Date().toISOString()
   };
-  if (selectedTransplantBatchId) payload.seed_batch_id = selectedTransplantBatchId;
 
   setLoading(true);
   try {
@@ -296,20 +247,17 @@ async function savePlot() {
       });
     }
 
-    // Log planting / transplant
+    // Log planting
     if (!current?.plant_date && plantDate) {
       await db.from('calendar_activities').insert({
         activity_date: plantDate,
         activity_type: 'planting',
         plot_code: selectedPlotCode,
-        summary: selectedTransplantBatchId
-          ? `ย้ายกล้า ${vegLabelMulti(vegType)} ลงแปลง ${selectedPlotCode}`
-          : `ปลูก ${vegLabelMulti(vegType)} แปลง ${selectedPlotCode}`
+        summary: `ปลูก ${vegLabelMulti(vegType)} แปลง ${selectedPlotCode}`
       });
     }
 
-    showToast(selectedTransplantBatchId ? 'ย้ายกล้าลงแปลงสำเร็จ' : 'บันทึกข้อมูลแปลงสำเร็จ');
-    selectedTransplantBatchId = null;
+    showToast('บันทึกข้อมูลแปลงสำเร็จ');
     loadAllPlots();
     loadPlotDetail(selectedPlotCode);
   } catch (err) {
