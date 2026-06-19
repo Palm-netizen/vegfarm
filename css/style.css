@@ -930,6 +930,8 @@ select.form-control { cursor: pointer; }
 .pe-date { color: var(--ink-faint); font-size: 11px; }
 .pe-amt { font-family: var(--font-display); font-weight: 800; color: #8B5CF6; white-space: nowrap; }
 .pe-del { border: none; background: transparent; color: var(--danger); font-weight: 700; cursor: pointer; padding: 0 4px; font-size: 18px; line-height: 1; flex: none; }
+.pe-edit { border: none; background: transparent; color: var(--ink-soft); font-weight: 700; cursor: pointer; padding: 0 4px; font-size: 15px; line-height: 1; flex: none; }
+.pe-edit:hover { color: var(--primary); }
 [data-theme="dark"] .pe-cat { background: #2A2350; color: #C4B5FD; }
 
 /* ===== Customer filter chips + lead badge ===== */

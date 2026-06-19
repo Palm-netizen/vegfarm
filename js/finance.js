@@ -40,6 +40,8 @@ function calcIncomeTotal() {
 }
 
 // ===== INCOME =====
+let editIncomeId = null;
+
 async function saveIncome() {
   const date    = document.getElementById('finance-date-income').value;
   const kg      = parseFloat(document.getElementById('finance-kg').value);
@@ -51,16 +53,21 @@ async function saveIncome() {
   if (!kg || kg<=0)   return showToast('กรุณาระบุน้ำหนัก','error');
 
   const total = parseFloat((kg*price).toFixed(2));
+  const payload = { income_date:date, kg_sold:kg, price_per_kg:price, total_amount:total, buyer:buyer||null, notes:notes||null };
   setLoading(true);
   try {
-    const { error } = await db.from('income').insert({
-      income_date:date, kg_sold:kg, price_per_kg:price, total_amount:total,
-      buyer:buyer||null, notes:notes||null
-    });
-    if (error) throw error;
-    // Auto-add the buyer to the customer list (skips if already there)
-    const addedCustomer = buyer ? await ensureCustomerFromBuyer(buyer) : false;
-    showToast(addedCustomer ? `บันทึกรายรับ + เพิ่ม "${buyer}" เข้ารายชื่อลูกค้า` : 'บันทึกรายรับสำเร็จ');
+    if (editIncomeId) {
+      const { error } = await db.from('income').update(payload).eq('id', editIncomeId);
+      if (error) throw error;
+      if (buyer) await ensureCustomerFromBuyer(buyer);
+      showToast('อัปเดตรายรับสำเร็จ');
+      editIncomeId = null;
+    } else {
+      const { error } = await db.from('income').insert(payload);
+      if (error) throw error;
+      const addedCustomer = buyer ? await ensureCustomerFromBuyer(buyer) : false;
+      showToast(addedCustomer ? `บันทึกรายรับ + เพิ่ม "${buyer}" เข้ารายชื่อลูกค้า` : 'บันทึกรายรับสำเร็จ');
+    }
     resetIncomeForm();
     loadIncomeList(); loadFinanceSummary();
   } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
@@ -68,11 +75,26 @@ async function saveIncome() {
 }
 
 function resetIncomeForm() {
+  editIncomeId = null;
+  const btn = document.getElementById('income-save-btn'); if (btn) btn.textContent = 'บันทึกรายรับ';
   document.getElementById('finance-date-income').value = new Date().toISOString().split('T')[0];
   ['finance-kg','finance-buyer','finance-notes-income'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('finance-total-preview').textContent='-';
+}
+
+async function editIncome(id) {
+  const { data } = await db.from('income').select('*').eq('id', id).single();
+  if (!data) return;
+  editIncomeId = id;
+  document.getElementById('finance-date-income').value = data.income_date;
+  document.getElementById('finance-kg').value = data.kg_sold;
+  document.getElementById('finance-buyer').value = data.buyer || '';
+  document.getElementById('finance-notes-income').value = data.notes || '';
+  calcIncomeTotal();
+  const btn = document.getElementById('income-save-btn'); if (btn) btn.textContent = 'อัปเดตรายรับ';
+  document.querySelector('#fpanel-income .card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function loadIncomeList() {
@@ -83,6 +105,7 @@ async function loadIncomeList() {
     <div class="pe-row">
       <span class="pe-desc"><strong>${r.buyer || 'ขายผัก'}</strong> <span class="pe-date">${formatDateTH(r.income_date)} · ${r.kg_sold} kg</span></span>
       <span class="pe-amt" style="color:var(--primary)">฿${parseFloat(r.total_amount).toLocaleString()}</span>
+      <button class="pe-edit" onclick="editIncome('${r.id}')" aria-label="แก้ไข">✎</button>
       <button class="pe-del" onclick="deleteIncome('${r.id}')" aria-label="ลบ">×</button>
     </div>`).join('') + '</div>';
 }
