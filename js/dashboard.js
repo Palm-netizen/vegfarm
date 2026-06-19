@@ -123,7 +123,7 @@ function renderDashboardStats(data) {
           <span class="badge badge-green">${p.plot_code}</span>
           <div style="flex:1">
             <div style="font-weight:600">${(typeof vegLabelMulti==='function'?vegLabelMulti:vegLabel)(p.vegetable_type)}</div>
-            <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest)}</div>
+            <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest)}${p.estimated_kg ? ` · คาด ${parseFloat(p.estimated_kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.` : ''}</div>
           </div>
           <span class="harvest-tag ${overdue ? 'overdue' : (p.daysLeft <= 2 ? 'soon' : '')}">${label}</span>
         </div>`;
