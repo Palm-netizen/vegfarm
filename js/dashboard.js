@@ -62,6 +62,14 @@ async function loadDashboard() {
       })
       .sort((a, b) => a.daysLeft - b.daysLeft);
 
+    // 8. แผนส่งผักสัปดาห์นี้ — ผลผลิตที่จะเก็บใน 7 วัน เทียบกับยอดที่ลูกค้าต้องการ/สัปดาห์
+    const { data: customers } = await db.from('customers').select('name,weekly_kg,type');
+    const supplyPlots = growingPlots.filter(p => p.daysLeft <= 7);
+    const supplyKg = supplyPlots.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
+    const demandCustomers = (customers || []).filter(c => parseFloat(c.weekly_kg) > 0)
+      .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
+    const demandKg = demandCustomers.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0);
+
     // Render
     renderDashboardStats({
       activePlots: activePlots?.length || 0,
@@ -71,7 +79,8 @@ async function loadDashboard() {
       todayTodos: todayTodos || [],
       recentProblems: recentProblems || [],
       chartBatches: (chartBatches || []).reverse(),
-      growingPlots
+      growingPlots,
+      weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers }
     });
 
   } catch (err) {
@@ -129,6 +138,33 @@ function renderDashboardStats(data) {
         </div>`;
         }).join('')
       : '<div class="empty-state">ยังไม่มีแปลงที่กำลังปลูก</div>';
+  }
+
+  // แผนส่งผักสัปดาห์นี้
+  const wkEl = el('dash-weekly-plan');
+  if (wkEl && data.weeklyPlan) {
+    const { supplyKg, demandKg, demandCustomers } = data.weeklyPlan;
+    const balance = supplyKg - demandKg;
+    const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+    const balanceTxt = balance >= 0
+      ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
+      : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
+    const custList = demandCustomers.length
+      ? demandCustomers.map(c => `
+        <div class="pe-row">
+          <span class="pe-desc">${c.type === 'farm' ? '🚜' : '🧺'} ${c.name}</span>
+          <span class="pe-amt" style="color:var(--accent)">${kg(parseFloat(c.weekly_kg))} กก.</span>
+        </div>`).join('')
+      : '<div class="text-sub" style="padding:8px 0">ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์</div>';
+    wkEl.innerHTML = `
+      <div class="savings-card" style="padding:14px 0">
+        <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
+        <div class="savings-row"><span>📦 ลูกค้าต้องการ/สัปดาห์</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
+        <div class="savings-divider"></div>
+        <div class="savings-row savings-total"><span>สรุป</span><span>${balanceTxt}</span></div>
+      </div>
+      <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง</div>
+      <div class="card" style="padding:4px 14px">${custList}</div>`;
   }
 
   // Today todos
