@@ -567,7 +567,8 @@ select.form-control { cursor: pointer; }
    ============================================================= */
 .toast {
   position: fixed; bottom: 102px; left: 50%; transform: translateX(-50%);
-  background: var(--ink); color: #fff;
+  background: #14241B; color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
   padding: 14px 28px; border-radius: 999px;
   font-size: 13.5px; font-weight: 700;
   z-index: 999; opacity: 0;

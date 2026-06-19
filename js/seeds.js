@@ -246,11 +246,15 @@ async function deleteSeedBatch(id) {
   if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
   setLoading(true);
   try {
-    await db.from('seed_batches').delete().eq('id', id);
+    // ปลดการอ้างอิงจากแปลงก่อน (กัน foreign-key ของ plots.seed_batch_id)
+    await db.from('plots').update({ seed_batch_id: null }).eq('seed_batch_id', id);
+    const { error } = await db.from('seed_batches').delete().eq('id', id);
+    if (error) throw error;
     showToast('ลบแล้ว');
     loadSeedBatches();
   } catch (err) {
-    showToast('ลบไม่สำเร็จ', 'error');
+    showToast('ลบไม่สำเร็จ: ' + (err.message || err), 'error');
+    console.error(err);
   } finally {
     setLoading(false);
   }
