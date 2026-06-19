@@ -182,7 +182,7 @@ async function editCycle(id) {
 }
 
 async function deleteCycle(id) {
-  if (!confirm('ลบรอบนี้ออกจากประวัติ?')) return;
+  if (!(await vfConfirm('ลบรอบนี้ออกจากประวัติ?', { okLabel: 'ลบ' }))) return;
   const { error } = await db.from('plot_cycles').delete().eq('id', id);
   if (error) return showToast('ลบไม่สำเร็จ: ' + (error.message || error), 'error');
   showToast('ลบแล้ว');
@@ -270,7 +270,7 @@ async function savePlot() {
 
 async function startNewCycle() {
   if (!selectedPlotCode) return;
-  if (!confirm(`เริ่มรอบปลูกใหม่สำหรับแปลง ${selectedPlotCode}?`)) return;
+  if (!(await vfConfirm(`เริ่มรอบปลูกใหม่สำหรับแปลง ${selectedPlotCode}?`, { okLabel: 'เริ่มรอบใหม่', danger: false, icon: '🌱' }))) return;
 
   const { data: current } = await db.from('plots').select('*').eq('plot_code', selectedPlotCode).single();
 

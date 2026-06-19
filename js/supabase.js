@@ -210,7 +210,7 @@ function exportAllData() {
 
 async function importAllData(file) {
   if (!file) return;
-  if (!confirm('การกู้คืนจะเขียนทับข้อมูลปัจจุบันทั้งหมด ดำเนินการต่อหรือไม่?')) return;
+  if (!(await vfConfirm('การกู้คืนจะเขียนทับข้อมูลปัจจุบันทั้งหมด ดำเนินการต่อหรือไม่?', { okLabel: 'กู้คืน', danger: false, icon: '⬆️' }))) return;
   try {
     const dump = JSON.parse(await file.text());
     if (!dump || dump._app !== 'vegfarm' || !dump.data) throw new Error('ไม่ใช่ไฟล์สำรองของ VegFarm');
@@ -260,6 +260,29 @@ function showToast(msg, type = 'success') {
 function setLoading(show) {
   const loader = document.getElementById('loader');
   if (loader) loader.style.display = show ? 'flex' : 'none';
+}
+
+// ============================================================
+//  Styled confirm dialog (replaces native confirm)
+// ============================================================
+let _vfConfirmResolve = null;
+function vfConfirm(message, { okLabel = 'ตกลง', danger = true, icon = '🗑️' } = {}) {
+  return new Promise(resolve => {
+    _vfConfirmResolve = resolve;
+    const el = document.getElementById('vf-confirm');
+    if (!el) { resolve(window.confirm(message)); return; }
+    document.getElementById('vf-confirm-msg').textContent = message;
+    document.getElementById('vf-confirm-icon').textContent = icon;
+    const ok = document.getElementById('vf-confirm-ok');
+    ok.textContent = okLabel;
+    ok.className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
+    el.style.display = 'flex';
+  });
+}
+function vfConfirmResolve(val) {
+  const el = document.getElementById('vf-confirm');
+  if (el) el.style.display = 'none';
+  if (_vfConfirmResolve) { _vfConfirmResolve(val); _vfConfirmResolve = null; }
 }
 
 // ============================================================

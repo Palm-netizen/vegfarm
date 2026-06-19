@@ -243,7 +243,7 @@ async function editSeedBatch(id) {
 }
 
 async function deleteSeedBatch(id) {
-  if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
+  if (!(await vfConfirm('ลบรายการนี้ใช่ไหม?', { okLabel: 'ลบ' }))) return;
   setLoading(true);
   try {
     // ปลดการอ้างอิงจากแปลงก่อน (กัน foreign-key ของ plots.seed_batch_id)

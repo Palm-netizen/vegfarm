@@ -88,7 +88,7 @@ async function loadIncomeList() {
 }
 
 async function deleteIncome(id) {
-  if (!confirm('ลบรายรับนี้?')) return;
+  if (!(await vfConfirm('ลบรายรับนี้?', { okLabel: 'ลบ' }))) return;
   await db.from('income').delete().eq('id',id);
   showToast('ลบแล้ว'); loadIncomeList(); loadFinanceSummary();
 }
@@ -160,7 +160,7 @@ async function loadExpenseList() {
 }
 
 async function deleteExpense(id) {
-  if (!confirm('ลบรายจ่ายนี้?')) return;
+  if (!(await vfConfirm('ลบรายจ่ายนี้?', { okLabel: 'ลบ' }))) return;
   await db.from('expenses').delete().eq('id',id);
   showToast('ลบแล้ว'); loadExpenseList(); loadFinanceSummary();
 }
@@ -232,7 +232,7 @@ function renderPersonalList() {
 }
 
 async function deletePersonal(id) {
-  if (!confirm('ลบรายจ่ายส่วนตัวนี้?')) return;
+  if (!(await vfConfirm('ลบรายจ่ายส่วนตัวนี้?', { okLabel: 'ลบ' }))) return;
   await db.from('personal_expenses').delete().eq('id',id);
   showToast('ลบแล้ว'); loadPersonalList(); loadFinanceSummary();
 }

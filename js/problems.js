@@ -196,7 +196,7 @@ async function toggleResolved(id, resolved) {
 }
 
 async function deleteProblem(id) {
-  if (!confirm('ลบรายการนี้ใช่ไหม?')) return;
+  if (!(await vfConfirm('ลบรายการนี้ใช่ไหม?', { okLabel: 'ลบ' }))) return;
   await db.from('problems').delete().eq('id', id);
   showToast('ลบแล้ว');
   loadProblemDatabase();

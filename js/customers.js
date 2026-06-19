@@ -262,7 +262,7 @@ async function saveCustomer() {
 }
 
 async function deleteCustomer(id) {
-  if (!confirm('ลบลูกค้านี้?')) return;
+  if (!(await vfConfirm('ลบลูกค้านี้?', { okLabel: 'ลบ' }))) return;
   await db.from('customers').delete().eq('id', id);
   showToast('ลบแล้ว');
   loadCustomers();

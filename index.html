@@ -15,7 +15,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=13">
+<link rel="stylesheet" href="css/style.css?v=14">
 </head>
 <body>
 
@@ -827,6 +827,18 @@
   </div>
 </div>
 
+<!-- ===== CONFIRM DIALOG ===== -->
+<div class="modal-overlay" id="vf-confirm" style="display:none" onclick="if(event.target===this)vfConfirmResolve(false)">
+  <div class="modal-sheet confirm-sheet">
+    <div class="confirm-icon" id="vf-confirm-icon">🗑️</div>
+    <div class="confirm-msg" id="vf-confirm-msg">ยืนยัน?</div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline" onclick="vfConfirmResolve(false)">ยกเลิก</button>
+      <button class="btn btn-danger" id="vf-confirm-ok" onclick="vfConfirmResolve(true)">ตกลง</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== BOTTOM NAV — glass floating ===== -->
 <div class="bottom-nav">
   <a href="#dashboard" id="nav-dashboard" data-page="dashboard">
@@ -865,15 +877,15 @@
 
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
-<script src="js/supabase.js"></script>
+<script src="js/supabase.js?v=2"></script>
 <script src="js/dashboard.js?v=3"></script>
-<script src="js/seeds.js?v=7"></script>
-<script src="js/plots.js?v=7"></script>
-<script src="js/problems.js"></script>
+<script src="js/seeds.js?v=8"></script>
+<script src="js/plots.js?v=8"></script>
+<script src="js/problems.js?v=2"></script>
 <script src="js/calendar.js?v=2"></script>
 <script src="js/todos.js"></script>
-<script src="js/finance.js?v=7"></script>
-<script src="js/customers.js?v=5"></script>
+<script src="js/finance.js?v=8"></script>
+<script src="js/customers.js?v=6"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
