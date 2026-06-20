@@ -933,6 +933,29 @@ select.form-control { cursor: pointer; }
 .pe-del { border: none; background: transparent; color: var(--danger); font-weight: 700; cursor: pointer; padding: 0 4px; font-size: 18px; line-height: 1; flex: none; }
 .pe-edit { border: none; background: transparent; color: var(--ink-soft); font-weight: 700; cursor: pointer; padding: 0 4px; font-size: 15px; line-height: 1; flex: none; }
 .pe-edit:hover { color: var(--primary); }
+
+/* ===== Login screen ===== */
+#login-screen {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: var(--gradient);
+  align-items: center; justify-content: center; padding: 24px;
+}
+.login-card {
+  background: var(--paper); border-radius: var(--radius-lg);
+  padding: 32px 24px; width: 100%; max-width: 360px;
+  box-shadow: var(--shadow-lg); text-align: center;
+  animation: confirmPop 0.25s ease;
+}
+.login-logo {
+  width: 60px; height: 60px; margin: 0 auto 14px; border-radius: 18px;
+  background: var(--gradient); display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow-primary);
+}
+.login-logo svg { width: 32px; height: 32px; }
+.login-title { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
+.login-sub { font-size: 13px; color: var(--ink-soft); margin: 4px 0 20px; }
+.login-card .form-control { margin-bottom: 12px; }
+.login-error { color: var(--danger); font-size: 13px; font-weight: 600; margin-top: 12px; min-height: 18px; }
 [data-theme="dark"] .pe-cat { background: #2A2350; color: #C4B5FD; }
 
 /* ===== Customer filter chips + lead badge ===== */

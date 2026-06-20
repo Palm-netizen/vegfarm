@@ -58,7 +58,16 @@ function updateThemeToggleIcon() {
   if (btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function vfStartApp() {
+  // show logout button in cloud mode
+  const lo = document.getElementById('logout-btn');
+  if (lo && typeof VF_USE_CLOUD !== 'undefined' && VF_USE_CLOUD) lo.style.display = 'flex';
+  // Initial page from hash or default
+  const hash = location.hash.replace('#', '');
+  showPage(PAGE_INIT[hash] ? hash : 'dashboard');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   updateThemeToggleIcon();
 
   // Set today's date in nav
@@ -75,7 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Initial page from hash or default
-  const hash = location.hash.replace('#', '');
-  showPage(PAGE_INIT[hash] ? hash : 'dashboard');
+  // Require login in cloud mode; offline skips
+  const loginScreen = document.getElementById('login-screen');
+  const authed = await vfHasSession();
+  if (authed) {
+    if (loginScreen) loginScreen.style.display = 'none';
+    vfStartApp();
+  } else {
+    if (loginScreen) loginScreen.style.display = 'flex';
+  }
 });

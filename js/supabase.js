@@ -187,6 +187,35 @@ if (typeof console !== 'undefined') {
 }
 
 // ============================================================
+//  Auth (เฉพาะโหมดคลาวด์) — โหมดออฟไลน์ข้ามล็อกอิน
+// ============================================================
+async function vfHasSession() {
+  if (!VF_USE_CLOUD) return true;            // ออฟไลน์: ไม่ต้องล็อกอิน
+  try { const { data } = await db.auth.getSession(); return !!(data && data.session); }
+  catch (e) { return false; }
+}
+
+async function vfSignIn() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน'; return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
+  if (error) { errEl.textContent = 'เข้าสู่ระบบไม่สำเร็จ — ตรวจอีเมล/รหัสผ่าน'; return; }
+  document.getElementById('login-screen').style.display = 'none';
+  if (typeof vfStartApp === 'function') vfStartApp();
+}
+
+async function vfSignOut() {
+  try { if (VF_USE_CLOUD && db.auth) await db.auth.signOut(); } catch (e) {}
+  location.reload();
+}
+
+// ============================================================
 //  Backup / Restore — export & import all data as one JSON file
 // ============================================================
 const VF_TABLES = [
