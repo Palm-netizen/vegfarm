@@ -11,6 +11,73 @@ function setCustomerFilter(f, btn) {
   renderCustomerList();
 }
 
+// ===== WEEKLY ORDERS =====
+function weekStartStr(d = new Date()) {
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7; // 0 = Monday
+  x.setDate(x.getDate() - day);
+  return x.toISOString().split('T')[0];
+}
+
+async function loadOrders() {
+  const ws = weekStartStr();
+  // label: ช่วงสัปดาห์ (จ.–อา.)
+  const end = new Date(ws); end.setDate(end.getDate() + 6);
+  const lblEl = document.getElementById('order-week-label');
+  if (lblEl) lblEl.textContent = `${formatDateTH(ws)} – ${formatDateTH(end.toISOString().split('T')[0])}`;
+
+  // customer dropdown
+  const sel = document.getElementById('order-customer');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = allCustomers.map(c => `<option value="${c.name}">${c.name}</option>`).join('')
+      || '<option value="">— ยังไม่มีลูกค้า —</option>';
+    if (cur) sel.value = cur;
+  }
+
+  const { data } = await db.from('orders').select('*').eq('week_start', ws).order('created_at', { ascending: true });
+  const orders = data || [];
+  const total = orders.reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+  const done = orders.filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+
+  document.getElementById('order-total').innerHTML = orders.length
+    ? `รวมสั่ง <b style="color:var(--primary)">${total.toLocaleString('th-TH',{maximumFractionDigits:1})} กก.</b> · ส่งแล้ว ${done.toLocaleString('th-TH',{maximumFractionDigits:1})} กก. (${orders.length} ราย)`
+    : '';
+  const list = document.getElementById('order-list');
+  list.innerHTML = orders.length
+    ? '<div class="card" style="padding:4px 14px;margin-top:8px">' + orders.map(o => `
+        <div class="pe-row">
+          <span class="pe-desc">${o.delivered ? '✅ ' : ''}<strong>${o.customer_name}</strong></span>
+          <span class="pe-amt" style="color:var(--primary)">${parseFloat(o.kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.</span>
+          <button class="mini-btn" onclick="toggleOrderDelivered('${o.id}', ${!o.delivered})">${o.delivered ? 'ยังไม่ส่ง' : 'ส่งแล้ว'}</button>
+          <button class="pe-del" onclick="deleteOrder('${o.id}')" aria-label="ลบ">×</button>
+        </div>`).join('') + '</div>'
+    : '<div class="text-sub" style="margin-top:8px">ยังไม่มีออเดอร์สัปดาห์นี้ — เลือกลูกค้าแล้วกดเพิ่ม</div>';
+}
+
+async function addOrder() {
+  const name = document.getElementById('order-customer').value;
+  const kg = parseFloat(document.getElementById('order-kg').value);
+  if (!name) return showToast('ยังไม่มีลูกค้าให้เลือก','error');
+  if (!kg || kg <= 0) return showToast('กรุณาระบุจำนวนกิโล','error');
+  const { error } = await db.from('orders').insert({ week_start: weekStartStr(), customer_name: name, kg });
+  if (error) return showToast('บันทึกไม่สำเร็จ: ' + (error.message || error), 'error');
+  showToast('เพิ่มออเดอร์แล้ว');
+  document.getElementById('order-kg').value = '';
+  loadOrders();
+}
+
+async function toggleOrderDelivered(id, val) {
+  await db.from('orders').update({ delivered: val }).eq('id', id);
+  loadOrders();
+}
+
+async function deleteOrder(id) {
+  if (!(await vfConfirm('ลบออเดอร์นี้?', { okLabel: 'ลบ' }))) return;
+  await db.from('orders').delete().eq('id', id);
+  showToast('ลบแล้ว'); loadOrders();
+}
+
 function initCustomers() {
   document.getElementById('cust-search-input').addEventListener('input', e => {
     customerSearch = e.target.value.toLowerCase();
@@ -72,6 +139,7 @@ async function loadCustomers() {
 
     renderCustomerList();
     loadCustomerSummary();
+    loadOrders();
   } catch(e) { console.error(e); showToast('โหลดข้อมูลลูกค้าไม่ได้','error'); }
   finally { setLoading(false); }
 }

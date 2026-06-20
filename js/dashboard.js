@@ -62,13 +62,28 @@ async function loadDashboard() {
       })
       .sort((a, b) => a.daysLeft - b.daysLeft);
 
-    // 8. แผนส่งผักสัปดาห์นี้ — ผลผลิตที่จะเก็บใน 7 วัน เทียบกับยอดที่ลูกค้าต้องการ/สัปดาห์
-    const { data: customers } = await db.from('customers').select('name,weekly_kg,type');
+    // 8. แผนส่งผักสัปดาห์นี้ — ผลผลิตที่จะเก็บใน 7 วัน เทียบกับออเดอร์/ยอดที่ลูกค้าต้องการ
     const supplyPlots = growingPlots.filter(p => p.daysLeft <= 7);
     const supplyKg = supplyPlots.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
-    const demandCustomers = (customers || []).filter(c => parseFloat(c.weekly_kg) > 0)
-      .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
-    const demandKg = demandCustomers.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0);
+
+    // วันจันทร์ของสัปดาห์นี้
+    const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
+    const weekStart = wd.toISOString().split('T')[0];
+    const { data: weekOrders } = await db.from('orders').select('customer_name,kg,delivered').eq('week_start', weekStart);
+
+    let demandCustomers, demandKg, ordersMode;
+    if (weekOrders && weekOrders.length) {
+      ordersMode = true;
+      demandCustomers = weekOrders.map(o => ({ name: o.customer_name, weekly_kg: o.kg, delivered: o.delivered, type: 'customer' }))
+        .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
+      demandKg = weekOrders.reduce((s, o) => s + (parseFloat(o.kg) || 0), 0);
+    } else {
+      ordersMode = false;
+      const { data: customers } = await db.from('customers').select('name,weekly_kg,type');
+      demandCustomers = (customers || []).filter(c => parseFloat(c.weekly_kg) > 0)
+        .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
+      demandKg = demandCustomers.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0);
+    }
 
     // Render
     renderDashboardStats({
@@ -80,7 +95,7 @@ async function loadDashboard() {
       recentProblems: recentProblems || [],
       chartBatches: (chartBatches || []).reverse(),
       growingPlots,
-      weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers }
+      weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers, ordersMode }
     });
 
   } catch (err) {
@@ -143,27 +158,28 @@ function renderDashboardStats(data) {
   // แผนส่งผักสัปดาห์นี้
   const wkEl = el('dash-weekly-plan');
   if (wkEl && data.weeklyPlan) {
-    const { supplyKg, demandKg, demandCustomers } = data.weeklyPlan;
+    const { supplyKg, demandKg, demandCustomers, ordersMode } = data.weeklyPlan;
     const balance = supplyKg - demandKg;
     const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
     const balanceTxt = balance >= 0
       ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
       : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
+    const demandLabel = ordersMode ? '📦 ลูกค้าสั่ง (ออเดอร์สัปดาห์นี้)' : '📦 ลูกค้าต้องการ/สัปดาห์';
     const custList = demandCustomers.length
       ? demandCustomers.map(c => `
         <div class="pe-row">
-          <span class="pe-desc">${c.type === 'farm' ? '🚜' : '🧺'} ${c.name}</span>
+          <span class="pe-desc">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
           <span class="pe-amt" style="color:var(--accent)">${kg(parseFloat(c.weekly_kg))} กก.</span>
         </div>`).join('')
-      : '<div class="text-sub" style="padding:8px 0">ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์</div>';
+      : `<div class="text-sub" style="padding:8px 0">${ordersMode ? '' : 'ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์'}</div>`;
     wkEl.innerHTML = `
       <div class="savings-card" style="padding:14px 0">
         <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
-        <div class="savings-row"><span>📦 ลูกค้าต้องการ/สัปดาห์</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
+        <div class="savings-row"><span>${demandLabel}</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
         <div class="savings-divider"></div>
         <div class="savings-row savings-total"><span>สรุป</span><span>${balanceTxt}</span></div>
       </div>
-      <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง</div>
+      <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง ${ordersMode ? '' : '<span style="font-weight:400">(ตั้งออเดอร์รายสัปดาห์ได้ที่หน้าลูกค้า)</span>'}</div>
       <div class="card" style="padding:4px 14px">${custList}</div>`;
   }
 

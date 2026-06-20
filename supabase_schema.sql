@@ -138,6 +138,18 @@ CREATE TABLE IF NOT EXISTS personal_expenses (
 -- เผื่อเคยสร้างตารางแบบมี CHECK เดิมไว้ ให้ปลดออกเพื่อรองรับหมวดใหม่ (เช่น กาแฟ)
 ALTER TABLE personal_expenses DROP CONSTRAINT IF EXISTS personal_expenses_category_check;
 
+-- 11. ออเดอร์รายสัปดาห์ (Weekly orders)
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  week_start DATE NOT NULL,        -- วันจันทร์ของสัปดาห์นั้น
+  customer_name TEXT NOT NULL,
+  kg NUMERIC(8,2) NOT NULL,
+  vegetable_type TEXT,
+  delivered BOOLEAN DEFAULT FALSE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
 -- ===========================
@@ -151,6 +163,7 @@ ALTER TABLE income              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE personal_expenses   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders              ENABLE ROW LEVEL SECURITY;
 
 -- Policies (drop ก่อนสร้างใหม่ เพื่อให้รันซ้ำได้)
 DO $$
@@ -158,7 +171,7 @@ DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'seed_batches','plots','plot_cycles','problems','todos',
-    'calendar_activities','income','expenses','customers','personal_expenses'
+    'calendar_activities','income','expenses','customers','personal_expenses','orders'
   ] LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Allow all" ON %I;', t);
     EXECUTE format('DROP POLICY IF EXISTS "Allow all for authenticated" ON %I;', t);
