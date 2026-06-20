@@ -12,6 +12,10 @@ function setCustomerFilter(f, btn) {
 }
 
 // ===== WEEKLY ORDERS =====
+let orderWeek = null; // วันจันทร์ของสัปดาห์ที่กำลังดู
+const TH_DAYS = ['วันอาทิตย์','วันจันทร์','วันอังคาร','วันพุธ','วันพฤหัสบดี','วันศุกร์','วันเสาร์'];
+function thDay(d) { return TH_DAYS[new Date(d).getDay()]; }
+
 function weekStartStr(d = new Date()) {
   const x = new Date(d);
   const day = (x.getDay() + 6) % 7; // 0 = Monday
@@ -19,12 +23,22 @@ function weekStartStr(d = new Date()) {
   return x.toISOString().split('T')[0];
 }
 
+function onOrderWeekChange() {
+  const v = document.getElementById('order-week-picker').value;
+  orderWeek = weekStartStr(v ? new Date(v) : new Date());
+  loadOrders();
+}
+
 async function loadOrders() {
-  const ws = weekStartStr();
-  // label: ช่วงสัปดาห์ (จ.–อา.)
-  const end = new Date(ws); end.setDate(end.getDate() + 6);
+  if (!orderWeek) orderWeek = weekStartStr();
+  const ws = orderWeek;
+  const picker = document.getElementById('order-week-picker');
+  if (picker && !picker.value) picker.value = ws;
+  // label: ช่วงสัปดาห์ พร้อมชื่อวัน (วันจันทร์ – วันอาทิตย์)
+  const endD = new Date(ws); endD.setDate(endD.getDate() + 6);
+  const end = endD.toISOString().split('T')[0];
   const lblEl = document.getElementById('order-week-label');
-  if (lblEl) lblEl.textContent = `${formatDateTH(ws)} – ${formatDateTH(end.toISOString().split('T')[0])}`;
+  if (lblEl) lblEl.textContent = `${thDay(ws)} ${formatDateTH(ws)} – ${thDay(end)} ${formatDateTH(end)}`;
 
   // customer dropdown
   const sel = document.getElementById('order-customer');
@@ -60,7 +74,7 @@ async function addOrder() {
   const kg = parseFloat(document.getElementById('order-kg').value);
   if (!name) return showToast('ยังไม่มีลูกค้าให้เลือก','error');
   if (!kg || kg <= 0) return showToast('กรุณาระบุจำนวนกิโล','error');
-  const { error } = await db.from('orders').insert({ week_start: weekStartStr(), customer_name: name, kg });
+  const { error } = await db.from('orders').insert({ week_start: orderWeek || weekStartStr(), customer_name: name, kg });
   if (error) return showToast('บันทึกไม่สำเร็จ: ' + (error.message || error), 'error');
   showToast('เพิ่มออเดอร์แล้ว');
   document.getElementById('order-kg').value = '';
