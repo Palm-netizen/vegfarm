@@ -231,6 +231,8 @@ async function deleteIncome(id) {
 }
 
 // ===== EXPENSE =====
+let editExpenseId = null;
+
 async function saveExpense() {
   const date     = document.getElementById('finance-date-expense').value;
   const category = document.getElementById('expense-category').value;
@@ -242,25 +244,45 @@ async function saveExpense() {
   if (!category)          return showToast('กรุณาเลือกหมวดหมู่','error');
   if (!amount||amount<=0) return showToast('กรุณาระบุจำนวนเงิน','error');
 
+  const payload = { expense_date:date, category, amount, description:desc||null, notes:notes||null };
   setLoading(true);
   try {
-    const { error } = await db.from('expenses').insert({
-      expense_date:date, category, amount, description:desc||null, notes:notes||null
-    });
-    if (error) throw error;
-    showToast('บันทึกรายจ่ายสำเร็จ');
+    if (editExpenseId) {
+      const { error } = await db.from('expenses').update(payload).eq('id', editExpenseId);
+      if (error) throw error;
+      showToast('อัปเดตรายจ่ายสำเร็จ'); editExpenseId = null;
+    } else {
+      const { error } = await db.from('expenses').insert(payload);
+      if (error) throw error;
+      showToast('บันทึกรายจ่ายสำเร็จ');
+    }
     resetExpenseForm(); loadExpenseList(); loadFinanceSummary();
   } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
   finally { setLoading(false); }
 }
 
 function resetExpenseForm() {
+  editExpenseId = null;
+  const btn = document.getElementById('expense-save-btn'); if (btn) btn.textContent = 'บันทึกรายจ่าย';
   document.getElementById('finance-date-expense').value = new Date().toISOString().split('T')[0];
   ['expense-amount','expense-desc','finance-notes-expense'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   document.getElementById('expense-category').value='';
   document.getElementById('expense-amount-preview').textContent='';
+}
+
+async function editExpense(id) {
+  const { data } = await db.from('expenses').select('*').eq('id', id).single();
+  if (!data) return;
+  editExpenseId = id;
+  document.getElementById('finance-date-expense').value = data.expense_date;
+  document.getElementById('expense-category').value = data.category;
+  document.getElementById('expense-amount').value = data.amount;
+  document.getElementById('expense-desc').value = data.description || '';
+  document.getElementById('finance-notes-expense').value = data.notes || '';
+  const btn = document.getElementById('expense-save-btn'); if (btn) btn.textContent = 'อัปเดตรายจ่าย';
+  document.querySelector('#fpanel-expense .card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Auto-fill fixed amounts
@@ -292,6 +314,7 @@ async function loadExpenseList() {
       <span class="pe-cat" style="background:var(--accent-tint);color:var(--accent)">${catLbl[r.category]||r.category}</span>
       <span class="pe-desc">${r.description||'-'} <span class="pe-date">${formatDateTH(r.expense_date)}</span></span>
       <span class="pe-amt" style="color:var(--accent)">฿${parseFloat(r.amount).toLocaleString()}</span>
+      <button class="pe-edit" onclick="editExpense('${r.id}')" aria-label="แก้ไข">✎</button>
       <button class="pe-del" onclick="deleteExpense('${r.id}')" aria-label="ลบ">×</button>
     </div>`).join('') + '</div>';
 }
@@ -306,6 +329,7 @@ async function deleteExpense(id) {
 const PERSONAL_CAT = { food:'กิน/อาหาร', coffee:'กาแฟ', living:'ของใช้ในบ้าน', loan:'ผ่อน/หนี้', health:'สุขภาพ', transport:'เดินทาง', other:'อื่นๆ' };
 let allPersonal = [];
 let personalSearch = '';
+let editPersonalId = null;
 
 async function savePersonal() {
   const date     = document.getElementById('personal-date').value;
@@ -317,18 +341,37 @@ async function savePersonal() {
   if (!category)          return showToast('กรุณาเลือกหมวดหมู่','error');
   if (!amount||amount<=0) return showToast('กรุณาระบุจำนวนเงิน','error');
 
+  const payload = { expense_date:date, category, amount, description:desc||null };
   setLoading(true);
   try {
-    const { error } = await db.from('personal_expenses').insert({
-      expense_date:date, category, amount, description:desc||null
-    });
-    if (error) throw error;
-    showToast('บันทึกรายจ่ายส่วนตัวสำเร็จ');
+    if (editPersonalId) {
+      const { error } = await db.from('personal_expenses').update(payload).eq('id', editPersonalId);
+      if (error) throw error;
+      showToast('อัปเดตรายจ่ายส่วนตัวสำเร็จ'); editPersonalId = null;
+    } else {
+      const { error } = await db.from('personal_expenses').insert(payload);
+      if (error) throw error;
+      showToast('บันทึกรายจ่ายส่วนตัวสำเร็จ');
+    }
+    const btn = document.getElementById('personal-save-btn'); if (btn) btn.textContent = 'บันทึกรายจ่ายส่วนตัว';
+    document.getElementById('personal-category').value = '';
     document.getElementById('personal-amount').value='';
     document.getElementById('personal-desc').value='';
     loadPersonalList(); loadFinanceSummary();
   } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
   finally { setLoading(false); }
+}
+
+async function editPersonal(id) {
+  const r = allPersonal.find(x => x.id === id);
+  if (!r) return;
+  editPersonalId = id;
+  document.getElementById('personal-date').value = r.expense_date;
+  document.getElementById('personal-category').value = r.category;
+  document.getElementById('personal-amount').value = r.amount;
+  document.getElementById('personal-desc').value = r.description || '';
+  const btn = document.getElementById('personal-save-btn'); if (btn) btn.textContent = 'อัปเดตรายจ่ายส่วนตัว';
+  document.querySelector('#fpanel-personal .card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function loadPersonalList() {
@@ -364,6 +407,7 @@ function renderPersonalList() {
       <span class="pe-cat">${PERSONAL_CAT[r.category] || r.category}</span>
       <span class="pe-desc">${r.description || '-'} <span class="pe-date">${formatDateTH(r.expense_date)}</span></span>
       <span class="pe-amt">฿${parseFloat(r.amount).toLocaleString()}</span>
+      <button class="pe-edit" onclick="editPersonal('${r.id}')" aria-label="แก้ไข">✎</button>
       <button class="pe-del" onclick="deletePersonal('${r.id}')" aria-label="ลบ">×</button>
     </div>`).join('') + '</div>';
 }
