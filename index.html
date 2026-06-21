@@ -29,7 +29,7 @@
     </div>
     <div class="login-title">VegFarm</div>
     <div class="login-sub">เข้าสู่ระบบเพื่อจัดการฟาร์ม</div>
-    <input id="login-email" type="email" class="form-control" placeholder="อีเมล" autocomplete="username">
+    <input id="login-email" type="text" class="form-control" placeholder="ชื่อผู้ใช้" autocomplete="username">
     <input id="login-password" type="password" class="form-control" placeholder="รหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')vfSignIn()">
     <button class="btn btn-primary" id="login-btn" style="width:100%" onclick="vfSignIn()">เข้าสู่ระบบ</button>
     <div id="login-error" class="login-error"></div>
@@ -959,7 +959,7 @@
 
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
-<script src="js/supabase.js?v=3"></script>
+<script src="js/supabase.js?v=4"></script>
 <script src="js/dashboard.js?v=6"></script>
 <script src="js/seeds.js?v=8"></script>
 <script src="js/plots.js?v=8"></script>

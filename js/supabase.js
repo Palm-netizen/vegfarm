@@ -196,16 +196,18 @@ async function vfHasSession() {
 }
 
 async function vfSignIn() {
-  const email = document.getElementById('login-email').value.trim();
+  let email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
-  if (!email || !password) { errEl.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน'; return; }
+  if (!email || !password) { errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน'; return; }
+  // ล็อกอินด้วยชื่อ: ถ้าไม่ใช่อีเมล (ไม่มี @) เติมโดเมนให้อัตโนมัติ
+  if (!email.includes('@')) email = email.toLowerCase() + '@vegfarm.local';
   const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.textContent = 'กำลังเข้าสู่ระบบ...';
   const { error } = await db.auth.signInWithPassword({ email, password });
   btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ';
-  if (error) { errEl.textContent = 'เข้าสู่ระบบไม่สำเร็จ — ตรวจอีเมล/รหัสผ่าน'; return; }
+  if (error) { errEl.textContent = 'เข้าสู่ระบบไม่สำเร็จ — ตรวจชื่อผู้ใช้/รหัสผ่าน'; return; }
   document.getElementById('login-screen').style.display = 'none';
   if (typeof vfStartApp === 'function') vfStartApp();
 }
