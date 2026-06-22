@@ -61,24 +61,43 @@ async function loadOrders() {
   list.innerHTML = orders.length
     ? '<div class="card" style="padding:4px 14px;margin-top:8px">' + orders.map(o => `
         <div class="pe-row">
-          <span class="pe-desc">${o.delivered ? '✅ ' : ''}<strong>${o.customer_name}</strong></span>
+          <span class="pe-desc"><strong>${o.customer_name}</strong></span>
           <span class="pe-amt" style="color:var(--primary)">${parseFloat(o.kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.</span>
-          <button class="mini-btn" onclick="toggleOrderDelivered('${o.id}', ${!o.delivered})">${o.delivered ? 'ยังไม่ส่ง' : 'ส่งแล้ว'}</button>
+          <button class="status-pill ${o.delivered ? 'done-pill' : 'wait-pill'}" onclick="toggleOrderDelivered('${o.id}', ${!o.delivered})">${o.delivered ? '✅ ส่งแล้ว' : '⬜ ยังไม่ส่ง'}</button>
+          <button class="pe-edit" onclick="editOrder('${o.id}')" aria-label="แก้ไข">✎</button>
           <button class="pe-del" onclick="deleteOrder('${o.id}')" aria-label="ลบ">×</button>
         </div>`).join('') + '</div>'
     : '<div class="text-sub" style="margin-top:8px">ยังไม่มีออเดอร์สัปดาห์นี้ — เลือกลูกค้าแล้วกดเพิ่ม</div>';
 }
+
+let editOrderId = null;
 
 async function addOrder() {
   const name = document.getElementById('order-customer').value;
   const kg = parseFloat(document.getElementById('order-kg').value);
   if (!name) return showToast('ยังไม่มีลูกค้าให้เลือก','error');
   if (!kg || kg <= 0) return showToast('กรุณาระบุจำนวนกิโล','error');
-  const { error } = await db.from('orders').insert({ week_start: orderWeek || weekStartStr(), customer_name: name, kg });
+  let error;
+  if (editOrderId) {
+    ({ error } = await db.from('orders').update({ customer_name: name, kg }).eq('id', editOrderId));
+  } else {
+    ({ error } = await db.from('orders').insert({ week_start: orderWeek || weekStartStr(), customer_name: name, kg }));
+  }
   if (error) return showToast('บันทึกไม่สำเร็จ: ' + (error.message || error), 'error');
-  showToast('เพิ่มออเดอร์แล้ว');
+  showToast(editOrderId ? 'แก้ไขออเดอร์แล้ว' : 'เพิ่มออเดอร์แล้ว');
+  editOrderId = null;
+  const btn = document.getElementById('order-add-btn'); if (btn) btn.textContent = 'เพิ่ม';
   document.getElementById('order-kg').value = '';
   loadOrders();
+}
+
+async function editOrder(id) {
+  const { data: o } = await db.from('orders').select('*').eq('id', id).single();
+  if (!o) return;
+  editOrderId = id;
+  document.getElementById('order-customer').value = o.customer_name;
+  document.getElementById('order-kg').value = o.kg;
+  const btn = document.getElementById('order-add-btn'); if (btn) btn.textContent = 'อัปเดต';
 }
 
 async function toggleOrderDelivered(id, val) {

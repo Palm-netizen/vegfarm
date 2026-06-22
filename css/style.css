@@ -994,6 +994,11 @@ select.form-control { cursor: pointer; }
 .status-pill { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
 .status-pill.growing { background: #FEF3C7; color: #D97706; }
 [data-theme="dark"] .status-pill.growing { background: #3A2E10; color: #FBBF24; }
+/* order delivered status (clickable) */
+.status-pill.done-pill, .status-pill.wait-pill { border: none; cursor: pointer; font-family: var(--font-body); }
+.status-pill.done-pill { background: var(--primary-tint-strong); color: var(--primary-dark); }
+.status-pill.wait-pill { background: var(--bg); color: var(--ink-soft); border: 1px solid var(--line); }
+[data-theme="dark"] .status-pill.done-pill { background: #14271C; color: #4ADE80; }
 
 /* ===== Seed monthly goal — animated green progress bar ===== */
 .seed-goal-card { margin-bottom: 14px; }
