@@ -86,7 +86,7 @@ async function loadDashboard() {
     }
 
     // 9. ออเดอร์วันนี้ที่ต้องส่ง
-    const { data: todayOrders } = await db.from('orders').select('customer_name,vegetable_type,kg,delivered').eq('order_date', today);
+    const { data: todayOrders } = await db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today);
 
     // Render
     renderDashboardStats({
@@ -179,7 +179,8 @@ function renderDashboardStats(data) {
         <div class="card" style="padding:4px 14px;margin-top:8px">
           ${ords.map(o => `
             <div class="pe-row">
-              <span class="pe-desc">${o.delivered ? '✅ ' : '⬜ '}<strong>${o.customer_name}</strong> <span class="pe-date">${o.vegetable_type ? (VEG[o.vegetable_type]||o.vegetable_type) : ''}</span></span>
+              <span class="dash-ord-check ${o.delivered ? 'on' : ''}" role="checkbox" aria-checked="${o.delivered}" tabindex="0" onclick="toggleDashOrder('${o.id}', ${!o.delivered})">${o.delivered ? '✅' : ''}</span>
+              <span class="pe-desc" style="flex:1"><strong>${o.customer_name}</strong> <span class="pe-date">${o.vegetable_type ? (VEG[o.vegetable_type]||o.vegetable_type) : ''}</span></span>
               <span class="pe-amt" style="color:var(--primary)">${kgN(parseFloat(o.kg))} กก.</span>
             </div>`).join('')}
         </div>`;
@@ -301,6 +302,13 @@ function renderDashboardChart(batches) {
       <span><span style="display:inline-block;width:10px;height:10px;background:#16A34A;border-radius:2px;margin-right:5px"></span>คาดการณ์ KG</span>
       <span><span style="display:inline-block;width:10px;height:10px;background:#F59E0B;border-radius:50%;margin-right:5px"></span>จำนวนเมล็ด</span>
     </div>`;
+}
+
+// ติ๊กถูกออเดอร์วันนี้จากหน้า Dashboard
+async function toggleDashOrder(id, val) {
+  const { error } = await db.from('orders').update({ delivered: val }).eq('id', id);
+  if (error) return showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
+  loadDashboard();
 }
 
 // ===== Helpers =====

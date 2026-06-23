@@ -933,6 +933,9 @@ select.form-control { cursor: pointer; }
 .pe-del { border: none; background: transparent; color: var(--danger); font-weight: 700; cursor: pointer; padding: 0 4px; font-size: 18px; line-height: 1; flex: none; }
 .pe-edit { border: none; background: transparent; color: var(--ink-soft); font-weight: 700; cursor: pointer; padding: 0 4px; font-size: 15px; line-height: 1; flex: none; }
 .pe-edit:hover { color: var(--primary); }
+.dash-ord-check { width: 24px; height: 24px; flex: none; border: 2px solid var(--line); border-radius: 7px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; line-height: 1; background: var(--paper); transition: transform .12s, border-color .12s, background .12s; }
+.dash-ord-check.on { border-color: var(--primary); background: var(--primary-tint); }
+.dash-ord-check:active { transform: scale(.88); }
 
 /* ===== Login screen ===== */
 #login-screen {
