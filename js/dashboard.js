@@ -162,29 +162,8 @@ function renderDashboardStats(data) {
   // ออเดอร์วันนี้ที่ต้องส่ง
   const toEl = el('dash-today-orders');
   if (toEl) {
-    const ords = data.todayOrders || [];
-    const VEG = { green_oak:'กรีนโอ๊ค', red_oak:'เรดโอ๊ค', finley:'ฟินเลย์', cos:'คอส', butterhead:'บัตเตอร์เฮด' };
-    const price = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
-    const kgN = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
-    if (!ords.length) {
-      toEl.innerHTML = '<div class="empty-state">วันนี้ยังไม่มีออเดอร์ที่ต้องส่ง</div>';
-    } else {
-      const tkg = ords.reduce((s, o) => s + parseFloat(o.kg || 0), 0);
-      const done = ords.filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
-      toEl.innerHTML = `
-        <div class="savings-card" style="padding:14px 0">
-          <div class="savings-row"><span>📦 รวมต้องส่ง</span><b style="color:var(--primary)">${kgN(tkg)} กก. · ฿${(tkg*price).toLocaleString('th-TH',{maximumFractionDigits:0})}</b></div>
-          <div class="savings-row"><span>✅ ส่งแล้ว</span><b>${kgN(done)} / ${kgN(tkg)} กก.</b></div>
-        </div>
-        <div class="card" style="padding:4px 14px;margin-top:8px">
-          ${ords.map(o => `
-            <div class="pe-row">
-              <span class="dash-ord-check ${o.delivered ? 'on' : ''}" role="checkbox" aria-checked="${o.delivered}" tabindex="0" onclick="toggleDashOrder('${o.id}', ${!o.delivered})">${o.delivered ? '✅' : ''}</span>
-              <span class="pe-desc" style="flex:1"><strong>${o.customer_name}</strong> <span class="pe-date">${o.vegetable_type ? (VEG[o.vegetable_type]||o.vegetable_type) : ''}</span></span>
-              <span class="pe-amt" style="color:var(--primary)">${kgN(parseFloat(o.kg))} กก.</span>
-            </div>`).join('')}
-        </div>`;
-    }
+    dashTodayOrders = data.todayOrders || [];
+    renderTodayOrders();
   }
 
   // แผนส่งผักสัปดาห์นี้
@@ -304,11 +283,47 @@ function renderDashboardChart(batches) {
     </div>`;
 }
 
-// ติ๊กถูกออเดอร์วันนี้จากหน้า Dashboard
+// ออเดอร์วันนี้ที่ต้องส่ง — render เฉพาะส่วนนี้ (ไม่โหลดทั้งหน้า)
+let dashTodayOrders = [];
+function renderTodayOrders() {
+  const toEl = document.getElementById('dash-today-orders');
+  if (!toEl) return;
+  const ords = dashTodayOrders || [];
+  const VEG = { green_oak:'กรีนโอ๊ค', red_oak:'เรดโอ๊ค', finley:'ฟินเลย์', cos:'คอส', butterhead:'บัตเตอร์เฮด' };
+  const price = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
+  const kgN = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  if (!ords.length) {
+    toEl.innerHTML = '<div class="empty-state">วันนี้ยังไม่มีออเดอร์ที่ต้องส่ง</div>';
+    return;
+  }
+  const tkg = ords.reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+  const done = ords.filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+  toEl.innerHTML = `
+    <div class="savings-card" style="padding:14px 0">
+      <div class="savings-row"><span>📦 รวมต้องส่ง</span><b style="color:var(--primary)">${kgN(tkg)} กก. · ฿${(tkg*price).toLocaleString('th-TH',{maximumFractionDigits:0})}</b></div>
+      <div class="savings-row"><span>✅ ส่งแล้ว</span><b>${kgN(done)} / ${kgN(tkg)} กก.</b></div>
+    </div>
+    <div class="card" style="padding:4px 14px;margin-top:8px">
+      ${ords.map(o => `
+        <div class="pe-row">
+          <span class="dash-ord-check ${o.delivered ? 'on' : ''}" role="checkbox" aria-checked="${o.delivered}" tabindex="0" onclick="toggleDashOrder('${o.id}', ${!o.delivered})">${o.delivered ? '✅' : ''}</span>
+          <span class="pe-desc" style="flex:1"><strong>${o.customer_name}</strong> <span class="pe-date">${o.vegetable_type ? (VEG[o.vegetable_type]||o.vegetable_type) : ''}</span></span>
+          <span class="pe-amt" style="color:var(--primary)">${kgN(parseFloat(o.kg))} กก.</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ติ๊กถูกออเดอร์วันนี้จากหน้า Dashboard — อัปเดตทันที (optimistic) แล้วค่อยบันทึกเบื้องหลัง
 async function toggleDashOrder(id, val) {
+  const o = dashTodayOrders.find(x => x.id === id);
+  if (o) o.delivered = val;          // อัปเดต UI ทันที
+  renderTodayOrders();
   const { error } = await db.from('orders').update({ delivered: val }).eq('id', id);
-  if (error) return showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
-  loadDashboard();
+  if (error) {
+    if (o) o.delivered = !val;       // ย้อนกลับถ้าบันทึกพลาด
+    renderTodayOrders();
+    showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
+  }
 }
 
 // ===== Helpers =====
