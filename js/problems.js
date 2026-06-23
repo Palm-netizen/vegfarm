@@ -1,7 +1,30 @@
 // js/problems.js — บันทึกปัญหา + ฐานข้อมูลปัญหา
 
-let problemPhotoFile = null;
+let problemPhotoDataUrl = null;
 let editProblemId = null;
+
+// ย่อรูปในเครื่องก่อนบันทึก (เร็วขึ้นมาก + แสดงได้เสมอเพราะเก็บเป็น data URL)
+function compressImage(file, maxDim = 1280, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) { height = Math.round(height * maxDim / width); width = maxDim; }
+        else if (height >= width && height > maxDim) { width = Math.round(width * maxDim / height); height = maxDim; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 function initProblems() {
   // Populate plot select T1-T15
@@ -13,16 +36,18 @@ function initProblems() {
 
   sel.addEventListener('change', () => loadPlotCycleInfo(sel.value));
 
-  document.getElementById('problem-photo-input').addEventListener('change', (e) => {
+  document.getElementById('problem-photo-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    problemPhotoFile = file;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      document.getElementById('problem-photo-preview').src = ev.target.result;
-      document.getElementById('problem-photo-preview').style.display = 'block';
-    };
-    reader.readAsDataURL(file);
+    try {
+      problemPhotoDataUrl = await compressImage(file);
+      const prev = document.getElementById('problem-photo-preview');
+      prev.src = problemPhotoDataUrl;
+      prev.style.display = 'block';
+    } catch (err) {
+      console.error(err);
+      showToast('อ่านรูปไม่สำเร็จ', 'error');
+    }
   });
 
   // Severity buttons
@@ -77,22 +102,12 @@ async function saveProblem() {
 
   setLoading(true);
   try {
-    let photoUrl = null;
-    if (problemPhotoFile) {
-      const fileName = `problems/${Date.now()}_${problemPhotoFile.name}`;
-      const { data: uploadData, error: uploadErr } = await db.storage
-        .from('photos')
-        .upload(fileName, problemPhotoFile);
-      if (!uploadErr) {
-        const { data: urlData } = db.storage.from('photos').getPublicUrl(fileName);
-        photoUrl = urlData.publicUrl;
-      }
-    }
+    // เก็บรูปเป็น data URL (ย่อแล้วในขั้นเลือกรูป) — บันทึกเร็ว และแสดงย้อนหลังได้เสมอ
+    const photoUrl = problemPhotoDataUrl || null;
 
     if (editProblemId) {
       // แก้ไขรายการเดิม
-      const patch = { plot_code: plotCode, problem_date: date, problem_type: type, severity, description, solution };
-      if (photoUrl) patch.photo_url = photoUrl;
+      const patch = { plot_code: plotCode, problem_date: date, problem_type: type, severity, description, solution, photo_url: photoUrl };
       const { error } = await db.from('problems').update(patch).eq('id', editProblemId);
       if (error) throw error;
       showToast('แก้ไขปัญหาสำเร็จ');
@@ -142,7 +157,7 @@ function resetProblemForm() {
   document.getElementById('problem-plot-info').innerHTML = '';
   document.querySelectorAll('.problem-type-btn').forEach(b => b.classList.remove('checked'));
   document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('selected'));
-  problemPhotoFile = null;
+  problemPhotoDataUrl = null;
   editProblemId = null;
   document.getElementById('problem-save-btn').textContent = 'บันทึกปัญหา';
   document.getElementById('problem-cancel-edit').style.display = 'none';
@@ -166,11 +181,12 @@ async function editProblem(id) {
   document.getElementById('problem-severity-value').value = p.severity || '';
   document.querySelectorAll('.severity-btn').forEach(b =>
     b.classList.toggle('selected', b.dataset.value === p.severity));
-  // รูปเดิม
+  // รูปเดิม — เก็บไว้ใช้ต่อถ้าไม่ได้เลือกรูปใหม่
   const prev = document.getElementById('problem-photo-preview');
+  problemPhotoDataUrl = p.photo_url || null;
   if (p.photo_url) { prev.src = p.photo_url; prev.style.display = 'block'; }
   else { prev.style.display = 'none'; }
-  problemPhotoFile = null;
+  document.getElementById('problem-photo-input').value = '';
   document.getElementById('problem-save-btn').textContent = 'บันทึกการแก้ไข';
   document.getElementById('problem-cancel-edit').style.display = 'block';
   document.getElementById('page-problems').scrollIntoView({ behavior: 'smooth' });
@@ -215,25 +231,49 @@ async function loadProblemDatabase() {
     return;
   }
 
+  lastProblems = problems;   // เก็บไว้ให้ป๊อปอัพดูรายละเอียด
   container.innerHTML = problems.map(p => `
-    <div class="card">
+    <div class="card" style="cursor:pointer" onclick="openProblemDetail('${p.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start">
         <div>
           <span class="badge badge-green">${p.plot_code}</span>
-          <strong style="margin-left:6px">${problemTypeLabel(p.problem_type)}</strong>
+          <strong style="margin-left:6px">${problemIcon2(p.problem_type)} ${problemTypeLabel(p.problem_type)}</strong>
+          ${p.resolved ? '<span class="badge" style="margin-left:6px;background:var(--primary-tint-strong);color:var(--primary-dark)">แก้แล้ว</span>' : ''}
         </div>
         <span class="severity-${p.severity}">${severityLabel2(p.severity)}</span>
       </div>
-      <div class="text-sub" style="margin:8px 0">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}</div>
-      ${p.description ? `<div style="margin-bottom:6px"><strong>อาการ:</strong> ${p.description}</div>` : ''}
-      ${p.solution ? `<div style="margin-bottom:6px"><strong>วิธีแก้:</strong> ${p.solution}</div>` : ''}
-      ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px" />` : ''}
-      <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end">
+      <div class="text-sub" style="margin:8px 0 2px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}${p.photo_url ? ' · 📷 มีรูป' : ''}</div>
+      ${p.description ? `<div class="text-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.description}</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end" onclick="event.stopPropagation()">
         <button class="btn btn-outline btn-sm" onclick="toggleResolved('${p.id}', ${!p.resolved})">${p.resolved ? 'ยังไม่แก้' : 'แก้แล้ว'}</button>
         <button class="btn btn-outline btn-sm" onclick="editProblem('${p.id}')">✎ แก้ไข</button>
         <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}')">ลบ</button>
       </div>
     </div>`).join('');
+}
+
+// ป๊อปอัพดูรายละเอียดปัญหาย้อนหลัง (ข้อความ + รูปเต็ม)
+let lastProblems = [];
+function openProblemDetail(id) {
+  const p = lastProblems.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('prob-detail-title').innerHTML =
+    `${problemIcon2(p.problem_type)} ${problemTypeLabel(p.problem_type)}`;
+  document.getElementById('prob-detail-body').innerHTML = `
+    <div class="prob-detail-meta">
+      <span class="badge badge-green">${p.plot_code}</span>
+      <span class="severity-${p.severity}">${severityLabel2(p.severity)}</span>
+      ${p.resolved ? '<span class="badge" style="background:var(--primary-tint-strong);color:var(--primary-dark)">แก้แล้ว</span>' : '<span class="badge" style="background:var(--bg);color:var(--ink-soft)">ยังไม่แก้</span>'}
+    </div>
+    <div class="text-sub" style="margin:8px 0 14px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}</div>
+    <div class="prob-detail-section"><div class="pds-label">อาการ</div><div class="pds-text">${p.description ? p.description : '<span class="text-sub">— ไม่ได้ระบุ —</span>'}</div></div>
+    <div class="prob-detail-section"><div class="pds-label">วิธีแก้</div><div class="pds-text">${p.solution ? p.solution : '<span class="text-sub">— ไม่ได้ระบุ —</span>'}</div></div>
+    ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px" />` : ''}`;
+  document.getElementById('prob-detail-modal').style.display = 'flex';
+}
+
+function closeProblemDetail() {
+  document.getElementById('prob-detail-modal').style.display = 'none';
 }
 
 async function toggleResolved(id, resolved) {

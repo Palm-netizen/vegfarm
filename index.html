@@ -30,7 +30,7 @@
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=20">
+<link rel="stylesheet" href="css/style.css?v=21">
 </head>
 <body>
 
@@ -967,6 +967,16 @@
   </div>
 </div>
 
+<!-- ===== PROBLEM DETAIL POPUP ===== -->
+<div class="modal-overlay" id="prob-detail-modal" onclick="if(event.target===this)closeProblemDetail()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="prob-detail-title">ปัญหา</div>
+    <div id="prob-detail-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px" onclick="closeProblemDetail()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== CONFIRM DIALOG ===== -->
 <div class="modal-overlay" id="vf-confirm" style="display:none" onclick="if(event.target===this)vfConfirmResolve(false)">
   <div class="modal-sheet confirm-sheet">
@@ -1021,7 +1031,7 @@
 <script defer src="js/dashboard.js?v=12"></script>
 <script defer src="js/seeds.js?v=8"></script>
 <script defer src="js/plots.js?v=9"></script>
-<script defer src="js/problems.js?v=3"></script>
+<script defer src="js/problems.js?v=4"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=12"></script>

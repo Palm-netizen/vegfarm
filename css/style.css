@@ -416,6 +416,10 @@ select.form-control { cursor: pointer; }
   color: var(--danger);
 }
 .btn-danger-outline:active { background: var(--danger); color: #fff; }
+.prob-detail-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prob-detail-section { margin-bottom: 14px; }
+.pds-label { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 3px; }
+.pds-text { font-size: 15px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; }
 .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
 .btn-icon {
   padding: 8px; border-radius: 10px; background: var(--bg);
