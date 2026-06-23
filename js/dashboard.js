@@ -169,32 +169,8 @@ function renderDashboardStats(data) {
   }
 
   // แผนส่งผักสัปดาห์นี้
-  const wkEl = el('dash-weekly-plan');
-  if (wkEl && data.weeklyPlan) {
-    const { supplyKg, demandKg, demandCustomers, ordersMode } = data.weeklyPlan;
-    const balance = supplyKg - demandKg;
-    const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
-    const balanceTxt = balance >= 0
-      ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
-      : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
-    const demandLabel = ordersMode ? '📦 ลูกค้าสั่ง (สัปดาห์นี้ ไม่รวมวันนี้)' : '📦 ลูกค้าต้องการ/สัปดาห์';
-    const custList = demandCustomers.length
-      ? demandCustomers.map(c => `
-        <div class="pe-row">
-          <span class="pe-desc">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
-          <span class="pe-amt" style="color:var(--accent)">${kg(parseFloat(c.weekly_kg))} กก.</span>
-        </div>`).join('')
-      : `<div class="text-sub" style="padding:8px 0">${ordersMode ? '' : 'ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์'}</div>`;
-    wkEl.innerHTML = `
-      <div class="savings-card" style="padding:14px 0">
-        <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
-        <div class="savings-row"><span>${demandLabel}</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
-        <div class="savings-divider"></div>
-        <div class="savings-row savings-total"><span>สรุป</span><span>${balanceTxt}</span></div>
-      </div>
-      <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง ${ordersMode ? '' : '<span style="font-weight:400">(ตั้งออเดอร์รายสัปดาห์ได้ที่หน้าลูกค้า)</span>'}</div>
-      <div class="card" style="padding:4px 14px">${custList}</div>`;
-  }
+  dashWeeklyPlan = data.weeklyPlan || null;
+  renderWeeklyPlan();
 
   // Today todos
   const todoHtml = data.todayTodos.length
@@ -315,15 +291,56 @@ function renderTodayOrders() {
     </div>`;
 }
 
+// แผนส่งผักสัปดาห์นี้ — render เฉพาะส่วนนี้ (หักออเดอร์วันนี้ที่ส่งแล้วออกจากยอดสัปดาห์)
+let dashWeeklyPlan = null;
+function renderWeeklyPlan() {
+  const wkEl = document.getElementById('dash-weekly-plan');
+  if (!wkEl || !dashWeeklyPlan) return;
+  const { supplyKg, demandKg, demandCustomers, ordersMode } = dashWeeklyPlan;
+  const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  // ออเดอร์วันนี้ที่ "ส่งแล้ว" → หักออกจากยอดสัปดาห์
+  const deliveredToday = (dashTodayOrders || []).filter(o => o.delivered)
+    .reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+  const remainDemand = Math.max(0, demandKg - deliveredToday);
+  const balance = supplyKg - remainDemand;
+  const balanceTxt = balance >= 0
+    ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
+    : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
+  const demandLabel = ordersMode ? '📦 ลูกค้าสั่ง (สัปดาห์นี้)' : '📦 ลูกค้าต้องการ/สัปดาห์';
+  const deliveredRow = deliveredToday > 0
+    ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>
+       <div class="savings-row"><span>คงเหลือต้องส่ง</span><b style="color:var(--accent)">${kg(remainDemand)} กก.</b></div>`
+    : '';
+  const custList = demandCustomers.length
+    ? demandCustomers.map(c => `
+      <div class="pe-row">
+        <span class="pe-desc">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
+        <span class="pe-amt" style="color:var(--accent)">${kg(parseFloat(c.weekly_kg))} กก.</span>
+      </div>`).join('')
+    : `<div class="text-sub" style="padding:8px 0">${ordersMode ? '' : 'ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์'}</div>`;
+  wkEl.innerHTML = `
+    <div class="savings-card" style="padding:14px 0">
+      <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
+      <div class="savings-row"><span>${demandLabel}</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
+      ${deliveredRow}
+      <div class="savings-divider"></div>
+      <div class="savings-row savings-total"><span>สรุป</span><span>${balanceTxt}</span></div>
+    </div>
+    <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง ${ordersMode ? '' : '<span style="font-weight:400">(ตั้งออเดอร์รายสัปดาห์ได้ที่หน้าลูกค้า)</span>'}</div>
+    <div class="card" style="padding:4px 14px">${custList}</div>`;
+}
+
 // ติ๊กถูกออเดอร์วันนี้จากหน้า Dashboard — อัปเดตทันที (optimistic) แล้วค่อยบันทึกเบื้องหลัง
 async function toggleDashOrder(id, val) {
   const o = dashTodayOrders.find(x => x.id === id);
   if (o) o.delivered = val;          // อัปเดต UI ทันที
   renderTodayOrders();
+  renderWeeklyPlan();                // อัปเดตยอดสัปดาห์ตามที่ส่งแล้ว
   const { error } = await db.from('orders').update({ delivered: val }).eq('id', id);
   if (error) {
     if (o) o.delivered = !val;       // ย้อนกลับถ้าบันทึกพลาด
     renderTodayOrders();
+    renderWeeklyPlan();
     showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
   }
 }
