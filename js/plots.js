@@ -182,11 +182,59 @@ async function editCycle(id) {
 }
 
 async function deleteCycle(id) {
-  if (!(await vfConfirm('ลบรอบนี้ออกจากประวัติ?', { okLabel: 'ลบ' }))) return;
+  if (!(await vfConfirm('ลบรอบนี้ออกจากประวัติ? (จำนวนรอบจะลดลง 1)', { okLabel: 'ลบ' }))) return;
+  // อ่านรอบที่จะลบไว้ก่อน เพื่อหักจำนวนรอบจริงของแปลง
+  const { data: cyc } = await db.from('plot_cycles').select('plot_code').eq('id', id).single();
   const { error } = await db.from('plot_cycles').delete().eq('id', id);
   if (error) return showToast('ลบไม่สำเร็จ: ' + (error.message || error), 'error');
-  showToast('ลบแล้ว');
+
+  // ลบรอบจริงไปด้วย — หัก cycle_count ของแปลงลง 1 (ไม่ต่ำกว่า 1)
+  const code = cyc?.plot_code || selectedPlotCode;
+  if (code) {
+    const { data: plot } = await db.from('plots').select('cycle_count').eq('plot_code', code).single();
+    const next = Math.max(1, (plot?.cycle_count || 1) - 1);
+    await db.from('plots').update({ cycle_count: next, updated_at: new Date().toISOString() }).eq('plot_code', code);
+  }
+
+  showToast('ลบรอบแล้ว');
+  loadAllPlots();
   if (selectedPlotCode) loadPlotDetail(selectedPlotCode);
+}
+
+// เคลียร์ข้อมูลทั้งแปลง — กรณีกรอกผิดจนจำนวนรอบเพี้ยน ให้รีเซ็ตกลับเป็นแปลงว่าง รอบ 1
+async function clearPlot() {
+  if (!selectedPlotCode) return showToast('กรุณาเลือกแปลงก่อน', 'error');
+  if (!(await vfConfirm(`เคลียร์ข้อมูลทั้งหมดของแปลง ${selectedPlotCode}? ประวัติรอบปลูกทั้งหมดจะถูกลบ และจำนวนรอบจะกลับเป็น 1`, { okLabel: 'เคลียร์ข้อมูล', danger: true, icon: '🧹' }))) return;
+
+  setLoading(true);
+  try {
+    // ลบประวัติรอบปลูกทั้งหมดของแปลงนี้
+    await db.from('plot_cycles').delete().eq('plot_code', selectedPlotCode);
+    // รีเซ็ตข้อมูลแปลงกลับเป็นว่าง รอบ 1
+    const { error } = await db.from('plots').update({
+      vegetable_type: null,
+      plant_date: null,
+      plant_age_days: null,
+      harvest_date: null,
+      estimated_kg: null,
+      actual_kg: null,
+      is_harvested: false,
+      harvest_notes: null,
+      cycle_count: 1,
+      updated_at: new Date().toISOString()
+    }).eq('plot_code', selectedPlotCode);
+    if (error) throw error;
+
+    showToast(`เคลียร์ข้อมูลแปลง ${selectedPlotCode} แล้ว`);
+    loadAllPlots();
+    document.getElementById('plot-detail-section').style.display = 'none';
+    selectedPlotCode = null;
+  } catch (err) {
+    console.error(err);
+    showToast('เคลียร์ไม่สำเร็จ: ' + (err.message || err), 'error');
+  } finally {
+    setLoading(false);
+  }
 }
 
 function toggleHarvestFields(show) {

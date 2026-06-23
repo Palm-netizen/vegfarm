@@ -24,7 +24,7 @@
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=19">
+<link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body>
 
@@ -315,6 +315,7 @@
       </div>
       <button class="btn btn-primary" onclick="savePlot()">บันทึกข้อมูลแปลง</button>
       <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="startNewCycle()">เริ่มรอบปลูกใหม่</button>
+      <button class="btn btn-danger-outline" style="width:100%;margin-top:8px" onclick="clearPlot()">🧹 เคลียร์ข้อมูลแปลง (รีเซ็ตรอบเป็น 1)</button>
 
       <div class="growth-divider"><span class="gd-label">ประวัติรอบปลูก</span></div>
       <div class="hist-list" id="plot-cycles-history"></div>
@@ -1010,7 +1011,7 @@
 <script src="js/supabase.js?v=4"></script>
 <script src="js/dashboard.js?v=11"></script>
 <script src="js/seeds.js?v=8"></script>
-<script src="js/plots.js?v=8"></script>
+<script src="js/plots.js?v=9"></script>
 <script src="js/problems.js?v=2"></script>
 <script src="js/calendar.js?v=2"></script>
 <script src="js/todos.js?v=2"></script>
