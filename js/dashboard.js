@@ -69,7 +69,9 @@ async function loadDashboard() {
     // วันจันทร์ของสัปดาห์นี้
     const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
     const weekStart = wd.toISOString().split('T')[0];
-    const { data: weekOrders } = await db.from('orders').select('customer_name,kg,delivered').eq('week_start', weekStart);
+    const { data: weekOrdersAll } = await db.from('orders').select('customer_name,kg,delivered,order_date').eq('week_start', weekStart);
+    // หักออเดอร์ของวันนี้ออก (โชว์แยกในส่วน "ออเดอร์วันนี้ที่ต้องส่ง") — ไม่บวกซ้ำ
+    const weekOrders = (weekOrdersAll || []).filter(o => o.order_date !== today);
 
     let demandCustomers, demandKg, ordersMode;
     if (weekOrders && weekOrders.length) {
@@ -175,7 +177,7 @@ function renderDashboardStats(data) {
     const balanceTxt = balance >= 0
       ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
       : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
-    const demandLabel = ordersMode ? '📦 ลูกค้าสั่ง (ออเดอร์สัปดาห์นี้)' : '📦 ลูกค้าต้องการ/สัปดาห์';
+    const demandLabel = ordersMode ? '📦 ลูกค้าสั่ง (สัปดาห์นี้ ไม่รวมวันนี้)' : '📦 ลูกค้าต้องการ/สัปดาห์';
     const custList = demandCustomers.length
       ? demandCustomers.map(c => `
         <div class="pe-row">
