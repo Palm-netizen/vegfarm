@@ -6,6 +6,11 @@
 <meta name="theme-color" content="#16A34A">
 <title>VegFarm — Smart Farm</title>
 
+<!-- เร่งการเชื่อมต่อปลายทางตั้งแต่ต้น (ลดเวลาโหลดครั้งแรก) -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://tdlbfnlnygxcgmwadcvj.supabase.co" crossorigin>
+
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -21,8 +26,9 @@
 <!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
 <link rel="stylesheet" href="css/fonts.css">
 
-<!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้)
+     defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="css/style.css?v=20">
 </head>
@@ -1009,17 +1015,17 @@
   </a>
 </div>
 
-<!-- ===== SCRIPTS ===== -->
-<script src="js/config.js"></script>
-<script src="js/supabase.js?v=4"></script>
-<script src="js/dashboard.js?v=12"></script>
-<script src="js/seeds.js?v=8"></script>
-<script src="js/plots.js?v=9"></script>
-<script src="js/problems.js?v=3"></script>
-<script src="js/calendar.js?v=2"></script>
-<script src="js/todos.js?v=2"></script>
-<script src="js/finance.js?v=12"></script>
-<script src="js/customers.js?v=9"></script>
-<script src="js/app.js?v=2"></script>
+<!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
+<script defer src="js/config.js"></script>
+<script defer src="js/supabase.js?v=4"></script>
+<script defer src="js/dashboard.js?v=12"></script>
+<script defer src="js/seeds.js?v=8"></script>
+<script defer src="js/plots.js?v=9"></script>
+<script defer src="js/problems.js?v=3"></script>
+<script defer src="js/calendar.js?v=2"></script>
+<script defer src="js/todos.js?v=2"></script>
+<script defer src="js/finance.js?v=12"></script>
+<script defer src="js/customers.js?v=9"></script>
+<script defer src="js/app.js?v=2"></script>
 </body>
 </html>

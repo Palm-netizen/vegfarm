@@ -1,7 +1,9 @@
 // sw.js — VegFarm service worker (offline app shell)
-// กลยุทธ์: network-first สำหรับไฟล์ของแอป (same-origin) เพื่อให้ได้เวอร์ชันล่าสุดเสมอ
-// ถ้าออฟไลน์ค่อย fallback ไปที่แคช. คำขอข้ามโดเมน (Supabase/CDN) ปล่อยผ่าน ไม่แคช.
-const CACHE = 'vegfarm-v1';
+// กลยุทธ์ (เร่งเวลาเปิดแอป):
+//  • index.html / การนำทาง  → network-first  (ได้ตัวอ้างอิงเวอร์ชันล่าสุดเสมอ ออฟไลน์ค่อย fallback แคช)
+//  • ไฟล์ js/css/ฟอนต์ (มี ?v= หรือ immutable) → cache-first + อัปเดตเบื้องหลัง (เปิดเร็วทันที)
+//  • คำขอข้ามโดเมน (Supabase/CDN) → ปล่อยผ่าน ไม่แคช
+const CACHE = 'vegfarm-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -19,13 +21,33 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return; // ปล่อย Supabase/CDN ผ่าน
 
+  const isHTML = req.mode === 'navigate' || req.destination === 'document';
+
+  if (isHTML) {
+    // network-first: ได้ index.html ล่าสุด (ซึ่งอ้างอิง ?v= ของไฟล์ใหม่)
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // stale-while-revalidate: ตอบจากแคชทันที แล้วค่อยอัปเดตเบื้องหลัง
   e.respondWith(
-    fetch(req)
-      .then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
-        return res;
-      })
-      .catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
+    caches.match(req).then(cached => {
+      const network = fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => cached);
+      return cached || network;
+    })
   );
 });
