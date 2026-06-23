@@ -128,6 +128,9 @@
     <div class="growth-divider"><span class="gd-label">แปลงที่กำลังปลูก (กำหนดเก็บเกี่ยว)</span></div>
     <div class="card"><div id="dash-harvest-list"></div></div>
 
+    <div class="growth-divider"><span class="gd-label">ออเดอร์วันนี้ที่ต้องส่ง</span></div>
+    <div class="card"><div id="dash-today-orders"></div></div>
+
     <div class="growth-divider"><span class="gd-label">แผนส่งผักสัปดาห์นี้</span></div>
     <div class="card"><div id="dash-weekly-plan"></div></div>
 
@@ -461,19 +464,55 @@
       </span>
       งานวันนี้
     </div>
-    <div class="section-sub">บันทึกงานที่ต้องทำ สูงสุด 5 ข้อต่อวัน</div>
+    <div class="section-sub">บันทึกงานที่ต้องทำ + ออเดอร์ผักที่ต้องส่ง</div>
 
     <div class="card">
-      <div class="form-group">
+      <div class="form-group" style="margin:0">
         <label class="form-label">เลือกวันที่</label>
         <input type="date" id="todo-date-picker" class="form-control">
       </div>
+    </div>
+
+    <!-- กิจกรรมที่ต้องทำ -->
+    <div class="growth-divider"><span class="gd-label">กิจกรรมที่ต้องทำ</span></div>
+    <div class="card">
       <form id="todo-add-form" style="display:flex;gap:8px;margin-bottom:16px">
         <input type="text" id="todo-input" class="form-control" placeholder="เพิ่มงาน...">
         <button type="submit" class="btn btn-primary" style="width:auto;white-space:nowrap;padding:14px 20px;background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 8px 20px rgba(245,158,11,0.30)">เพิ่ม</button>
       </form>
       <div class="text-sub" style="margin-bottom:10px;font-weight:700" id="todo-count-label">0/5 งาน</div>
       <div id="todo-list"></div>
+    </div>
+
+    <!-- ออเดอร์ผักวันนี้ที่ต้องส่ง -->
+    <div class="growth-divider"><span class="gd-label">ออเดอร์ผักวันนี้ที่ต้องส่ง</span></div>
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ลูกค้า</label>
+          <select id="dorder-customer" class="form-control"></select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">ชนิดผัก</label>
+          <select id="dorder-veg" class="form-control">
+            <option value="">ไม่ระบุ</option>
+            <option value="green_oak">กรีนโอ๊ค</option>
+            <option value="red_oak">เรดโอ๊ค</option>
+            <option value="finley">ฟินเลย์</option>
+            <option value="cos">คอส</option>
+            <option value="butterhead">บัตเตอร์เฮด</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-top:8px">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">จำนวน (กก.)</label>
+          <input type="number" id="dorder-kg" class="form-control" step="0.1" min="0" placeholder="เช่น 5">
+        </div>
+        <button class="btn btn-primary" id="dorder-add-btn" style="width:auto;padding:13px 16px" onclick="addDayOrder()">เพิ่ม</button>
+      </div>
+      <div id="dorder-total" class="text-sub" style="font-weight:700;margin-top:12px"></div>
+      <div id="dorder-list"></div>
     </div>
   </div>
 </div>
@@ -969,12 +1008,12 @@
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
 <script src="js/supabase.js?v=4"></script>
-<script src="js/dashboard.js?v=6"></script>
+<script src="js/dashboard.js?v=7"></script>
 <script src="js/seeds.js?v=8"></script>
 <script src="js/plots.js?v=8"></script>
 <script src="js/problems.js?v=2"></script>
 <script src="js/calendar.js?v=2"></script>
-<script src="js/todos.js"></script>
+<script src="js/todos.js?v=2"></script>
 <script src="js/finance.js?v=12"></script>
 <script src="js/customers.js?v=9"></script>
 <script src="js/app.js?v=2"></script>

@@ -85,6 +85,9 @@ async function loadDashboard() {
       demandKg = demandCustomers.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0);
     }
 
+    // 9. ออเดอร์วันนี้ที่ต้องส่ง
+    const { data: todayOrders } = await db.from('orders').select('customer_name,vegetable_type,kg,delivered').eq('order_date', today);
+
     // Render
     renderDashboardStats({
       activePlots: activePlots?.length || 0,
@@ -95,7 +98,8 @@ async function loadDashboard() {
       recentProblems: recentProblems || [],
       chartBatches: (chartBatches || []).reverse(),
       growingPlots,
-      weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers, ordersMode }
+      weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers, ordersMode },
+      todayOrders: todayOrders || []
     });
 
   } catch (err) {
@@ -153,6 +157,33 @@ function renderDashboardStats(data) {
         </div>`;
         }).join('')
       : '<div class="empty-state">ยังไม่มีแปลงที่กำลังปลูก</div>';
+  }
+
+  // ออเดอร์วันนี้ที่ต้องส่ง
+  const toEl = el('dash-today-orders');
+  if (toEl) {
+    const ords = data.todayOrders || [];
+    const VEG = { green_oak:'กรีนโอ๊ค', red_oak:'เรดโอ๊ค', finley:'ฟินเลย์', cos:'คอส', butterhead:'บัตเตอร์เฮด' };
+    const price = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
+    const kgN = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+    if (!ords.length) {
+      toEl.innerHTML = '<div class="empty-state">วันนี้ยังไม่มีออเดอร์ที่ต้องส่ง</div>';
+    } else {
+      const tkg = ords.reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+      const done = ords.filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+      toEl.innerHTML = `
+        <div class="savings-card" style="padding:14px 0">
+          <div class="savings-row"><span>📦 รวมต้องส่ง</span><b style="color:var(--primary)">${kgN(tkg)} กก. · ฿${(tkg*price).toLocaleString('th-TH',{maximumFractionDigits:0})}</b></div>
+          <div class="savings-row"><span>✅ ส่งแล้ว</span><b>${kgN(done)} / ${kgN(tkg)} กก.</b></div>
+        </div>
+        <div class="card" style="padding:4px 14px;margin-top:8px">
+          ${ords.map(o => `
+            <div class="pe-row">
+              <span class="pe-desc">${o.delivered ? '✅ ' : '⬜ '}<strong>${o.customer_name}</strong> <span class="pe-date">${o.vegetable_type ? (VEG[o.vegetable_type]||o.vegetable_type) : ''}</span></span>
+              <span class="pe-amt" style="color:var(--primary)">${kgN(parseFloat(o.kg))} กก.</span>
+            </div>`).join('')}
+        </div>`;
+    }
   }
 
   // แผนส่งผักสัปดาห์นี้

@@ -142,6 +142,7 @@ ALTER TABLE personal_expenses DROP CONSTRAINT IF EXISTS personal_expenses_catego
 CREATE TABLE IF NOT EXISTS orders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   week_start DATE NOT NULL,        -- วันจันทร์ของสัปดาห์นั้น
+  order_date DATE,                 -- วันที่ส่งจริง (สำหรับออเดอร์รายวัน)
   customer_name TEXT NOT NULL,
   kg NUMERIC(8,2) NOT NULL,
   vegetable_type TEXT,
@@ -149,6 +150,8 @@ CREATE TABLE IF NOT EXISTS orders (
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- เผื่อสร้างตาราง orders ไว้ก่อนหน้า ให้เพิ่มคอลัมน์วันที่ส่ง
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_date DATE;
 
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
