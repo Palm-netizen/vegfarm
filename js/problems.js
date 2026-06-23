@@ -1,6 +1,7 @@
 // js/problems.js — บันทึกปัญหา + ฐานข้อมูลปัญหา
 
 let problemPhotoFile = null;
+let editProblemId = null;
 
 function initProblems() {
   // Populate plot select T1-T15
@@ -88,28 +89,37 @@ async function saveProblem() {
       }
     }
 
-    const { data: plot } = await db.from('plots').select('cycle_count').eq('plot_code', plotCode).single();
+    if (editProblemId) {
+      // แก้ไขรายการเดิม
+      const patch = { plot_code: plotCode, problem_date: date, problem_type: type, severity, description, solution };
+      if (photoUrl) patch.photo_url = photoUrl;
+      const { error } = await db.from('problems').update(patch).eq('id', editProblemId);
+      if (error) throw error;
+      showToast('แก้ไขปัญหาสำเร็จ');
+    } else {
+      const { data: plot } = await db.from('plots').select('cycle_count').eq('plot_code', plotCode).single();
 
-    const { error } = await db.from('problems').insert({
-      plot_code: plotCode,
-      problem_date: date,
-      problem_type: type,
-      severity,
-      description,
-      solution,
-      photo_url: photoUrl,
-      cycle_number: plot?.cycle_count || 1
-    });
-    if (error) throw error;
+      const { error } = await db.from('problems').insert({
+        plot_code: plotCode,
+        problem_date: date,
+        problem_type: type,
+        severity,
+        description,
+        solution,
+        photo_url: photoUrl,
+        cycle_number: plot?.cycle_count || 1
+      });
+      if (error) throw error;
 
-    await db.from('calendar_activities').insert({
-      activity_date: date,
-      activity_type: 'problem',
-      plot_code: plotCode,
-      summary: `ปัญหา${problemTypeLabel(type)} แปลง ${plotCode}`
-    });
+      await db.from('calendar_activities').insert({
+        activity_date: date,
+        activity_type: 'problem',
+        plot_code: plotCode,
+        summary: `ปัญหา${problemTypeLabel(type)} แปลง ${plotCode}`
+      });
 
-    showToast('บันทึกปัญหาสำเร็จ');
+      showToast('บันทึกปัญหาสำเร็จ');
+    }
     resetProblemForm();
     loadProblemDatabase();
   } catch (err) {
@@ -133,6 +143,41 @@ function resetProblemForm() {
   document.querySelectorAll('.problem-type-btn').forEach(b => b.classList.remove('checked'));
   document.querySelectorAll('.severity-btn').forEach(b => b.classList.remove('selected'));
   problemPhotoFile = null;
+  editProblemId = null;
+  document.getElementById('problem-save-btn').textContent = 'บันทึกปัญหา';
+  document.getElementById('problem-cancel-edit').style.display = 'none';
+}
+
+// โหลดปัญหาเดิมขึ้นฟอร์มเพื่อแก้ไข
+async function editProblem(id) {
+  const { data: p } = await db.from('problems').select('*').eq('id', id).single();
+  if (!p) return;
+  editProblemId = id;
+  document.getElementById('problem-plot-select').value = p.plot_code || '';
+  loadPlotCycleInfo(p.plot_code);
+  document.getElementById('problem-date').value = p.problem_date || '';
+  document.getElementById('problem-description').value = p.description || '';
+  document.getElementById('problem-solution').value = p.solution || '';
+  // เลือกปุ่มประเภทปัญหา
+  document.getElementById('problem-type-value').value = p.problem_type || '';
+  document.querySelectorAll('.problem-type-btn').forEach(b =>
+    b.classList.toggle('checked', b.dataset.value === p.problem_type));
+  // เลือกปุ่มความรุนแรง
+  document.getElementById('problem-severity-value').value = p.severity || '';
+  document.querySelectorAll('.severity-btn').forEach(b =>
+    b.classList.toggle('selected', b.dataset.value === p.severity));
+  // รูปเดิม
+  const prev = document.getElementById('problem-photo-preview');
+  if (p.photo_url) { prev.src = p.photo_url; prev.style.display = 'block'; }
+  else { prev.style.display = 'none'; }
+  problemPhotoFile = null;
+  document.getElementById('problem-save-btn').textContent = 'บันทึกการแก้ไข';
+  document.getElementById('problem-cancel-edit').style.display = 'block';
+  document.getElementById('page-problems').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEditProblem() {
+  resetProblemForm();
 }
 
 async function loadProblemDatabase() {
@@ -185,6 +230,7 @@ async function loadProblemDatabase() {
       ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px" />` : ''}
       <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end">
         <button class="btn btn-outline btn-sm" onclick="toggleResolved('${p.id}', ${!p.resolved})">${p.resolved ? 'ยังไม่แก้' : 'แก้แล้ว'}</button>
+        <button class="btn btn-outline btn-sm" onclick="editProblem('${p.id}')">✎ แก้ไข</button>
         <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}')">ลบ</button>
       </div>
     </div>`).join('');
@@ -203,10 +249,10 @@ async function deleteProblem(id) {
 }
 
 function problemIcon2(type) {
-  return { burned_leaf: '🔥', root_rot: '🦠', worm: '🐛', fungus: '🍄', other: '⚠️' }[type] || '⚠️';
+  return { burned_leaf: '🔥', waterlogged: '💧', root_rot: '🦠', worm: '🐛', fungus: '🍄', other: '⚠️' }[type] || '⚠️';
 }
 function problemTypeLabel(type) {
-  return { burned_leaf: 'ใบไหม้', root_rot: 'รากเน่า', worm: 'หนอน', fungus: 'เชื้อรา', other: 'อื่นๆ' }[type] || type;
+  return { burned_leaf: 'ใบไหม้', waterlogged: 'ใบอิ่มน้ำ', root_rot: 'รากเน่า', worm: 'หนอน', fungus: 'เชื้อรา', other: 'อื่นๆ' }[type] || type;
 }
 function severityLabel2(s) {
   return { low: 'เบา', medium: 'ปานกลาง', high: 'รุนแรง' }[s] || s;

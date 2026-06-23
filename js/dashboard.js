@@ -347,11 +347,11 @@ async function toggleDashOrder(id, val) {
 
 // ===== Helpers =====
 function problemIcon(type) {
-  const icons = { burned_leaf: '🔥', root_rot: '🦠', worm: '🐛', fungus: '🍄', other: '⚠️' };
+  const icons = { burned_leaf: '🔥', waterlogged: '💧', root_rot: '🦠', worm: '🐛', fungus: '🍄', other: '⚠️' };
   return icons[type] || '⚠️';
 }
 function problemLabel(type) {
-  const labels = { burned_leaf: 'ใบไหม้', root_rot: 'รากเน่า', worm: 'หนอน', fungus: 'เชื้อรา', other: 'อื่นๆ' };
+  const labels = { burned_leaf: 'ใบไหม้', waterlogged: 'ใบอิ่มน้ำ', root_rot: 'รากเน่า', worm: 'หนอน', fungus: 'เชื้อรา', other: 'อื่นๆ' };
   return labels[type] || type;
 }
 function severityLabel(s) {

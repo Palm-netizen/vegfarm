@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS problems (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   plot_code TEXT NOT NULL,
   problem_date DATE NOT NULL,
-  problem_type TEXT NOT NULL CHECK (problem_type IN ('burned_leaf', 'root_rot', 'worm', 'fungus', 'other')),
+  problem_type TEXT NOT NULL CHECK (problem_type IN ('burned_leaf', 'waterlogged', 'root_rot', 'worm', 'fungus', 'other')),
   severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high')),
   description TEXT,
   solution TEXT,
@@ -64,6 +64,10 @@ CREATE TABLE IF NOT EXISTS problems (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- เผื่อสร้างตารางไว้ก่อนหน้า ให้เพิ่มประเภท "ใบอิ่มน้ำ" (waterlogged) เข้า CHECK
+ALTER TABLE problems DROP CONSTRAINT IF EXISTS problems_problem_type_check;
+ALTER TABLE problems ADD CONSTRAINT problems_problem_type_check
+  CHECK (problem_type IN ('burned_leaf','waterlogged','root_rot','worm','fungus','other'));
 
 -- 5. To-Do รายวัน
 CREATE TABLE IF NOT EXISTS todos (

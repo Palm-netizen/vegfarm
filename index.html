@@ -354,6 +354,7 @@
         <label class="form-label">ประเภทปัญหา</label>
         <div class="checkbox-group">
           <div class="checkbox-item problem-type-btn" data-value="burned_leaf">ใบไหม้</div>
+          <div class="checkbox-item problem-type-btn" data-value="waterlogged">ใบอิ่มน้ำ</div>
           <div class="checkbox-item problem-type-btn" data-value="root_rot">รากเน่า</div>
           <div class="checkbox-item problem-type-btn" data-value="worm">หนอน</div>
           <div class="checkbox-item problem-type-btn" data-value="fungus">เชื้อรา</div>
@@ -383,7 +384,8 @@
         <input type="file" id="problem-photo-input" class="form-control" accept="image/*" capture="environment">
         <img id="problem-photo-preview" style="display:none;width:100%;border-radius:var(--radius-sm);margin-top:10px">
       </div>
-      <button class="btn btn-primary" onclick="saveProblem()" style="background:linear-gradient(135deg,#EF4444,#F87171);box-shadow:0 8px 20px rgba(239,68,68,0.30)">บันทึกปัญหา</button>
+      <button id="problem-save-btn" class="btn btn-primary" onclick="saveProblem()" style="background:linear-gradient(135deg,#EF4444,#F87171);box-shadow:0 8px 20px rgba(239,68,68,0.30)">บันทึกปัญหา</button>
+      <button id="problem-cancel-edit" class="btn btn-outline" style="width:100%;margin-top:8px;display:none" onclick="cancelEditProblem()">ยกเลิกแก้ไข</button>
     </div>
 
     <div class="growth-divider"><span class="gd-label">ฐานข้อมูลปัญหา</span></div>
@@ -393,6 +395,7 @@
         <select id="prob-filter-type" class="form-control" onchange="loadProblemDatabase()">
           <option value="">ทุกประเภท</option>
           <option value="burned_leaf">ใบไหม้</option>
+          <option value="waterlogged">ใบอิ่มน้ำ</option>
           <option value="root_rot">รากเน่า</option>
           <option value="worm">หนอน</option>
           <option value="fungus">เชื้อรา</option>
@@ -1009,10 +1012,10 @@
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
 <script src="js/supabase.js?v=4"></script>
-<script src="js/dashboard.js?v=11"></script>
+<script src="js/dashboard.js?v=12"></script>
 <script src="js/seeds.js?v=8"></script>
 <script src="js/plots.js?v=9"></script>
-<script src="js/problems.js?v=2"></script>
+<script src="js/problems.js?v=3"></script>
 <script src="js/calendar.js?v=2"></script>
 <script src="js/todos.js?v=2"></script>
 <script src="js/finance.js?v=12"></script>
