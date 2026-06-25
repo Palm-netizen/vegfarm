@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#10B981">
+<title>Coach — ฝึกทักษะการขายทุกวัน</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Supabase (ใช้เมื่อใส่ค่าจริงใน js/store.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== TOP BAR ===== -->
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">🚀</span>
+    <span>Coach</span>
+  </div>
+  <div class="topbar-right">
+    <span id="today-date" class="topbar-date">-</span>
+    <span id="mode-badge" class="mode-badge"></span>
+  </div>
+</header>
+
+<!-- ===== PAGES ===== -->
+<main class="app">
+  <section class="page active" id="page-training"><div class="page-content"></div></section>
+  <section class="page" id="page-tasks"><div class="page-content"></div></section>
+  <section class="page" id="page-calendar"><div class="page-content"></div></section>
+  <section class="page" id="page-customers"><div class="page-content"></div></section>
+  <section class="page" id="page-review"><div class="page-content"></div></section>
+  <section class="page" id="page-goals"><div class="page-content"></div></section>
+</main>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav class="bottom-nav">
+  <a href="#training" id="nav-training" data-page="training">
+    <span class="nav-ico">💪</span><span class="nav-lbl">ฝึก</span>
+  </a>
+  <a href="#tasks" id="nav-tasks" data-page="tasks">
+    <span class="nav-ico">✅</span><span class="nav-lbl">งาน</span>
+  </a>
+  <a href="#calendar" id="nav-calendar" data-page="calendar">
+    <span class="nav-ico">🗓️</span><span class="nav-lbl">ปฏิทิน</span>
+  </a>
+  <a href="#customers" id="nav-customers" data-page="customers">
+    <span class="nav-ico">👥</span><span class="nav-lbl">ลูกค้า</span>
+  </a>
+  <a href="#review" id="nav-review" data-page="review">
+    <span class="nav-ico">🌙</span><span class="nav-lbl">สรุป</span>
+  </a>
+  <a href="#goals" id="nav-goals" data-page="goals">
+    <span class="nav-ico">🎯</span><span class="nav-lbl">เป้า</span>
+  </a>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<!-- ===== SCRIPTS (แยกไฟล์ตามเมนู เพื่อแก้ไขง่าย) ===== -->
+<script src="js/store.js"></script>
+<script src="js/training.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/customers.js"></script>
+<script src="js/review.js"></script>
+<script src="js/goals.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
