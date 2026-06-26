@@ -242,7 +242,7 @@ async function loadProblemDatabase() {
         </div>
         <span class="severity-${p.severity}">${severityLabel2(p.severity)}</span>
       </div>
-      <div class="text-sub" style="margin:8px 0 2px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}${p.photo_url ? ' · 📷 มีรูป' : ''}</div>
+      <div class="text-sub" style="margin:8px 0 2px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}${p.photo_url ? ' · 📷 มีรูป' : ''}${(Array.isArray(p.followups) && p.followups.length) ? ` · 📌 ติดตาม ${p.followups.length} ครั้ง` : ''}</div>
       ${p.description ? `<div class="text-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.description}</div>` : ''}
       <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end" onclick="event.stopPropagation()">
         <button class="btn btn-outline btn-sm" onclick="toggleResolved('${p.id}', ${!p.resolved})">${p.resolved ? 'ยังไม่แก้' : 'แก้แล้ว'}</button>
@@ -254,11 +254,54 @@ async function loadProblemDatabase() {
 
 // ป๊อปอัพดูรายละเอียดปัญหาย้อนหลัง (ข้อความ + รูปเต็ม)
 let lastProblems = [];
+let currentDetailProblem = null;
+let followupPhotos = [null, null];   // data URL ของรูปติดตามผล (สูงสุด 2 รูป)
+const MAX_FOLLOWUPS = 3;
+
 function openProblemDetail(id) {
   const p = lastProblems.find(x => x.id === id);
   if (!p) return;
+  currentDetailProblem = p;
+  followupPhotos = [null, null];
+  renderProblemDetailBody(p);
+  document.getElementById('prob-detail-modal').style.display = 'flex';
+}
+
+function renderProblemDetailBody(p) {
   document.getElementById('prob-detail-title').innerHTML =
     `${problemIcon2(p.problem_type)} ${problemTypeLabel(p.problem_type)}`;
+
+  const fus = Array.isArray(p.followups) ? p.followups : [];
+  const fuListHtml = fus.length
+    ? fus.map((f, i) => `
+      <div class="fu-item">
+        <div class="fu-head">📌 ติดตามผลครั้งที่ ${i + 1} · ${f.date ? formatDateTH(f.date) : '-'}</div>
+        ${f.detail ? `<div class="pds-text" style="margin-top:4px">${f.detail}</div>` : ''}
+        ${(f.photos && f.photos.length) ? `<div class="fu-photos">${f.photos.map(ph => `<img src="${ph}" />`).join('')}</div>` : ''}
+      </div>`).join('')
+    : '<div class="text-sub">ยังไม่มีการติดตามผล</div>';
+
+  const formHtml = fus.length < MAX_FOLLOWUPS ? `
+    <button id="fu-add-btn" class="btn btn-outline btn-sm" style="margin-top:10px" onclick="showFollowupForm()">➕ ติดตามผล (ครั้งที่ ${fus.length + 1}/${MAX_FOLLOWUPS})</button>
+    <div id="fu-form" style="display:none;margin-top:10px">
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label">วันที่ติดตามผล</label>
+        <input type="date" id="fu-date" class="form-control">
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label">วิธีแก้ไขเพิ่มเติม / ผลที่ได้</label>
+        <textarea id="fu-detail" class="form-control" placeholder="บันทึกผลหลังแก้ไข หรือวิธีที่ทำเพิ่ม..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label">รูป (สูงสุด 2 รูป)</label>
+        <input type="file" id="fu-photo-0" class="form-control" accept="image/*" capture="environment" onchange="onFollowupPhoto(0,this)" style="margin-bottom:6px">
+        <input type="file" id="fu-photo-1" class="form-control" accept="image/*" capture="environment" onchange="onFollowupPhoto(1,this)">
+        <div id="fu-photo-preview" style="display:flex;gap:6px;margin-top:8px"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:100%" onclick="saveFollowup()">บันทึกติดตามผล</button>
+    </div>`
+    : '<div class="text-sub" style="margin-top:10px">✅ ติดตามผลครบ 3 ครั้งแล้ว</div>';
+
   document.getElementById('prob-detail-body').innerHTML = `
     <div class="prob-detail-meta">
       <span class="badge badge-green">${p.plot_code}</span>
@@ -268,8 +311,66 @@ function openProblemDetail(id) {
     <div class="text-sub" style="margin:8px 0 14px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}</div>
     <div class="prob-detail-section"><div class="pds-label">อาการ</div><div class="pds-text">${p.description ? p.description : '<span class="text-sub">— ไม่ได้ระบุ —</span>'}</div></div>
     <div class="prob-detail-section"><div class="pds-label">วิธีแก้</div><div class="pds-text">${p.solution ? p.solution : '<span class="text-sub">— ไม่ได้ระบุ —</span>'}</div></div>
-    ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px" />` : ''}`;
-  document.getElementById('prob-detail-modal').style.display = 'flex';
+    ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px" />` : ''}
+    <div class="growth-divider" style="margin:18px 0 10px"><span class="gd-label">การติดตามผล (${fus.length}/${MAX_FOLLOWUPS})</span></div>
+    <div class="fu-list">${fuListHtml}</div>
+    ${formHtml}`;
+}
+
+function showFollowupForm() {
+  const btn = document.getElementById('fu-add-btn');
+  const form = document.getElementById('fu-form');
+  if (btn) btn.style.display = 'none';
+  if (form) form.style.display = 'block';
+  const d = document.getElementById('fu-date');
+  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+async function onFollowupPhoto(idx, input) {
+  const file = input.files[0];
+  if (!file) { followupPhotos[idx] = null; renderFollowupPreview(); return; }
+  try {
+    followupPhotos[idx] = await compressImage(file, 1024, 0.6);  // ไฟล์เล็ก
+    renderFollowupPreview();
+  } catch (err) {
+    console.error(err);
+    showToast('อ่านรูปไม่สำเร็จ', 'error');
+  }
+}
+
+function renderFollowupPreview() {
+  const el = document.getElementById('fu-photo-preview');
+  if (!el) return;
+  el.innerHTML = followupPhotos.filter(Boolean)
+    .map(ph => `<img src="${ph}" style="width:64px;height:64px;object-fit:cover;border-radius:8px">`).join('');
+}
+
+async function saveFollowup() {
+  if (!currentDetailProblem) return;
+  const date = document.getElementById('fu-date').value;
+  const detail = document.getElementById('fu-detail').value.trim();
+  const photos = followupPhotos.filter(Boolean);
+  if (!date) return showToast('กรุณาระบุวันที่ติดตามผล', 'error');
+  if (!detail && !photos.length) return showToast('กรุณากรอกรายละเอียดหรือแนบรูป', 'error');
+
+  const fus = Array.isArray(currentDetailProblem.followups) ? currentDetailProblem.followups : [];
+  if (fus.length >= MAX_FOLLOWUPS) return showToast('ติดตามผลครบ 3 ครั้งแล้ว', 'error');
+
+  const newFus = [...fus, { date, detail, photos }];
+  setLoading(true);
+  try {
+    const { error } = await db.from('problems').update({ followups: newFus }).eq('id', currentDetailProblem.id);
+    if (error) throw error;
+    showToast('บันทึกติดตามผลแล้ว');
+    const id = currentDetailProblem.id;
+    await loadProblemDatabase();          // refresh list + lastProblems
+    openProblemDetail(id);                // re-render popup จากข้อมูลล่าสุด
+  } catch (err) {
+    console.error(err);
+    showToast('บันทึกไม่สำเร็จ: ' + (err.message || err), 'error');
+  } finally {
+    setLoading(false);
+  }
 }
 
 function closeProblemDetail() {

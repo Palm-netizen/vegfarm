@@ -420,6 +420,12 @@ select.form-control { cursor: pointer; }
 .prob-detail-section { margin-bottom: 14px; }
 .pds-label { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-bottom: 3px; }
 .pds-text { font-size: 15px; color: var(--ink); line-height: 1.5; white-space: pre-wrap; }
+.fu-list { display: flex; flex-direction: column; gap: 8px; }
+.fu-item { background: var(--bg); border-radius: 12px; padding: 10px 12px; border-left: 3px solid var(--primary); }
+.fu-head { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
+[data-theme="dark"] .fu-head { color: #4ADE80; }
+.fu-photos { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.fu-photos img { width: 90px; height: 90px; object-fit: cover; border-radius: 8px; }
 .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
 .btn-icon {
   padding: 8px; border-radius: 10px; background: var(--bg);

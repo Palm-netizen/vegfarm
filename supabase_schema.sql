@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS problems (
   photo_url TEXT,
   cycle_number INTEGER,
   resolved BOOLEAN DEFAULT FALSE,
+  followups JSONB DEFAULT '[]'::jsonb,   -- การติดตามผล (สูงสุด 3 ครั้ง): [{date, detail, photos:[]}]
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -68,6 +69,8 @@ CREATE TABLE IF NOT EXISTS problems (
 ALTER TABLE problems DROP CONSTRAINT IF EXISTS problems_problem_type_check;
 ALTER TABLE problems ADD CONSTRAINT problems_problem_type_check
   CHECK (problem_type IN ('burned_leaf','waterlogged','root_rot','worm','fungus','other'));
+-- เผื่อสร้างตารางไว้ก่อนหน้า ให้เพิ่มคอลัมน์ติดตามผล
+ALTER TABLE problems ADD COLUMN IF NOT EXISTS followups JSONB DEFAULT '[]'::jsonb;
 
 -- 5. To-Do รายวัน
 CREATE TABLE IF NOT EXISTS todos (
