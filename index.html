@@ -30,7 +30,7 @@
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=23">
+<link rel="stylesheet" href="css/style.css?v=24">
 </head>
 <body>
 
@@ -400,6 +400,10 @@
     </div>
 
     <div class="growth-divider"><span class="gd-label">ฐานข้อมูลปัญหา</span></div>
+    <div class="prob-tabs">
+      <button class="prob-tab active" id="prob-tab-open" onclick="setProblemTab('open')">🔧 กำลังแก้ <span id="prob-count-open"></span></button>
+      <button class="prob-tab" id="prob-tab-resolved" onclick="setProblemTab('resolved')">✅ แก้สำเร็จ <span id="prob-count-resolved"></span></button>
+    </div>
     <div class="filter-bar">
       <input type="text" id="prob-search" class="form-control" placeholder="🔍 ค้นหา แปลง / อาการ / วิธีแก้..." oninput="loadProblemDatabase()">
       <div class="filter-row">
@@ -417,11 +421,6 @@
           <option value="low">เบา</option>
           <option value="medium">ปานกลาง</option>
           <option value="high">รุนแรง</option>
-        </select>
-        <select id="prob-filter-status" class="form-control" onchange="loadProblemDatabase()">
-          <option value="">ทุกสถานะ</option>
-          <option value="open">ยังไม่แก้</option>
-          <option value="resolved">แก้แล้ว</option>
         </select>
       </div>
     </div>
@@ -1041,7 +1040,7 @@
 <script defer src="js/dashboard.js?v=12"></script>
 <script defer src="js/seeds.js?v=8"></script>
 <script defer src="js/plots.js?v=10"></script>
-<script defer src="js/problems.js?v=6"></script>
+<script defer src="js/problems.js?v=7"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=12"></script>

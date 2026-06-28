@@ -208,13 +208,20 @@ async function loadProblemDatabase() {
   const q = (document.getElementById('prob-search')?.value || '').trim().toLowerCase();
   const fType = document.getElementById('prob-filter-type')?.value || '';
   const fSev = document.getElementById('prob-filter-sev')?.value || '';
-  const fStatus = document.getElementById('prob-filter-status')?.value || '';
+  const allRows = all || [];
+  // อัปเดตจำนวนบนแท็บ
+  const openCount = allRows.filter(p => !p.resolved).length;
+  const resolvedCount = allRows.filter(p => p.resolved).length;
+  const oc = document.getElementById('prob-count-open');
+  const rc = document.getElementById('prob-count-resolved');
+  if (oc) oc.textContent = `(${openCount})`;
+  if (rc) rc.textContent = `(${resolvedCount})`;
 
-  const problems = (all || []).filter(p => {
+  const problems = allRows.filter(p => {
+    if (problemTab === 'open' && p.resolved) return false;
+    if (problemTab === 'resolved' && !p.resolved) return false;
     if (fType && p.problem_type !== fType) return false;
     if (fSev && p.severity !== fSev) return false;
-    if (fStatus === 'open' && p.resolved) return false;
-    if (fStatus === 'resolved' && !p.resolved) return false;
     if (q) {
       const hay = `${p.plot_code} ${problemTypeLabel(p.problem_type)} ${p.description || ''} ${p.solution || ''}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -222,34 +229,44 @@ async function loadProblemDatabase() {
     return true;
   });
 
-  if (!all?.length) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>ยังไม่มีบันทึกปัญหา</div>';
-    return;
-  }
+  lastProblems = problems;   // เก็บไว้ให้ป๊อปอัพดูรายละเอียด
+
   if (!problems.length) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div>ไม่พบรายการที่ตรงกับเงื่อนไข</div>';
+    container.innerHTML = problemTab === 'resolved'
+      ? '<div class="empty-state"><div class="empty-icon">✅</div>ยังไม่มีงานที่แก้สำเร็จ</div>'
+      : '<div class="empty-state"><div class="empty-icon">📋</div>ไม่มีปัญหาที่กำลังแก้</div>';
     return;
   }
 
-  lastProblems = problems;   // เก็บไว้ให้ป๊อปอัพดูรายละเอียด
   container.innerHTML = problems.map(p => `
     <div class="card" style="cursor:pointer" onclick="openProblemDetail('${p.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start">
         <div>
           <span class="badge badge-green">${p.plot_code}</span>
           <strong style="margin-left:6px">${problemIcon2(p.problem_type)} ${problemTypeLabel(p.problem_type)}</strong>
-          ${p.resolved ? '<span class="badge" style="margin-left:6px;background:var(--primary-tint-strong);color:var(--primary-dark)">แก้แล้ว</span>' : ''}
+          ${p.resolved ? '<span class="badge" style="margin-left:6px;background:var(--primary-tint-strong);color:var(--primary-dark)">✅ แก้สำเร็จ</span>' : ''}
         </div>
         <span class="severity-${p.severity}">${severityLabel2(p.severity)}</span>
       </div>
       <div class="text-sub" style="margin:8px 0 2px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}${p.photo_url ? ' · 📷 มีรูป' : ''}${(Array.isArray(p.followups) && p.followups.length) ? ` · 📌 ติดตาม ${p.followups.length} ครั้ง` : ''}</div>
       ${p.description ? `<div class="text-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.description}</div>` : ''}
       <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end" onclick="event.stopPropagation()">
-        <button class="btn btn-outline btn-sm" onclick="toggleResolved('${p.id}', ${!p.resolved})">${p.resolved ? 'ยังไม่แก้' : 'แก้แล้ว'}</button>
+        ${p.resolved
+          ? `<button class="btn btn-outline btn-sm" onclick="toggleResolved('${p.id}', false)">↩ กลับมาแก้</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="toggleResolved('${p.id}', true)">✅ แก้สำเร็จ</button>`}
         <button class="btn btn-outline btn-sm" onclick="editProblem('${p.id}')">✎ แก้ไข</button>
         <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}')">ลบ</button>
       </div>
     </div>`).join('');
+}
+
+// แท็บ: กำลังแก้ / แก้สำเร็จ
+let problemTab = 'open';
+function setProblemTab(tab) {
+  problemTab = tab;
+  document.getElementById('prob-tab-open').classList.toggle('active', tab === 'open');
+  document.getElementById('prob-tab-resolved').classList.toggle('active', tab === 'resolved');
+  loadProblemDatabase();
 }
 
 // ป๊อปอัพดูรายละเอียดปัญหาย้อนหลัง (ข้อความ + รูปเต็ม)
@@ -378,7 +395,9 @@ function closeProblemDetail() {
 }
 
 async function toggleResolved(id, resolved) {
-  await db.from('problems').update({ resolved }).eq('id', id);
+  const { error } = await db.from('problems').update({ resolved }).eq('id', id);
+  if (error) return showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
+  showToast(resolved ? 'ปิดงาน — ย้ายไปแท็บแก้สำเร็จแล้ว' : 'ย้ายกลับมาแท็บกำลังแก้');
   loadProblemDatabase();
 }
 

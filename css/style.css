@@ -666,6 +666,11 @@ select.form-control { cursor: pointer; }
   box-shadow: var(--shadow);
 }
 
+/* แท็บฐานข้อมูลปัญหา (กำลังแก้ / แก้สำเร็จ) */
+.prob-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
+.prob-tab { flex: 1; padding: 10px 4px; border: none; cursor: pointer; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--ink-soft); background: transparent; transition: all 0.18s; white-space: nowrap; }
+.prob-tab.active { background: var(--paper); color: var(--ink); box-shadow: var(--shadow); }
+
 .fin-card { margin-bottom: 10px; }
 .fin-row {
   display: flex; justify-content: space-between;
