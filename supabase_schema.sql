@@ -32,9 +32,12 @@ CREATE TABLE IF NOT EXISTS plots (
   cycle_count INTEGER DEFAULT 1,
   seed_batch_id UUID REFERENCES seed_batches(id),
   qr_code_url TEXT,
+  photo_url TEXT,                 -- รูปแปลงปลูก (data URL ที่ย่อแล้ว)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- เผื่อสร้างตารางไว้ก่อนหน้า ให้เพิ่มคอลัมน์รูปแปลงปลูก
+ALTER TABLE plots ADD COLUMN IF NOT EXISTS photo_url TEXT;
 
 -- 3. ประวัติการปลูกแต่ละแปลง
 CREATE TABLE IF NOT EXISTS plot_cycles (

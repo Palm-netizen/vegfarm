@@ -277,7 +277,7 @@ function renderProblemDetailBody(p) {
       <div class="fu-item">
         <div class="fu-head">📌 ติดตามผลครั้งที่ ${i + 1} · ${f.date ? formatDateTH(f.date) : '-'}</div>
         ${f.detail ? `<div class="pds-text" style="margin-top:4px">${f.detail}</div>` : ''}
-        ${(f.photos && f.photos.length) ? `<div class="fu-photos">${f.photos.map(ph => `<img src="${ph}" />`).join('')}</div>` : ''}
+        ${(f.photos && f.photos.length) ? `<div class="fu-photos">${f.photos.map(ph => `<img src="${ph}" onclick="openImageViewer(this.src)" />`).join('')}</div>` : ''}
       </div>`).join('')
     : '<div class="text-sub">ยังไม่มีการติดตามผล</div>';
 
@@ -311,7 +311,7 @@ function renderProblemDetailBody(p) {
     <div class="text-sub" style="margin:8px 0 14px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}</div>
     <div class="prob-detail-section"><div class="pds-label">อาการ</div><div class="pds-text">${p.description ? p.description : '<span class="text-sub">— ไม่ได้ระบุ —</span>'}</div></div>
     <div class="prob-detail-section"><div class="pds-label">วิธีแก้</div><div class="pds-text">${p.solution ? p.solution : '<span class="text-sub">— ไม่ได้ระบุ —</span>'}</div></div>
-    ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px" />` : ''}
+    ${p.photo_url ? `<img src="${p.photo_url}" style="width:100%;border-radius:var(--radius-sm);margin-top:8px;cursor:pointer" onclick="openImageViewer(this.src)" />` : ''}
     <div class="growth-divider" style="margin:18px 0 10px"><span class="gd-label">การติดตามผล (${fus.length}/${MAX_FOLLOWUPS})</span></div>
     <div class="fu-list">${fuListHtml}</div>
     ${formHtml}`;

@@ -1,6 +1,7 @@
 // js/plots.js — บันทึกรอบปลูกลงแปลง
 
 let selectedPlotCode = null;
+let plotPhotoDataUrl = null;   // รูปแปลงปลูก (data URL ที่ย่อแล้ว)
 
 function initPlots() {
   renderPlotGrid();
@@ -8,6 +9,20 @@ function initPlots() {
   document.querySelectorAll('#plot-veg-group .veg-checkbox-plot').forEach(item => {
     const cb = item.querySelector('input');
     cb.addEventListener('change', () => item.classList.toggle('checked', cb.checked));
+  });
+  // รูปแปลงปลูก — ย่อให้ไฟล์เล็ก แล้วแสดง preview (คลิกดูภาพใหญ่ได้)
+  document.getElementById('plot-photo-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      plotPhotoDataUrl = await vfCompressImage(file, 1024, 0.6);
+      const prev = document.getElementById('plot-photo-preview');
+      prev.src = plotPhotoDataUrl;
+      prev.style.display = 'block';
+    } catch (err) {
+      console.error(err);
+      showToast('อ่านรูปไม่สำเร็จ', 'error');
+    }
   });
   loadAllPlots();
 }
@@ -123,6 +138,13 @@ async function loadPlotDetail(code) {
   document.getElementById('plot-est-kg').value = plot.estimated_kg || '';
   document.getElementById('plot-harvested-cb').checked = plot.is_harvested || false;
 
+  // รูปแปลงปลูก
+  plotPhotoDataUrl = plot.photo_url || null;
+  const photoPrev = document.getElementById('plot-photo-preview');
+  document.getElementById('plot-photo-input').value = '';
+  if (plot.photo_url) { photoPrev.src = plot.photo_url; photoPrev.style.display = 'block'; }
+  else { photoPrev.src = ''; photoPrev.style.display = 'none'; }
+
   // เก็บรวมทั้งหมดตั้งแต่เริ่มปลูก (ทุกรอบ) + คิดเป็นเงิน ฿100/กก.
   const totalKg = (cycles || []).reduce((s, c) => s + (parseFloat(c.actual_kg) || 0), 0);
   const totalBaht = totalKg * 100;
@@ -217,6 +239,7 @@ async function clearPlot() {
       plant_age_days: null,
       harvest_date: null,
       estimated_kg: null,
+      photo_url: null,
       actual_kg: null,
       is_harvested: false,
       harvest_notes: null,
@@ -224,6 +247,7 @@ async function clearPlot() {
       updated_at: new Date().toISOString()
     }).eq('plot_code', selectedPlotCode);
     if (error) throw error;
+    plotPhotoDataUrl = null;
 
     showToast(`เคลียร์ข้อมูลแปลง ${selectedPlotCode} แล้ว`);
     loadAllPlots();
@@ -264,6 +288,7 @@ async function savePlot() {
     plant_age_days: seedlingAge,
     harvest_date: harvestDate,
     estimated_kg: estKg,
+    photo_url: plotPhotoDataUrl,
     is_harvested: isHarvested,
     actual_kg: isHarvested ? actualKg : null,
     harvest_notes: isHarvested ? harvestNotes : null,
@@ -329,12 +354,14 @@ async function startNewCycle() {
       plant_date: null,
       harvest_date: null,
       estimated_kg: null,
+      photo_url: null,
       actual_kg: null,
       is_harvested: false,
       harvest_notes: null,
       cycle_count: (current?.cycle_count || 1) + 1,
       updated_at: new Date().toISOString()
     }).eq('plot_code', selectedPlotCode);
+    plotPhotoDataUrl = null;
 
     showToast(`เริ่มรอบใหม่แปลง ${selectedPlotCode} แล้ว`);
     loadAllPlots();

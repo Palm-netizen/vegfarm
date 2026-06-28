@@ -30,7 +30,7 @@
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=22">
+<link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body>
 
@@ -302,6 +302,11 @@
       <div class="form-group">
         <label class="form-label">กิโลที่คาดการณ์</label>
         <input type="number" id="plot-est-kg" class="form-control" step="0.1" placeholder="เช่น 8.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">รูปแปลงปลูก (1 รูป)</label>
+        <input type="file" id="plot-photo-input" class="form-control" accept="image/*" capture="environment">
+        <img id="plot-photo-preview" style="display:none;width:120px;height:120px;object-fit:cover;border-radius:var(--radius-sm);margin-top:10px;cursor:pointer" onclick="openImageViewer(this.src)">
       </div>
       <div class="form-group">
         <label class="checkbox-item" style="width:100%;justify-content:center;border-radius:var(--radius-sm)">
@@ -977,6 +982,11 @@
   </div>
 </div>
 
+<!-- ===== IMAGE VIEWER (lightbox) ===== -->
+<div class="img-viewer" id="img-viewer" onclick="closeImageViewer()">
+  <img id="img-viewer-img" src="" alt="">
+</div>
+
 <!-- ===== CONFIRM DIALOG ===== -->
 <div class="modal-overlay" id="vf-confirm" style="display:none" onclick="if(event.target===this)vfConfirmResolve(false)">
   <div class="modal-sheet confirm-sheet">
@@ -1027,11 +1037,11 @@
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=4"></script>
+<script defer src="js/supabase.js?v=5"></script>
 <script defer src="js/dashboard.js?v=12"></script>
 <script defer src="js/seeds.js?v=8"></script>
-<script defer src="js/plots.js?v=9"></script>
-<script defer src="js/problems.js?v=5"></script>
+<script defer src="js/plots.js?v=10"></script>
+<script defer src="js/problems.js?v=6"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=12"></script>
