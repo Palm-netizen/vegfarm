@@ -250,12 +250,12 @@ async function loadProblemDatabase() {
       </div>
       <div class="text-sub" style="margin:8px 0 2px">${formatDateTH(p.problem_date)} · รอบที่ ${p.cycle_number || 1}${p.photo_url ? ' · 📷 มีรูป' : ''}${(Array.isArray(p.followups) && p.followups.length) ? ` · 📌 ติดตาม ${p.followups.length} ครั้ง` : ''}</div>
       ${p.description ? `<div class="text-sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.description}</div>` : ''}
-      <div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end" onclick="event.stopPropagation()">
+      <div class="prob-actions" onclick="event.stopPropagation()">
         ${p.resolved
-          ? `<button class="btn btn-outline btn-sm" onclick="toggleResolved('${p.id}', false)">↩ กลับมาแก้</button>`
-          : `<button class="btn btn-primary btn-sm" onclick="toggleResolved('${p.id}', true)">✅ แก้สำเร็จ</button>`}
-        <button class="btn btn-outline btn-sm" onclick="editProblem('${p.id}')">✎ แก้ไข</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteProblem('${p.id}')">ลบ</button>
+          ? `<button class="pa-btn pa-reopen" onclick="toggleResolved('${p.id}', false)">↩ กลับมาแก้</button>`
+          : `<button class="pa-btn pa-done" onclick="toggleResolved('${p.id}', true)">✓ แก้สำเร็จ</button>`}
+        <button class="pa-btn pa-edit" onclick="editProblem('${p.id}')" aria-label="แก้ไข">✎</button>
+        <button class="pa-btn pa-del" onclick="deleteProblem('${p.id}')" aria-label="ลบ">🗑</button>
       </div>
     </div>`).join('');
 }

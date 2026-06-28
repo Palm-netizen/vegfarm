@@ -666,6 +666,17 @@ select.form-control { cursor: pointer; }
   box-shadow: var(--shadow);
 }
 
+/* ปุ่มจัดการในการ์ดปัญหา — เล็ก กระชับ ทรงพิลล์ */
+.prob-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; align-items: center; }
+.pa-btn { border: none; cursor: pointer; font-family: var(--font-body); font-weight: 700; font-size: 12px; border-radius: 999px; padding: 6px 12px; line-height: 1; transition: transform .12s, opacity .12s; }
+.pa-btn:active { transform: scale(.93); }
+.pa-done { background: var(--primary); color: #fff; box-shadow: 0 3px 8px rgba(22,163,74,.28); }
+.pa-reopen { background: var(--primary-tint-strong); color: var(--primary-dark); }
+[data-theme="dark"] .pa-reopen { background: var(--primary-tint); color: #4ADE80; }
+.pa-edit, .pa-del { padding: 6px 9px; font-size: 13px; background: var(--bg); }
+.pa-edit { color: var(--ink-soft); }
+.pa-del { color: var(--danger); }
+
 /* แท็บฐานข้อมูลปัญหา (กำลังแก้ / แก้สำเร็จ) */
 .prob-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
 .prob-tab { flex: 1; padding: 10px 4px; border: none; cursor: pointer; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--ink-soft); background: transparent; transition: all 0.18s; white-space: nowrap; }
