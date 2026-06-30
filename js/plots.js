@@ -96,6 +96,8 @@ async function loadAllPlots() {
     ).join('');
   }
 
+  const today = new Date().toISOString().split('T')[0];
+
   plots?.forEach(p => {
     const card = document.getElementById(`plot-card-${p.plot_code}`);
     const info = document.getElementById(`plot-info-${p.plot_code}`);
@@ -106,8 +108,18 @@ async function loadAllPlots() {
     else if (p.plant_date) card.classList.add('active-plot');
     if (problemSet.has(p.plot_code)) card.classList.add('has-problem');
 
-    if (p.plant_date) {
-      info.innerHTML = `${vegLabelMulti(p.vegetable_type)}<br>${p.is_harvested ? 'เก็บแล้ว' : 'กำลังปลูก'}`;
+    if (p.plant_date && !p.is_harvested) {
+      // ใกล้กำหนดเก็บ (ภายใน 5 วัน) → เปลี่ยนเป็นสีเหลืองเข้ม + แจ้งเตือน
+      const harvest = p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0)));
+      const daysLeft = Math.round((new Date(harvest) - new Date(today)) / 86400000);
+      let status = 'กำลังปลูก';
+      if (daysLeft >= 0 && daysLeft <= 5) {
+        card.classList.add('near-harvest');
+        status = daysLeft === 0 ? '🟡 เก็บได้วันนี้!' : `🟡 ใกล้ถึงเวลาเก็บแล้ว อีก ${daysLeft} วัน`;
+      }
+      info.innerHTML = `${vegLabelMulti(p.vegetable_type)}<br>${status}`;
+    } else if (p.plant_date) {
+      info.innerHTML = `${vegLabelMulti(p.vegetable_type)}<br>เก็บแล้ว`;
     } else {
       info.textContent = 'ว่าง';
     }

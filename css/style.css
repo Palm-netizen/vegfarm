@@ -567,6 +567,10 @@ select.form-control { cursor: pointer; }
 .plot-card.active-plot { border-color: transparent; background: var(--gradient); }
 .plot-card.active-plot .plot-code,
 .plot-card.active-plot .plot-info { color: #fff; }
+/* ใกล้กำหนดเก็บ (ภายใน 5 วัน) — สีเหลืองเข้ม */
+.plot-card.near-harvest { border-color: transparent; background: linear-gradient(135deg, #B45309, #EAB308); box-shadow: 0 6px 16px rgba(202,138,4,.35); }
+.plot-card.near-harvest .plot-code,
+.plot-card.near-harvest .plot-info { color: #fff; }
 .plot-card.harvested   { border-color: var(--accent); background: var(--accent-tint); }
 .plot-card.has-problem { border-color: var(--danger); }
 .plot-card.has-problem::after {
