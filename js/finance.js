@@ -16,6 +16,10 @@ function initFinance() {
   const pd = document.getElementById('personal-date'); if (pd) pd.value = today;
   document.getElementById('finance-kg').addEventListener('input', calcIncomeTotal);
 
+  // ตัวเลือกเดือนสรุป — จำกัดไม่ให้เลือกเกินเดือนปัจจุบัน
+  const mp = document.getElementById('fin-month-picker');
+  if (mp) mp.max = today.slice(0,7);
+
   switchFinanceTab('income');
   loadFinanceSummary();
 }
@@ -418,13 +422,39 @@ async function deletePersonal(id) {
   showToast('ลบแล้ว'); loadPersonalList(); loadFinanceSummary();
 }
 
+// เลือกเดือนดูสรุปย้อนหลัง
+function finThisMonth() {
+  const picker = document.getElementById('fin-month-picker');
+  if (picker) picker.value = '';
+  loadFinanceSummary();
+}
+
 // ===== SUMMARY =====
 async function loadFinanceSummary() {
-  const now=new Date(), yr=now.getFullYear(), mo=String(now.getMonth()+1).padStart(2,'0');
+  const now=new Date();
+  // อ่านเดือนที่เลือกจากตัวเลือก (ว่าง = เดือนปัจจุบัน)
+  const pick = document.getElementById('fin-month-picker')?.value;
+  let yr, moIdx;
+  if (pick && /^\d{4}-\d{2}$/.test(pick)) { yr = +pick.slice(0,4); moIdx = +pick.slice(5,7) - 1; }
+  else { yr = now.getFullYear(); moIdx = now.getMonth(); }
+  const mo = String(moIdx+1).padStart(2,'0');
+  const selDate = new Date(yr, moIdx, 1);
+  const isCurrentMonth = (yr === now.getFullYear() && moIdx === now.getMonth());
+
   const monthStart=`${yr}-${mo}-01`;
-  const nm = new Date(yr, now.getMonth()+1, 1);
+  const nm = new Date(yr, moIdx+1, 1);
   const nextMonthStart = `${nm.getFullYear()}-${String(nm.getMonth()+1).padStart(2,'0')}-01`;
   const yearStart=`${yr}-01-01`, yearEnd=`${yr}-12-31`;
+
+  // อัปเดตป้ายเดือนที่กำลังดู
+  const monthName = selDate.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+  const mLabel = document.getElementById('sum-month-label');
+  if (mLabel) mLabel.textContent = isCurrentMonth ? 'เดือนนี้' : monthName;
+  const yLabel = document.getElementById('sum-year-label');
+  const thYear = selDate.toLocaleDateString('th-TH',{year:'numeric'});
+  if (yLabel) yLabel.textContent = (yr === now.getFullYear()) ? 'สะสมปีนี้' : `สะสมทั้งปี ${thYear}`;
+  const bLabel = document.getElementById('sum-breakdown-label');
+  if (bLabel) bLabel.textContent = `รายจ่ายแยกหมวด (${isCurrentMonth ? 'เดือนนี้' : monthName})`;
 
   const [incM,incY,expM,expY,allInc,allExp,persM] = await Promise.all([
     db.from('income').select('total_amount').gte('income_date',monthStart).lt('income_date',nextMonthStart),
@@ -441,7 +471,10 @@ async function loadFinanceSummary() {
   const fmt=n=>`฿${n.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
 
   // ค่าใช้จ่ายคงที่อัตโนมัติทุกเดือน (ไม่ต้องกรอกเอง) — FIXED_MONTHLY = 11,100
-  const monthsElapsed = now.getMonth() + 1;            // ม.ค.=1 ... เดือนปัจจุบัน
+  // จำนวนเดือนสำหรับสรุปทั้งปี: ปีปัจจุบัน = ถึงเดือนนี้, ปีที่ผ่านมา = 12, ปีอนาคต = ถึงเดือนที่เลือก
+  const monthsElapsed = (yr < now.getFullYear()) ? 12
+                      : (yr > now.getFullYear()) ? (moIdx + 1)
+                      : (now.getMonth() + 1);
 
   const im=si(incM), iy=si(incY);
   const em=se(expM)+FIXED_MONTHLY;                      // เดือนนี้ + ค่าคงที่ 1 เดือน
@@ -452,7 +485,7 @@ async function loadFinanceSummary() {
   if (hero) {
     const profit=im-em;
     hero.classList.toggle('negative', profit<0);
-    document.getElementById('hero-month-label').textContent = now.toLocaleDateString('th-TH',{month:'long',year:'numeric'});
+    document.getElementById('hero-month-label').textContent = monthName;
     document.getElementById('hero-profit').textContent = (profit<0?'-':'')+fmt(Math.abs(profit));
     document.getElementById('hero-inc').textContent = fmt(im);
     document.getElementById('hero-exp').textContent = fmt(em);

@@ -550,7 +550,7 @@
     <!-- Net-profit hero (this month) -->
     <div class="fin-hero" id="fin-hero">
       <div class="fin-hero-top">
-        <span class="fin-hero-label">กำไรสุทธิเดือนนี้</span>
+        <span class="fin-hero-label">กำไรสุทธิ</span>
         <span class="fin-hero-month" id="hero-month-label">–</span>
       </div>
       <div class="fin-hero-profit" id="hero-profit">–</div>
@@ -740,7 +740,15 @@
 
     <div id="fpanel-summary" class="hidden">
 
-      <div class="growth-divider" style="margin-top:0"><span class="gd-label">เดือนนี้</span></div>
+      <div class="form-group" style="margin-bottom:6px">
+        <label class="form-label">เลือกเดือนดูสรุปย้อนหลัง</label>
+        <div style="display:flex;gap:8px">
+          <input type="month" id="fin-month-picker" class="form-control" onchange="loadFinanceSummary()">
+          <button class="btn btn-outline btn-sm" style="flex:none;white-space:nowrap" onclick="finThisMonth()">เดือนนี้</button>
+        </div>
+      </div>
+
+      <div class="growth-divider" style="margin-top:10px"><span class="gd-label" id="sum-month-label">เดือนนี้</span></div>
       <div class="kpi-grid">
         <div class="kpi-card income-card">
           <div class="kpi-label">รายรับ</div>
@@ -772,7 +780,7 @@
         <div class="savings-row savings-total"><span>เงินเหลือเก็บ</span><span id="sum-savings-month">–</span></div>
       </div>
 
-      <div class="growth-divider"><span class="gd-label">สะสมปีนี้</span></div>
+      <div class="growth-divider"><span class="gd-label" id="sum-year-label">สะสมปีนี้</span></div>
       <div class="year-row">
         <div class="year-card">
           <div class="year-label">รายรับ</div>
@@ -788,7 +796,7 @@
         </div>
       </div>
 
-      <div class="growth-divider"><span class="gd-label">รายจ่ายแยกหมวด (เดือนนี้)</span></div>
+      <div class="growth-divider"><span class="gd-label" id="sum-breakdown-label">รายจ่ายแยกหมวด (เดือนนี้)</span></div>
       <div class="card">
         <div id="expense-breakdown"></div>
       </div>
@@ -1043,7 +1051,7 @@
 <script defer src="js/problems.js?v=8"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
-<script defer src="js/finance.js?v=12"></script>
+<script defer src="js/finance.js?v=13"></script>
 <script defer src="js/customers.js?v=9"></script>
 <script defer src="js/app.js?v=2"></script>
 </body>
