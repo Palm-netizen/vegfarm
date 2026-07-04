@@ -571,6 +571,10 @@ select.form-control { cursor: pointer; }
 .plot-card.near-harvest { border-color: transparent; background: linear-gradient(135deg, #B45309, #EAB308); box-shadow: 0 6px 16px rgba(202,138,4,.35); }
 .plot-card.near-harvest .plot-code,
 .plot-card.near-harvest .plot-info { color: #fff; }
+/* เลยกำหนดเก็บแล้ว — สีแดง */
+.plot-card.overdue-harvest { border-color: transparent; background: linear-gradient(135deg, #B91C1C, #EF4444); box-shadow: 0 6px 16px rgba(220,38,38,.38); }
+.plot-card.overdue-harvest .plot-code,
+.plot-card.overdue-harvest .plot-info { color: #fff; }
 .plot-card.harvested   { border-color: var(--accent); background: var(--accent-tint); }
 .plot-card.has-problem { border-color: var(--danger); }
 .plot-card.has-problem::after {

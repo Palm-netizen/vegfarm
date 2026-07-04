@@ -109,13 +109,19 @@ async function loadAllPlots() {
     if (problemSet.has(p.plot_code)) card.classList.add('has-problem');
 
     if (p.plant_date && !p.is_harvested) {
-      // ใกล้กำหนดเก็บ (ภายใน 5 วัน) → เปลี่ยนเป็นสีเหลืองเข้ม + แจ้งเตือน
+      // สถานะตามวันเก็บเกี่ยว: เลยกำหนด(แดง) / ใกล้เก็บ ≤5วัน(เหลืองเข้ม) / กำลังปลูก(เขียว)
       const harvest = p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0)));
       const daysLeft = Math.round((new Date(harvest) - new Date(today)) / 86400000);
       let status = 'กำลังปลูก';
-      if (daysLeft >= 0 && daysLeft <= 5) {
+      if (daysLeft < 0) {
+        card.classList.add('overdue-harvest');
+        status = `🔴 ครบกำหนดเก็บ เลยมา ${-daysLeft} วัน`;
+      } else if (daysLeft === 0) {
         card.classList.add('near-harvest');
-        status = daysLeft === 0 ? '🟡 เก็บได้วันนี้!' : `🟡 ใกล้ถึงเวลาเก็บแล้ว อีก ${daysLeft} วัน`;
+        status = '🟡 เก็บได้วันนี้!';
+      } else if (daysLeft <= 5) {
+        card.classList.add('near-harvest');
+        status = `🟡 ใกล้ถึงเวลาเก็บแล้ว อีก ${daysLeft} วัน`;
       }
       info.innerHTML = `${vegLabelMulti(p.vegetable_type)}<br>${status}`;
     } else if (p.plant_date) {
