@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#4F46E5">
+<title>Knowledge Capture — สกัดความรู้จากหนังสือ</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== TOP NAV ===== -->
+<div class="top-nav">
+  <div class="top-nav-row">
+    <div class="logo">
+      <span class="logo-mark">📚</span>
+      <span>Knowledge Capture<span class="logo-sub">สกัดความรู้จากหนังสือ</span></span>
+    </div>
+    <div class="nav-date">
+      <span class="nav-date-label">วันนี้</span>
+      <span id="nav-date">-</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOADER / TOAST ===== -->
+<div id="loader"><div class="spinner"></div><div id="loader-text">กำลังโหลด...</div></div>
+<div class="toast" id="toast"></div>
+
+<!-- ===========================================================
+     1. ปฏิทิน (หน้าหลัก — คลิกวันเพื่อบันทึก)
+     =========================================================== -->
+<div class="page" id="page-calendar">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 1</div>
+    <div class="section-title"><span class="title-icon">📅</span> ปฏิทินการอ่าน</div>
+    <div class="section-sub">แตะวันที่เพื่อบันทึกหรือดูสิ่งที่อ่านในวันนั้น</div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <button class="btn btn-outline btn-sm" id="cal-prev">‹ ก่อนหน้า</button>
+        <strong id="cal-month-label" style="font-family:var(--font-display);color:var(--ink);font-size:16px;font-weight:800;letter-spacing:-0.5px">–</strong>
+        <button class="btn btn-outline btn-sm" id="cal-next">ถัดไป ›</button>
+      </div>
+      <div class="calendar-grid" id="cal-grid"></div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);font-weight:600">
+        <span><span class="cal-dot" style="display:inline-block;margin-right:4px"></span>มีบันทึกการอ่าน</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     2. Dashboard
+     =========================================================== -->
+<div class="page" id="page-dashboard">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 2</div>
+    <div class="section-title"><span class="title-icon">📊</span> Dashboard</div>
+    <div class="section-sub">สรุปพฤติกรรมการอ่านและความรู้ที่สะสมมาทั้งหมด</div>
+
+    <div class="quote-card">
+      <div class="card-title" style="color:rgba(255,255,255,0.8)">✨ Quote of the Day</div>
+      <div class="quote-text" id="qotd-text">ยังไม่มีไฮไลท์ในระบบ</div>
+      <div class="quote-source" id="qotd-source">–</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="card-title">อ่านต่อเนื่อง</div>
+        <div class="card-value" id="dash-streak">–</div>
+        <div class="card-sub">วันติดต่อกัน</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-icon">📖</div>
+        <div class="card-title">สรุปแล้ว</div>
+        <div class="card-value" id="dash-books">–</div>
+        <div class="card-sub">เล่ม</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-icon">✨</div>
+        <div class="card-title">ไฮไลท์ทั้งหมด</div>
+        <div class="card-value" id="dash-highlights">–</div>
+        <div class="card-sub">ข้อ</div>
+      </div>
+      <div class="stat-card danger">
+        <div class="stat-icon">🎯</div>
+        <div class="card-title">ลงมือทำแล้ว</div>
+        <div class="card-value" id="dash-actions-done">–</div>
+        <div class="card-sub" id="dash-actions-total-label">จาก – ข้อ</div>
+      </div>
+    </div>
+
+    <div class="growth-divider"><span class="gd-label">บันทึกล่าสุด</span></div>
+    <div class="card"><div id="dash-recent-notes"></div></div>
+
+    <div class="growth-divider"><span class="gd-label">จำนวนบันทึกใน 8 สัปดาห์</span></div>
+    <div class="card"><div class="chart-wrap"><canvas id="dashChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     3. สุ่มทบทวน (Spaced Repetition)
+     =========================================================== -->
+<div class="page" id="page-review">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 3</div>
+    <div class="section-title"><span class="title-icon">🔁</span> สุ่มทบทวน</div>
+    <div class="section-sub">ใช้หลักการทบทวนแบบเว้นระยะ (Spaced Repetition)</div>
+
+    <div class="review-tabs" id="review-tabs"></div>
+    <div id="review-content"></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     4. ค้นหาด้วย AI
+     =========================================================== -->
+<div class="page" id="page-search">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 4</div>
+    <div class="section-title"><span class="title-icon">🔎</span> ค้นหาด้วย AI</div>
+    <div class="section-sub">ลองถามด้วยประโยคธรรมชาติ เช่น "หนังสือที่พูดเรื่องวินัย" หรือ "สรุปทุกไฮไลท์เกี่ยวกับการขาย"</div>
+
+    <div class="search-bar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="พิมพ์คำถามหรือคำค้นหา...">
+    </div>
+    <button class="btn btn-primary" onclick="runKnowledgeSearch()">ค้นหา</button>
+
+    <div class="growth-divider"><span class="gd-label">ผลลัพธ์</span></div>
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     5. เชื่อมโยงความรู้
+     =========================================================== -->
+<div class="page" id="page-connections">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 5</div>
+    <div class="section-title"><span class="title-icon">🔗</span> เชื่อมโยงความรู้</div>
+    <div class="section-sub">หนังสือที่มีแนวคิดเชื่อมโยงกัน จัดกลุ่มจากแท็กที่ใช้ร่วมกัน</div>
+    <button class="btn btn-outline btn-block" onclick="runAIConnections()" style="margin-bottom:14px">✨ วิเคราะห์เชิงลึกด้วย AI</button>
+    <div id="connections-list"></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     6. Mind Map อัตโนมัติ
+     =========================================================== -->
+<div class="page" id="page-mindmap">
+  <div class="page-content">
+    <div class="section-eyebrow">เมนู 6</div>
+    <div class="section-title"><span class="title-icon">🧠</span> Mind Map</div>
+    <div class="section-sub">แผนผังความรู้ที่สร้างอัตโนมัติจากแท็กและหนังสือที่บันทึกไว้</div>
+
+    <div class="mindmap-legend">
+      <span><span class="dot" style="background:var(--primary)"></span>ศูนย์กลาง</span>
+      <span><span class="dot" style="background:var(--violet)"></span>แท็ก</span>
+      <span><span class="dot" style="background:var(--accent)"></span>หนังสือ</span>
+    </div>
+    <div class="mindmap-wrap"><canvas id="mindmapCanvas"></canvas></div>
+    <div class="card mindmap-detail" id="mindmap-detail">
+      <span class="text-sub">แตะโหนดในแผนผังเพื่อดูรายละเอียด</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DAY MODAL: list notes of a clicked date ===== -->
+<div class="modal-overlay" id="day-modal" onclick="if(event.target===this)closeDayModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="day-modal-title">วันที่ –</div>
+    <div id="day-modal-notes"></div>
+    <button class="btn btn-primary" style="margin-top:10px" onclick="openEntryForm(currentModalDate)">+ บันทึกหนังสือเล่มใหม่</button>
+  </div>
+</div>
+
+<!-- ===== ENTRY MODAL: add / edit a note ===== -->
+<div class="modal-overlay" id="entry-modal" onclick="if(event.target===this)closeEntryForm()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="entry-modal-title">บันทึกการอ่าน</div>
+
+    <input type="hidden" id="entry-id">
+
+    <div class="form-group">
+      <label class="form-label">📖 ชื่อหนังสือ</label>
+      <input type="text" id="entry-book" class="form-control" placeholder="เช่น Atomic Habits">
+    </div>
+    <div class="form-group">
+      <label class="form-label">📅 วันที่อ่าน</label>
+      <input type="date" id="entry-date" class="form-control">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">✨ ไฮไลท์วันนี้ (1-5 ข้อ)</label>
+      <div id="entry-highlights"></div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="addHighlightField()">+ เพิ่มไฮไลท์</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">💡 สิ่งที่ได้เรียนรู้ (Key Insight)</label>
+      <textarea id="entry-insight" class="form-control" placeholder="สรุปแก่นความคิดสำคัญ..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">🎯 จะนำไปใช้ยังไง (Action)</label>
+      <textarea id="entry-action" class="form-control" placeholder="จะนำไปปรับใช้อย่างไร..."></textarea>
+      <label class="checkbox-item" id="entry-done-toggle" style="margin-top:8px" onclick="toggleActionDone(event)">
+        <input type="checkbox" id="entry-action-done"> ลงมือทำแล้ว
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">⭐ ระดับความสำคัญ</label>
+      <div class="star-picker" id="entry-stars"></div>
+      <input type="hidden" id="entry-importance" value="3">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">🏷️ แท็ก</label>
+      <div class="checkbox-group" id="entry-preset-tags"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input type="text" id="entry-tag-input" class="form-control" placeholder="เพิ่มแท็กเอง แล้วกด Enter">
+      </div>
+      <div class="checkbox-group" id="entry-custom-tags" style="margin-top:10px"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">📷 อัปโหลดรูป (สูงสุด 2 รูป)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <input type="file" id="entry-photo-1" class="form-control" accept="image/*">
+        <input type="file" id="entry-photo-2" class="form-control" accept="image/*">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px" id="entry-photo-preview"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveEntry()">บันทึก</button>
+    <button class="btn btn-danger btn-block hidden" id="entry-delete-btn" style="margin-top:8px" onclick="deleteEntry()">ลบบันทึกนี้</button>
+    <button class="btn btn-outline btn-block" style="margin-top:8px" onclick="closeEntryForm()">ยกเลิก</button>
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAV ===== -->
+<div class="bottom-nav">
+  <a href="#calendar" id="nav-calendar" data-page="calendar">
+    <span class="nav-icon" style="font-size:20px">📅</span> ปฏิทิน
+  </a>
+  <a href="#dashboard" id="nav-dashboard" data-page="dashboard">
+    <span class="nav-icon" style="font-size:20px">📊</span> Dashboard
+  </a>
+  <a href="#review" id="nav-review" data-page="review">
+    <span class="nav-icon" style="font-size:20px">🔁</span> ทบทวน
+  </a>
+  <a href="#search" id="nav-search" data-page="search">
+    <span class="nav-icon" style="font-size:20px">🔎</span> ค้นหา
+  </a>
+  <a href="#connections" id="nav-connections" data-page="connections">
+    <span class="nav-icon" style="font-size:20px">🔗</span> เชื่อมโยง
+  </a>
+  <a href="#mindmap" id="nav-mindmap" data-page="mindmap">
+    <span class="nav-icon" style="font-size:20px">🧠</span> Mind Map
+  </a>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/supabase.js"></script>
+<script src="js/entry.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/review.js"></script>
+<script src="js/search.js"></script>
+<script src="js/connections.js"></script>
+<script src="js/mindmap.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
