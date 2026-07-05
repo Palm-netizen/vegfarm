@@ -704,6 +704,34 @@ select.form-control { cursor: pointer; }
 .pa-edit { color: var(--ink-soft); }
 .pa-del { color: var(--danger); }
 
+/* ===== Weekly Batch (ล็อตรายสัปดาห์) ===== */
+.batch-card {
+  background: var(--paper); border: 2px solid var(--line); border-radius: var(--radius-md);
+  padding: 14px; margin-bottom: 12px; position: relative;
+}
+.batch-card.warn  { border-color: #EAB308; box-shadow: 0 4px 16px rgba(202,138,4,.20); }
+.batch-card.ready { border-color: var(--primary); box-shadow: 0 4px 16px rgba(22,163,74,.20); }
+.batch-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.batch-code { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
+.batch-veg { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; }
+.batch-grid { display: flex; gap: 10px; margin-bottom: 8px; }
+.batch-grid > div { flex: 1; background: var(--bg); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.batch-grid .bl { font-size: 11px; color: var(--ink-faint); font-weight: 700; }
+.batch-grid .bv { font-size: 15px; font-weight: 800; color: var(--ink); font-family: var(--font-display); }
+.batch-grid .bv.ok { color: var(--primary); }
+.batch-bar { height: 8px; background: var(--bg); border-radius: 999px; overflow: hidden; margin-top: 2px; }
+.batch-bar-fill { height: 100%; background: linear-gradient(90deg,#0EA5E9,#22D3EE); border-radius: 999px; transition: width .4s; }
+.batch-bar-fill.ok { background: linear-gradient(90deg,#16A34A,#65A30D); }
+.batch-bar-label { font-size: 11px; color: var(--ink-soft); margin: 4px 0 8px; font-weight: 600; }
+.batch-meta { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 4px; }
+.batch-status { font-size: 13.5px; color: var(--ink); }
+.batch-alert { margin-top: 10px; padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+.batch-alert.warn  { background: #FEF3C7; color: #92400E; }
+.batch-alert.ready { background: var(--primary-tint-strong); color: var(--primary-dark); }
+[data-theme="dark"] .batch-alert.warn  { background: #3A2E10; color: #FBBF24; }
+[data-theme="dark"] .batch-alert.ready { background: #14271C; color: #4ADE80; }
+.batch-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+
 /* แท็บฐานข้อมูลปัญหา (กำลังแก้ / แก้สำเร็จ) */
 .prob-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
 .prob-tab { flex: 1; padding: 10px 4px; border: none; cursor: pointer; border-radius: 10px; font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--ink-soft); background: transparent; transition: all 0.18s; white-space: nowrap; }

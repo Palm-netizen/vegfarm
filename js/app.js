@@ -3,6 +3,7 @@
 const PAGE_INIT = {
   dashboard: loadDashboard,
   seeds: initSeeds,
+  batches: initBatches,
   plots: initPlots,
   problems: initProblems,
   calendar: initCalendar,
@@ -36,6 +37,8 @@ function showPage(pageId) {
     renderCalendar();
   } else if (pageId === 'plots') {
     loadAllPlots();
+  } else if (pageId === 'batches') {
+    loadBatches();
   } else if (pageId === 'problems') {
     loadProblemDatabase();
   } else if (pageId === 'todos') {

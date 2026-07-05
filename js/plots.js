@@ -2,6 +2,7 @@
 
 let selectedPlotCode = null;
 let plotPhotoDataUrl = null;   // รูปแปลงปลูก (data URL ที่ย่อแล้ว)
+let vfPendingPlant = null;     // ข้อมูลจากล็อต Weekly Batch ที่กด "ย้ายลงปลูก" มา
 
 function initPlots() {
   renderPlotGrid();
@@ -137,9 +138,20 @@ function selectPlot(code) {
   document.querySelectorAll('.plot-card').forEach(c => c.style.outline = 'none');
   document.getElementById(`plot-card-${code}`).style.outline = '3px solid var(--primary)';
   document.getElementById('selected-plot-label').textContent = `แปลง ${code}`;
-  loadPlotDetail(code);
+  loadPlotDetail(code).then(applyPendingPlant);
   document.getElementById('plot-detail-section').style.display = 'block';
   document.getElementById('plot-detail-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+// กรอกข้อมูลอัตโนมัติเมื่อมาจากล็อต Weekly Batch (กดย้ายลงปลูก)
+function applyPendingPlant() {
+  if (!vfPendingPlant) return;
+  setPlotVeg(vfPendingPlant.veg);
+  document.getElementById('plot-seedling-age').value = vfPendingPlant.age;
+  document.getElementById('plot-plant-date').value = new Date().toISOString().split('T')[0];
+  updatePlotHarvestDisplay();
+  showToast(`กรอกข้อมูลจากล็อต ${vfPendingPlant.lot} แล้ว — ตรวจสอบและกดบันทึก`);
+  vfPendingPlant = null;
 }
 
 async function loadPlotDetail(code) {

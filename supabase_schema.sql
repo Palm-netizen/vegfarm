@@ -163,9 +163,27 @@ CREATE TABLE IF NOT EXISTS orders (
 -- เผื่อสร้างตาราง orders ไว้ก่อนหน้า ให้เพิ่มคอลัมน์วันที่ส่ง
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_date DATE;
 
+-- 12. ล็อตรายสัปดาห์ (Weekly Batch) — รวมเมล็ดที่เพาะใน 1 สัปดาห์ (จ.-ศ.) เป็นล็อตเดียว
+CREATE TABLE IF NOT EXISTS weekly_batches (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  lot_code TEXT NOT NULL,            -- เช่น GO-W27
+  vegetable_type TEXT NOT NULL,      -- green_oak / red_oak / finley / cos / butterhead
+  year INTEGER NOT NULL,
+  week INTEGER NOT NULL,             -- เลขสัปดาห์ ISO
+  week_start DATE NOT NULL,          -- วันจันทร์ของสัปดาห์
+  seed_start DATE,                   -- วันเพาะแรกสุดในล็อต (ใช้คำนวณอายุ)
+  seed_end DATE,                     -- วันเพาะล่าสุด
+  total_seeds INTEGER DEFAULT 0,     -- รวมจำนวนต้นที่เพาะในสัปดาห์
+  target INTEGER DEFAULT 0,          -- เป้าหมายต่อสัปดาห์
+  stage TEXT DEFAULT 'nursery1' CHECK (stage IN ('nursery1','nursery2','planted')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
 -- ===========================
+ALTER TABLE weekly_batches      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seed_batches        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plots               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plot_cycles         ENABLE ROW LEVEL SECURITY;
@@ -184,7 +202,7 @@ DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'seed_batches','plots','plot_cycles','problems','todos',
-    'calendar_activities','income','expenses','customers','personal_expenses','orders'
+    'calendar_activities','income','expenses','customers','personal_expenses','orders','weekly_batches'
   ] LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Allow all" ON %I;', t);
     EXECUTE format('DROP POLICY IF EXISTS "Allow all for authenticated" ON %I;', t);

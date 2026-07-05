@@ -30,7 +30,7 @@
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=28">
+<link rel="stylesheet" href="css/style.css?v=29">
 </head>
 <body>
 
@@ -257,6 +257,59 @@
 
     <div class="growth-divider"><span class="gd-label">ประวัติการเพาะเมล็ด</span></div>
     <div class="hist-list" id="seed-history-list"></div>
+  </div>
+</div>
+
+<!-- ===========================================================
+     2B. Weekly Batch (ล็อตรายสัปดาห์)
+     =========================================================== -->
+<div class="page" id="page-batches">
+  <div class="page-content">
+    <div class="section-eyebrow">ล็อตรายสัปดาห์</div>
+    <div class="section-title">
+      <span class="title-icon" style="background:linear-gradient(135deg,#0EA5E9,#22D3EE);box-shadow:0 8px 20px rgba(14,165,233,0.30)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      Weekly Batch
+    </div>
+    <div class="section-sub">รวมเมล็ดที่เพาะใน 1 สัปดาห์ (จ.–ศ.) เป็นล็อตเดียว ติดตามการโตตามอายุ เพื่อปรับแผนแต่ละฤดู</div>
+
+    <div class="card">
+      <div class="card-title">เพิ่มเมล็ดเข้าล็อตสัปดาห์นี้</div>
+      <div class="form-group">
+        <label class="form-label">วันที่เพาะ</label>
+        <input type="date" id="batch-seed-date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ชนิดผัก</label>
+        <select id="batch-veg" class="form-control">
+          <option value="green_oak">กรีนโอ๊ค (GO)</option>
+          <option value="red_oak">เรดโอ๊ค (RO)</option>
+          <option value="finley">ฟินเลย์ (FL)</option>
+          <option value="cos">คอส (CO)</option>
+          <option value="butterhead">บัตเตอร์เฮด (BH)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">จำนวนต้นที่เพาะ</label>
+        <input type="number" id="batch-count" class="form-control" min="1" placeholder="เช่น 1500">
+      </div>
+      <div class="form-group">
+        <label class="form-label">เป้าหมายต่อสัปดาห์ (ต้น)</label>
+        <input type="number" id="batch-target" class="form-control" min="0" placeholder="เช่น 3000">
+      </div>
+      <button class="btn btn-primary" style="background:linear-gradient(135deg,#0EA5E9,#22D3EE)" onclick="addWeeklySeeding()">เพิ่มเข้าล็อตสัปดาห์นี้</button>
+    </div>
+
+    <div class="growth-divider"><span class="gd-label">ล็อตทั้งหมด</span></div>
+    <div class="prob-tabs">
+      <button class="prob-tab active" id="btab-nursery1" onclick="setBatchTab('nursery1')">🌱 อนุบาล 1 <span id="btab-count-nursery1"></span></button>
+      <button class="prob-tab" id="btab-nursery2" onclick="setBatchTab('nursery2')">🌿 อนุบาล 2 <span id="btab-count-nursery2"></span></button>
+      <button class="prob-tab" id="btab-planted" onclick="setBatchTab('planted')">✅ ลงแปลง <span id="btab-count-planted"></span></button>
+    </div>
+    <div id="batch-list"></div>
   </div>
 </div>
 
@@ -1022,6 +1075,10 @@
     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12M12 12C12 7 8 4 4 4C4 9 7 13 12 13M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/></svg></span>
     <span class="nav-label">เพาะ</span>
   </a>
+  <a href="#batches" id="nav-batches" data-page="batches">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span>
+    <span class="nav-label">ล็อต</span>
+  </a>
   <a href="#plots" id="nav-plots" data-page="plots">
     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/><path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/></svg></span>
     <span class="nav-label">แปลง</span>
@@ -1050,15 +1107,16 @@
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=6"></script>
+<script defer src="js/supabase.js?v=7"></script>
 <script defer src="js/dashboard.js?v=12"></script>
 <script defer src="js/seeds.js?v=8"></script>
-<script defer src="js/plots.js?v=13"></script>
+<script defer src="js/batches.js?v=1"></script>
+<script defer src="js/plots.js?v=14"></script>
 <script defer src="js/problems.js?v=9"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=14"></script>
 <script defer src="js/customers.js?v=9"></script>
-<script defer src="js/app.js?v=2"></script>
+<script defer src="js/app.js?v=3"></script>
 </body>
 </html>
