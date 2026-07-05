@@ -30,7 +30,7 @@
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=27">
+<link rel="stylesheet" href="css/style.css?v=28">
 </head>
 <body>
 
@@ -78,6 +78,12 @@
 <div id="loader"><div class="spinner"></div><div id="loader-text">กำลังโหลด...</div></div>
 <!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
+
+<!-- ===== UNDO SNACKBAR ===== -->
+<div id="undo-bar">
+  <span id="undo-msg">บันทึกแล้ว</span>
+  <button id="undo-btn" onclick="vfDoUndo()">↩ ย้อนกลับ</button>
+</div>
 
 <!-- ===========================================================
      1. DASHBOARD
@@ -1044,14 +1050,14 @@
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=5"></script>
+<script defer src="js/supabase.js?v=6"></script>
 <script defer src="js/dashboard.js?v=12"></script>
 <script defer src="js/seeds.js?v=8"></script>
-<script defer src="js/plots.js?v=12"></script>
-<script defer src="js/problems.js?v=8"></script>
+<script defer src="js/plots.js?v=13"></script>
+<script defer src="js/problems.js?v=9"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
-<script defer src="js/finance.js?v=13"></script>
+<script defer src="js/finance.js?v=14"></script>
 <script defer src="js/customers.js?v=9"></script>
 <script defer src="js/app.js?v=2"></script>
 </body>

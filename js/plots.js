@@ -348,9 +348,28 @@ async function savePlot() {
       });
     }
 
-    showToast('บันทึกข้อมูลแปลงสำเร็จ');
     loadAllPlots();
     loadPlotDetail(selectedPlotCode);
+
+    // ปุ่มย้อนกลับ: คืนค่าข้อมูลแปลงกลับเป็นก่อนบันทึก
+    const code = selectedPlotCode;
+    const revert = {
+      vegetable_type: current?.vegetable_type ?? null,
+      plant_date: current?.plant_date ?? null,
+      plant_age_days: current?.plant_age_days ?? null,
+      harvest_date: current?.harvest_date ?? null,
+      estimated_kg: current?.estimated_kg ?? null,
+      photo_url: current?.photo_url ?? null,
+      is_harvested: current?.is_harvested ?? false,
+      actual_kg: current?.actual_kg ?? null,
+      harvest_notes: current?.harvest_notes ?? null,
+      updated_at: new Date().toISOString()
+    };
+    vfOfferUndo(`บันทึกข้อมูลแปลง ${code} แล้ว`, async () => {
+      await db.from('plots').update(revert).eq('plot_code', code);
+      loadAllPlots();
+      if (selectedPlotCode === code) loadPlotDetail(code);
+    });
   } catch (err) {
     console.error(err);
     showToast('บันทึกไม่สำเร็จ: ' + (err.message || err), 'error');

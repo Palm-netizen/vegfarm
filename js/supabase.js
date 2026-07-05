@@ -293,6 +293,71 @@ function setLoading(show) {
   if (loader) loader.style.display = show ? 'flex' : 'none';
 }
 
+// ===== UNDO (ย้อนกลับการบันทึก/เปลี่ยนสถานะล่าสุด) =====
+let _vfUndoFn = null;
+let _vfUndoTimer = null;
+// เสนอปุ่มย้อนกลับ: msg = ข้อความ, undoFn = ฟังก์ชัน async ที่คืนค่ากลับสภาพเดิม
+function vfOfferUndo(msg, undoFn) {
+  _vfUndoFn = undoFn;
+  const bar = document.getElementById('undo-bar');
+  if (!bar) return;
+  document.getElementById('undo-msg').textContent = msg || 'บันทึกแล้ว';
+  bar.classList.add('show');
+  clearTimeout(_vfUndoTimer);
+  _vfUndoTimer = setTimeout(() => { bar.classList.remove('show'); _vfUndoFn = null; }, 8000);
+}
+function vfHideUndo() {
+  clearTimeout(_vfUndoTimer);
+  _vfUndoFn = null;
+  document.getElementById('undo-bar')?.classList.remove('show');
+}
+async function vfDoUndo() {
+  const fn = _vfUndoFn;
+  vfHideUndo();
+  if (!fn) return;
+  setLoading(true);
+  try {
+    await fn();
+    showToast('ย้อนกลับแล้ว');
+  } catch (err) {
+    console.error(err);
+    showToast('ย้อนกลับไม่สำเร็จ: ' + (err.message || err), 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// เพิ่มแถวใหม่แบบย้อนกลับได้ (ย้อน = ลบแถวที่เพิ่ง insert) — คืน { data, error }
+async function vfInsertUndoable(table, payload, msg, onDone) {
+  const { data, error } = await db.from(table).insert(payload).select();
+  if (error) return { data: null, error };
+  const row = Array.isArray(data) ? data[0] : data;
+  if (row && row.id) {
+    vfOfferUndo(msg, async () => {
+      await db.from(table).delete().eq('id', row.id);
+      if (typeof onDone === 'function') onDone();
+    });
+  }
+  return { data: row, error: null };
+}
+
+// อัปเดตแถวโดยจำค่าเดิมไว้ให้ย้อนกลับได้ — คืน { error }
+async function vfUpdateUndoable(table, id, patch, msg, onDone) {
+  const { data: prev } = await db.from(table).select('*').eq('id', id).single();
+  const { error } = await db.from(table).update(patch).eq('id', id);
+  if (error) return { error };
+  if (prev) {
+    // เก็บเฉพาะคีย์ที่ถูกแก้ เพื่อคืนค่าเดิม
+    const revert = {};
+    Object.keys(patch).forEach(k => { revert[k] = prev[k]; });
+    vfOfferUndo(msg, async () => {
+      await db.from(table).update(revert).eq('id', id);
+      if (typeof onDone === 'function') onDone();
+    });
+  }
+  return { error: null };
+}
+
 // แสดงรูปขนาดใหญ่ (lightbox) — แตะที่ไหนก็ปิด
 function openImageViewer(src) {
   if (!src) return;

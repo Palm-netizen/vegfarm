@@ -181,10 +181,10 @@ async function saveIncome() {
       showToast('อัปเดตรายรับสำเร็จ');
       editIncomeId = null;
     } else {
-      const { error } = await db.from('income').insert(payload);
-      if (error) throw error;
       const addedCustomer = buyer ? await ensureCustomerFromBuyer(buyer) : false;
-      showToast(addedCustomer ? `บันทึกรายรับ + เพิ่ม "${buyer}" เข้ารายชื่อลูกค้า` : 'บันทึกรายรับสำเร็จ');
+      const msg = addedCustomer ? `บันทึกรายรับ + เพิ่ม "${buyer}" เข้าลูกค้า` : 'บันทึกรายรับสำเร็จ';
+      const { error } = await vfInsertUndoable('income', payload, msg, () => { loadIncomeList(); loadFinanceSummary(); });
+      if (error) throw error;
     }
     resetIncomeForm();
     loadIncomeList(); loadFinanceSummary();
@@ -256,9 +256,8 @@ async function saveExpense() {
       if (error) throw error;
       showToast('อัปเดตรายจ่ายสำเร็จ'); editExpenseId = null;
     } else {
-      const { error } = await db.from('expenses').insert(payload);
+      const { error } = await vfInsertUndoable('expenses', payload, 'บันทึกรายจ่ายสำเร็จ', () => { loadExpenseList(); loadFinanceSummary(); });
       if (error) throw error;
-      showToast('บันทึกรายจ่ายสำเร็จ');
     }
     resetExpenseForm(); loadExpenseList(); loadFinanceSummary();
   } catch(e) { showToast('บันทึกไม่สำเร็จ: '+(e.message||e),'error'); console.error(e); }
@@ -353,9 +352,8 @@ async function savePersonal() {
       if (error) throw error;
       showToast('อัปเดตรายจ่ายส่วนตัวสำเร็จ'); editPersonalId = null;
     } else {
-      const { error } = await db.from('personal_expenses').insert(payload);
+      const { error } = await vfInsertUndoable('personal_expenses', payload, 'บันทึกรายจ่ายส่วนตัวสำเร็จ', () => { loadPersonalList(); loadFinanceSummary(); });
       if (error) throw error;
-      showToast('บันทึกรายจ่ายส่วนตัวสำเร็จ');
     }
     const btn = document.getElementById('personal-save-btn'); if (btn) btn.textContent = 'บันทึกรายจ่ายส่วนตัว';
     document.getElementById('personal-category').value = '';

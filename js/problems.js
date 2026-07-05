@@ -114,7 +114,7 @@ async function saveProblem() {
     } else {
       const { data: plot } = await db.from('plots').select('cycle_count').eq('plot_code', plotCode).single();
 
-      const { error } = await db.from('problems').insert({
+      const { error } = await vfInsertUndoable('problems', {
         plot_code: plotCode,
         problem_date: date,
         problem_type: type,
@@ -123,7 +123,7 @@ async function saveProblem() {
         solution,
         photo_url: photoUrl,
         cycle_number: plot?.cycle_count || 1
-      });
+      }, 'บันทึกปัญหาสำเร็จ', () => loadProblemDatabase());
       if (error) throw error;
 
       await db.from('calendar_activities').insert({
@@ -132,8 +132,6 @@ async function saveProblem() {
         plot_code: plotCode,
         summary: `ปัญหา${problemTypeLabel(type)} แปลง ${plotCode}`
       });
-
-      showToast('บันทึกปัญหาสำเร็จ');
     }
     resetProblemForm();
     loadProblemDatabase();
@@ -395,9 +393,10 @@ function closeProblemDetail() {
 }
 
 async function toggleResolved(id, resolved) {
-  const { error } = await db.from('problems').update({ resolved }).eq('id', id);
+  const { error } = await vfUpdateUndoable('problems', id, { resolved },
+    resolved ? 'ปิดงาน — ย้ายไปแท็บแก้สำเร็จแล้ว' : 'ย้ายกลับมาแท็บกำลังแก้',
+    () => loadProblemDatabase());
   if (error) return showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
-  showToast(resolved ? 'ปิดงาน — ย้ายไปแท็บแก้สำเร็จแล้ว' : 'ย้ายกลับมาแท็บกำลังแก้');
   loadProblemDatabase();
 }
 
