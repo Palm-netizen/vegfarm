@@ -67,6 +67,11 @@ async function loadBatches() {
     });
   });
 
+  // เลขล็อตแบบรันนิ่ง เริ่มที่ W001 (เรียงตามวันจันทร์ของสัปดาห์ที่มีข้อมูล)
+  const weekMondays = [...new Set(Object.values(lots).map(L => L.monday))].sort();
+  const weekRun = {};
+  weekMondays.forEach((m, i) => { weekRun[m] = i + 1; });
+
   // ผูกสถานะ + เป้าหมายจาก overlay
   const stateMap = {};
   states.forEach(s => { stateMap[`${s.year}-${s.week}-${s.vegetable_type}`] = s; });
@@ -75,7 +80,8 @@ async function loadBatches() {
     const s = stateMap[L.key];
     return {
       ...L,
-      lot_code: `${BATCH_PREFIX[L.veg] || 'XX'}-W${L.week}`,
+      runNo: weekRun[L.monday],
+      lot_code: `${BATCH_PREFIX[L.veg] || 'XX'}-W${String(weekRun[L.monday]).padStart(3, '0')}`,
       total_seeds: Math.round(L.total),
       target: (s && s.target) ? parseInt(s.target) : DEFAULT_TARGET,
       stage: (s && s.stage) ? s.stage : 'nursery1',
@@ -143,7 +149,7 @@ function renderBatchCard(b) {
     <div class="batch-card ${frame}">
       <div class="batch-head">
         <div class="batch-code">${b.lot_code}</div>
-        <div class="batch-veg">${veg} · สัปดาห์ ${b.week}</div>
+        <div class="batch-veg">${veg} · สัปดาห์ที่ ${b.runNo}</div>
       </div>
       <div class="batch-grid">
         <div><span class="bl">เป้าหมาย</span><span class="bv">${fmt(target)} ต้น</span></div>
