@@ -274,33 +274,10 @@
       </span>
       Weekly Batch
     </div>
-    <div class="section-sub">รวมเมล็ดที่เพาะใน 1 สัปดาห์ (จันทร์–อาทิตย์) เป็นล็อตเดียว ติดตามการโตตามอายุ เพื่อปรับแผนแต่ละฤดู</div>
+    <div class="section-sub">ดึงข้อมูลจากเมนู "เพาะเมล็ด" อัตโนมัติ จัดกลุ่มเป็นล็อตรายสัปดาห์ (จันทร์–อาทิตย์) ตามชนิดผัก เพื่อติดตามการโตตามอายุและปรับแผนแต่ละฤดู</div>
 
-    <div class="card">
-      <div class="card-title">เพิ่มเมล็ดเข้าล็อตสัปดาห์นี้</div>
-      <div class="form-group">
-        <label class="form-label">วันที่เพาะ</label>
-        <input type="date" id="batch-seed-date" class="form-control">
-      </div>
-      <div class="form-group">
-        <label class="form-label">ชนิดผัก</label>
-        <select id="batch-veg" class="form-control">
-          <option value="green_oak">กรีนโอ๊ค (GO)</option>
-          <option value="red_oak">เรดโอ๊ค (RO)</option>
-          <option value="finley">ฟินเลย์ (FL)</option>
-          <option value="cos">คอส (CO)</option>
-          <option value="butterhead">บัตเตอร์เฮด (BH)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">จำนวนต้นที่เพาะ</label>
-        <input type="number" id="batch-count" class="form-control" min="1" placeholder="เช่น 1500">
-      </div>
-      <div class="form-group">
-        <label class="form-label">เป้าหมายต่อสัปดาห์ (ต้น)</label>
-        <input type="number" id="batch-target" class="form-control" min="0" placeholder="เช่น 3000">
-      </div>
-      <button class="btn btn-primary" style="background:linear-gradient(135deg,#0EA5E9,#22D3EE)" onclick="addWeeklySeeding()">เพิ่มเข้าล็อตสัปดาห์นี้</button>
+    <div class="card" style="background:var(--primary-tint);border:1px solid var(--line)">
+      <div class="text-sub" style="line-height:1.6">🔄 ระบบสร้างชื่อล็อตและจัดกลุ่มให้อัตโนมัติจากข้อมูลในเมนู <strong>เพาะเมล็ด</strong> — ไม่ต้องกรอกซ้ำ</div>
     </div>
 
     <div class="growth-divider"><span class="gd-label">ล็อตทั้งหมด</span></div>
@@ -1110,7 +1087,7 @@
 <script defer src="js/supabase.js?v=7"></script>
 <script defer src="js/dashboard.js?v=12"></script>
 <script defer src="js/seeds.js?v=8"></script>
-<script defer src="js/batches.js?v=2"></script>
+<script defer src="js/batches.js?v=3"></script>
 <script defer src="js/plots.js?v=14"></script>
 <script defer src="js/problems.js?v=9"></script>
 <script defer src="js/calendar.js?v=2"></script>
