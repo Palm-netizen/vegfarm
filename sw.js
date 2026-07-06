@@ -3,7 +3,7 @@
 //  • index.html / การนำทาง  → network-first  (ได้ตัวอ้างอิงเวอร์ชันล่าสุดเสมอ ออฟไลน์ค่อย fallback แคช)
 //  • ไฟล์ js/css/ฟอนต์ (มี ?v= หรือ immutable) → cache-first + อัปเดตเบื้องหลัง (เปิดเร็วทันที)
 //  • คำขอข้ามโดเมน (Supabase/CDN) → ปล่อยผ่าน ไม่แคช
-const CACHE = 'vegfarm-v2';
+const CACHE = 'vegfarm-v3';
 
 self.addEventListener('install', () => self.skipWaiting());
 
