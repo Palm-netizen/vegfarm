@@ -176,14 +176,32 @@ function renderPlotLots(plots) {
     return s[0] === s[s.length - 1] ? formatDateTH(s[0]) : `${short(s[0])}–${short(s[s.length - 1])}`;
   };
 
+  const today = new Date().toISOString().split('T')[0];
+
   el.innerHTML = display.map(w => {
     const code = `แปลง-W${String(w.runNo).padStart(3, '0')}`;
     const plantRange = rangeOf(w.plots.map(p => p.plant_date));
-    const harvests = w.plots.map(p => p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0))));
-    const harvestRange = rangeOf(harvests);
     const vegs = [...new Set(w.plots.flatMap(p => String(p.vegetable_type || '').split(',')).map(v => v.trim()).filter(Boolean))]
       .map(v => vegLabel(v)).join(', ');
-    const codes = w.plots.map(p => `<span class="badge badge-green">${p.plot_code}</span>`).join(' ');
+
+    // เรียงแปลงตามวันเก็บเกี่ยว (เก็บก่อน → เก็บทีหลัง) แล้วไล่สีจากอุ่น→เขียว เพื่อวางแผนขาย
+    const withH = w.plots.map(p => ({
+      p, h: p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0)))
+    })).sort((a, b) => (a.h < b.h ? -1 : (a.h > b.h ? 1 : 0)));
+    const n = withH.length;
+    const seq = withH.map((x, i) => {
+      const hue = Math.round(18 + 112 * (n > 1 ? i / (n - 1) : 0));   // 18=ส้ม(ก่อน) → 130=เขียว(หลัง)
+      const daysLeft = Math.round((new Date(x.h) - new Date(today)) / 86400000);
+      const when = daysLeft < 0 ? `เลย ${-daysLeft} วัน` : daysLeft === 0 ? 'วันนี้' : `อีก ${daysLeft} วัน`;
+      return `
+        <div class="pls-row">
+          <span class="pls-rank">${i + 1}</span>
+          <span class="pls-code" style="background:hsl(${hue},68%,42%)">${x.p.plot_code}</span>
+          <span class="pls-veg">${vegLabelMulti(x.p.vegetable_type)}</span>
+          <span class="pls-date">${formatDateTH(x.h)} · ${when}</span>
+        </div>`;
+    }).join('');
+
     return `
       <div class="batch-card">
         <div class="batch-head">
@@ -192,8 +210,8 @@ function renderPlotLots(plots) {
         </div>
         <div class="batch-meta">🌱 ปลูก: ${plantRange}</div>
         <div class="batch-meta">🥬 ชนิดผัก: ${vegs || '-'}</div>
-        <div class="batch-meta">🧺 เก็บเกี่ยว: ${harvestRange}</div>
-        <div class="plot-lot-codes">${codes}</div>
+        <div class="pls-head">🧺 ลำดับเก็บเกี่ยว <span class="pls-legend"><i style="background:hsl(18,68%,42%)"></i>เก็บก่อน → <i style="background:hsl(130,68%,42%)"></i>เก็บทีหลัง</span></div>
+        <div class="plot-lot-seq">${seq}</div>
       </div>`;
   }).join('');
 }

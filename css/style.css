@@ -732,6 +732,16 @@ select.form-control { cursor: pointer; }
 [data-theme="dark"] .batch-alert.ready { background: #14271C; color: #4ADE80; }
 .batch-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
 .plot-lot-codes { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+/* ลำดับเก็บเกี่ยวในล็อต (ไล่สีตามลำดับเก็บก่อน→หลัง) */
+.pls-head { font-size: 12.5px; color: var(--ink-soft); font-weight: 700; margin: 10px 0 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pls-legend { font-size: 10.5px; color: var(--ink-faint); font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+.pls-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.plot-lot-seq { display: flex; flex-direction: column; gap: 6px; }
+.pls-row { display: flex; align-items: center; gap: 8px; }
+.pls-rank { width: 20px; height: 20px; flex: none; border-radius: 50%; background: var(--bg); color: var(--ink-soft); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.pls-code { flex: none; color: #fff; font-weight: 800; font-size: 13px; padding: 3px 11px; border-radius: 999px; font-family: var(--font-display); }
+.pls-veg { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pls-date { flex: none; font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
 
 /* แท็บฐานข้อมูลปัญหา (กำลังแก้ / แก้สำเร็จ) */
 .prob-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
