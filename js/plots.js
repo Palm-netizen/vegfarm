@@ -131,6 +131,61 @@ async function loadAllPlots() {
       info.textContent = 'ว่าง';
     }
   });
+
+  renderPlotLots(plots || []);
+}
+
+// จัดล็อตแปลง: รวมแปลงที่ปลูกในสัปดาห์เดียวกัน (จ.–อา.) เป็นล็อต ตั้งชื่ออัตโนมัติ แสดงด้านล่าง
+function renderPlotLots(plots) {
+  const el = document.getElementById('plot-lots');
+  if (!el) return;
+
+  // จัดกลุ่มแปลงที่ปลูกอยู่ (มีวันปลูก ยังไม่เก็บ) ตามสัปดาห์ ISO ของวันปลูก
+  const lots = {};
+  plots.forEach(p => {
+    if (!p.plant_date || p.is_harvested) return;
+    const { year, week, monday } = isoWeekInfo(p.plant_date);
+    const key = `${year}-${week}`;
+    if (!lots[key]) lots[key] = { key, monday, plots: [] };
+    lots[key].plots.push(p);
+  });
+
+  // เลขล็อตรันนิ่ง เริ่ม W001 เรียงตามสัปดาห์ที่ปลูก (เก่า→ใหม่)
+  const asc = Object.values(lots).sort((a, b) => (a.monday < b.monday ? -1 : 1));
+  asc.forEach((w, i) => { w.runNo = i + 1; });
+  const display = asc.slice().sort((a, b) => (a.monday < b.monday ? 1 : -1));  // ใหม่สุดขึ้นก่อน
+
+  if (!display.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div>ยังไม่มีแปลงที่กำลังปลูก</div>';
+    return;
+  }
+
+  const short = d => new Date(d).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  const rangeOf = arr => {
+    const s = arr.slice().sort();
+    return s[0] === s[s.length - 1] ? formatDateTH(s[0]) : `${short(s[0])}–${short(s[s.length - 1])}`;
+  };
+
+  el.innerHTML = display.map(w => {
+    const code = `แปลง-W${String(w.runNo).padStart(3, '0')}`;
+    const plantRange = rangeOf(w.plots.map(p => p.plant_date));
+    const harvests = w.plots.map(p => p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0))));
+    const harvestRange = rangeOf(harvests);
+    const vegs = [...new Set(w.plots.flatMap(p => String(p.vegetable_type || '').split(',')).map(v => v.trim()).filter(Boolean))]
+      .map(v => vegLabel(v)).join(', ');
+    const codes = w.plots.map(p => `<span class="badge badge-green">${p.plot_code}</span>`).join(' ');
+    return `
+      <div class="batch-card">
+        <div class="batch-head">
+          <div class="batch-code">${code}</div>
+          <div class="batch-veg">${w.plots.length} แปลง · สัปดาห์ที่ ${w.runNo}</div>
+        </div>
+        <div class="batch-meta">🌱 ปลูก: ${plantRange}</div>
+        <div class="batch-meta">🥬 ชนิดผัก: ${vegs || '-'}</div>
+        <div class="batch-meta">🧺 เก็บเกี่ยว: ${harvestRange}</div>
+        <div class="plot-lot-codes">${codes}</div>
+      </div>`;
+  }).join('');
 }
 
 function selectPlot(code) {

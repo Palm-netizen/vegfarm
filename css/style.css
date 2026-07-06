@@ -731,6 +731,7 @@ select.form-control { cursor: pointer; }
 [data-theme="dark"] .batch-alert.warn  { background: #3A2E10; color: #FBBF24; }
 [data-theme="dark"] .batch-alert.ready { background: #14271C; color: #4ADE80; }
 .batch-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.plot-lot-codes { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
 
 /* แท็บฐานข้อมูลปัญหา (กำลังแก้ / แก้สำเร็จ) */
 .prob-tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
