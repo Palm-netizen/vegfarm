@@ -3,7 +3,7 @@
 //  • index.html / การนำทาง  → network-first  (ได้ตัวอ้างอิงเวอร์ชันล่าสุดเสมอ ออฟไลน์ค่อย fallback แคช)
 //  • ไฟล์ js/css/ฟอนต์ (มี ?v= หรือ immutable) → cache-first + อัปเดตเบื้องหลัง (เปิดเร็วทันที)
 //  • คำขอข้ามโดเมน (Supabase/CDN) → ปล่อยผ่าน ไม่แคช
-const CACHE = 'vegfarm-v3';
+const CACHE = 'vegfarm-v4';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -24,9 +24,10 @@ self.addEventListener('fetch', (e) => {
   const isHTML = req.mode === 'navigate' || req.destination === 'document';
 
   if (isHTML) {
-    // network-first: ได้ index.html ล่าสุด (ซึ่งอ้างอิง ?v= ของไฟล์ใหม่)
+    // network-first + no-store: ดึง index.html สดเสมอ (ข้าม HTTP cache ของเบราว์เซอร์)
+    // กันปัญหาเห็นเวอร์ชันเก่าค้างบน iPhone
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then(res => {
           const copy = res.clone();
           caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});

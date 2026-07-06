@@ -1,5 +1,7 @@
 // js/app.js — App router & init
 
+const APP_VERSION = 'v2026.07.06 · build 21';
+
 const PAGE_INIT = {
   dashboard: loadDashboard,
   seeds: initSeeds,
@@ -72,6 +74,9 @@ function vfStartApp() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   updateThemeToggleIcon();
+
+  const verEl = document.getElementById('app-version');
+  if (verEl) verEl.textContent = 'VegFarm · ' + APP_VERSION;
 
   // Set today's date in nav
   const today = new Date();
