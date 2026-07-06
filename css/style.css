@@ -711,6 +711,15 @@ select.form-control { cursor: pointer; }
 }
 .batch-card.warn  { border-color: #EAB308; box-shadow: 0 4px 16px rgba(202,138,4,.20); }
 .batch-card.ready { border-color: var(--primary); box-shadow: 0 4px 16px rgba(22,163,74,.20); }
+.batch-card.danger { border-color: var(--danger); box-shadow: 0 4px 16px rgba(220,38,38,.22); }
+.batch-bar-fill.warn { background: linear-gradient(90deg,#EF4444,#F97316); }
+.batch-bar-label.danger { color: var(--danger); font-weight: 700; }
+/* หัวข้อเป้าหมายการปลูกด้านบนป๊อปอัพล็อต */
+.lot-target { background: var(--primary-tint); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 14px; }
+.lot-target .lt-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 4px; color: var(--ink); }
+.lot-target .lt-row b { font-family: var(--font-display); font-weight: 800; color: var(--primary-dark); }
+[data-theme="dark"] .lot-target .lt-row b { color: #4ADE80; }
+.lot-target .lt-note { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
 .batch-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .batch-code { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
 .batch-veg { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; }

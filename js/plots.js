@@ -4,6 +4,10 @@ let selectedPlotCode = null;
 let plotPhotoDataUrl = null;   // รูปแปลงปลูก (data URL ที่ย่อแล้ว)
 let vfPendingPlant = null;     // ข้อมูลจากล็อต Weekly Batch ที่กด "ย้ายลงปลูก" มา
 
+// เป้าหมายการปลูกต่อสัปดาห์ (เพื่อให้พอส่งออเดอร์)
+const LOT_ORDER_TARGET_KG = 90;   // ออเดอร์ต่อสัปดาห์ 90 กก.
+const LOT_PLOTS_PER_WEEK = 4;     // ต้องปลูก 4 แปลง/สัปดาห์
+
 function initPlots() {
   renderPlotGrid();
   // ชนิดผัก (เลือกหลายชนิด) — sync .checked class จากสถานะ checkbox
@@ -178,11 +182,29 @@ function renderPlotLots(plots) {
 
   const today = new Date().toISOString().split('T')[0];
 
-  el.innerHTML = display.map(w => {
+  // สรุปเป้าหมายด้านบน
+  const headHtml = `
+    <div class="lot-target">
+      <div class="lt-row"><span>🎯 เป้าหมายออเดอร์/สัปดาห์</span><b>${LOT_ORDER_TARGET_KG} กก.</b></div>
+      <div class="lt-row"><span>🌱 ต้องปลูกให้ครบ/สัปดาห์</span><b>${LOT_PLOTS_PER_WEEK} แปลง</b></div>
+      <div class="lt-note">ปลูกให้ครบ ${LOT_PLOTS_PER_WEEK} แปลงทุกสัปดาห์ ไม่งั้นผักจะไม่พอส่งออเดอร์</div>
+    </div>`;
+
+  const lotsHtml = display.map(w => {
     const code = `แปลง-W${String(w.runNo).padStart(3, '0')}`;
     const plantRange = rangeOf(w.plots.map(p => p.plant_date));
     const vegs = [...new Set(w.plots.flatMap(p => String(p.vegetable_type || '').split(',')).map(v => v.trim()).filter(Boolean))]
       .map(v => vegLabel(v)).join(', ');
+
+    // เช็คว่าปลูกครบเป้า 4 แปลงในสัปดาห์นี้หรือยัง
+    const cnt = w.plots.length;
+    const complete = cnt >= LOT_PLOTS_PER_WEEK;
+    const pct = Math.min(100, Math.round(cnt / LOT_PLOTS_PER_WEEK * 100));
+    const need = Math.max(0, LOT_PLOTS_PER_WEEK - cnt);
+    const barHtml = `
+      <div class="batch-bar"><div class="batch-bar-fill ${complete ? 'ok' : 'warn'}" style="width:${pct}%"></div></div>
+      <div class="batch-bar-label ${complete ? '' : 'danger'}">ปลูกแล้ว ${cnt}/${LOT_PLOTS_PER_WEEK} แปลง · ${
+        complete ? 'ครบเป้าแล้ว ✅' : `🔴 ยังไม่ครบ! ปลูกอีก ${need} แปลง ไม่งั้นผักไม่พอขาย`}</div>`;
 
     // เรียงแปลงตามวันเก็บเกี่ยว (เก็บก่อน → เก็บทีหลัง) แล้วไล่สีจากอุ่น→เขียว เพื่อวางแผนขาย
     const withH = w.plots.map(p => ({
@@ -203,17 +225,20 @@ function renderPlotLots(plots) {
     }).join('');
 
     return `
-      <div class="batch-card">
+      <div class="batch-card ${complete ? 'ready' : 'danger'}">
         <div class="batch-head">
           <div class="batch-code">${code}</div>
-          <div class="batch-veg">${w.plots.length} แปลง · สัปดาห์ที่ ${w.runNo}</div>
+          <div class="batch-veg">${cnt} แปลง · สัปดาห์ที่ ${w.runNo}</div>
         </div>
+        ${barHtml}
         <div class="batch-meta">🌱 ปลูก: ${plantRange}</div>
         <div class="batch-meta">🥬 ชนิดผัก: ${vegs || '-'}</div>
         <div class="pls-head">🧺 ลำดับเก็บเกี่ยว <span class="pls-legend"><i style="background:hsl(18,68%,42%)"></i>เก็บก่อน → <i style="background:hsl(130,68%,42%)"></i>เก็บทีหลัง</span></div>
         <div class="plot-lot-seq">${seq}</div>
       </div>`;
   }).join('');
+
+  el.innerHTML = headHtml + lotsHtml;
 }
 
 function selectPlot(code) {
