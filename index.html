@@ -50,7 +50,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=35">
+<link rel="stylesheet" href="css/style.css?v=36">
 </head>
 <body>
 
@@ -121,6 +121,8 @@ if('serviceWorker' in navigator){
       Dashboard
     </div>
     <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
+
+    <div id="dash-advice"></div>
 
     <div class="stat-grid">
       <div class="stat-card">
@@ -1123,7 +1125,7 @@ if('serviceWorker' in navigator){
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=7"></script>
-<script defer src="js/dashboard.js?v=13"></script>
+<script defer src="js/dashboard.js?v=14"></script>
 <script defer src="js/seeds.js?v=9"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
@@ -1132,6 +1134,6 @@ if('serviceWorker' in navigator){
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=14"></script>
 <script defer src="js/customers.js?v=9"></script>
-<script defer src="js/app.js?v=8"></script>
+<script defer src="js/app.js?v=9"></script>
 </body>
 </html>

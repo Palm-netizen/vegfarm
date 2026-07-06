@@ -11,7 +11,7 @@ async function loadDashboard() {
     // ยิงทุก query พร้อมกัน (parallel) แทนที่จะรอทีละอัน → หน้าแรกโหลดเร็วขึ้นมาก
     const [
       activePlotsR, batchesR, problemPlotsR, todayTodosR,
-      recentProblemsR, chartBatchesR, weekOrdersR, todayOrdersR
+      recentProblemsR, chartBatchesR, weekOrdersR, todayOrdersR, futureSeedsR
     ] = await Promise.all([
       db.from('plots').select('*').eq('is_harvested', false).not('plant_date', 'is', null),
       db.from('seed_batches').select('survival_rate').order('created_at', { ascending: false }).limit(5),
@@ -21,6 +21,7 @@ async function loadDashboard() {
       db.from('seed_batches').select('seed_date, seed_count, estimated_kg, weather_condition').order('seed_date', { ascending: false }).limit(6),
       db.from('orders').select('customer_name,kg,delivered,order_date').eq('week_start', weekStart),
       db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today),
+      db.from('seed_batches').select('harvest_date, estimated_kg').gte('harvest_date', today),
     ]);
 
     // 1. จำนวนรอบปลูกปัจจุบัน (ใช้ซ้ำเป็น "แปลงที่กำลังปลูก" ด้วย)
@@ -71,6 +72,19 @@ async function loadDashboard() {
 
     // 9. ออเดอร์วันนี้ที่ต้องส่ง
     const todayOrders = todayOrdersR.data || [];
+
+    // 10. คำแนะนำ/แจ้งเตือนอัจฉริยะ
+    renderAdvice({
+      today, weekStart,
+      futureSeeds: futureSeedsR.data || [],
+      growingPlots, todayOrders,
+      thisWeekPlots: activePlots.filter(p => {
+        const wd = new Date(p.plant_date); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
+        return wd.toISOString().split('T')[0] === weekStart;
+      }).length,
+      overdue: growingPlots.filter(p => p.daysLeft < 0).length,
+      nearHarvest: growingPlots.filter(p => p.daysLeft >= 0 && p.daysLeft <= 5).length
+    });
 
     // Render
     renderDashboardStats({
@@ -310,6 +324,87 @@ function renderWeeklyPlan() {
     </div>
     <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง ${ordersMode ? '' : '<span style="font-weight:400">(ตั้งออเดอร์รายสัปดาห์ได้ที่หน้าลูกค้า)</span>'}</div>
     <div class="card" style="padding:4px 14px">${custList}</div>`;
+}
+
+// ===== คำแนะนำ/แจ้งเตือนอัจฉริยะ — แปลงข้อมูลเป็นคำแนะนำในการตัดสินใจ =====
+const WEEKLY_TARGET_KG = (typeof LOT_ORDER_TARGET_KG !== 'undefined') ? LOT_ORDER_TARGET_KG : 90;
+const SEED_TO_HARVEST_DAYS = 45;
+
+// จำนวนเมล็ดที่ต้องเพาะเพื่อให้ได้ผลผลิต kg ที่ต้องการ (ตามฤดูปัจจุบัน) ปัดขึ้นเป็นหลัก 50
+function seedsForKg(kg) {
+  const s = (typeof currentSeason === 'function') ? currentSeason() : { key: 'hot' };
+  const weather = s.key || 'hot';
+  const kgPerPlant = weather === 'cold' ? (1 / 10) : (1 / 12);
+  const yieldPerSeed = (getSurvivalRate(weather) / 100) * kgPerPlant;
+  if (yieldPerSeed <= 0) return 0;
+  return Math.max(50, Math.ceil(kg / yieldPerSeed / 50) * 50);
+}
+
+function renderAdvice(d) {
+  const el = document.getElementById('dash-advice');
+  if (!el) return;
+  const items = [];
+  const fmt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  const shortDate = ds => new Date(ds).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+  // 1) พยากรณ์ผลผลิต 8 สัปดาห์ข้างหน้า เทียบเป้า 90 กก./สัปดาห์
+  const HORIZON = 8;
+  const weeks = [];
+  for (let i = 0; i < HORIZON; i++) {
+    const ws = addDays(d.weekStart, i * 7);
+    const we = addDays(d.weekStart, (i + 1) * 7);
+    const supply = (d.futureSeeds || [])
+      .filter(b => b.harvest_date >= ws && b.harvest_date < we)
+      .reduce((s, b) => s + (parseFloat(b.estimated_kg) || 0), 0);
+    weeks.push({ i, ws, supply, gap: WEEKLY_TARGET_KG - supply });
+  }
+  // สัปดาห์ที่การเพาะ "สัปดาห์นี้" จะไปโผล่ (≈45 วัน ≈ สัปดาห์ที่ 6-7) และยังขาดเป้า
+  const seedableShort = weeks.find(w => w.i >= Math.floor(SEED_TO_HARVEST_DAYS / 7) && w.gap > 2);
+  if (seedableShort) {
+    const seeds = seedsForKg(seedableShort.gap);
+    items.push({
+      level: 'warn', icon: '📉',
+      title: `อีก ${seedableShort.i} สัปดาห์ (${shortDate(seedableShort.ws)}) ผลผลิตจะได้ ~${fmt(seedableShort.supply)}/${WEEKLY_TARGET_KG} กก. — ขาด ${fmt(seedableShort.gap)} กก.`,
+      action: `🌱 ควรเพาะเพิ่ม ~${fmt(seeds)} เมล็ดในสัปดาห์นี้ เพื่อให้ทันเป้า ${WEEKLY_TARGET_KG} กก./สัปดาห์`
+    });
+  }
+  // ขาดในระยะใกล้ (< 6 สัปดาห์) ที่เพาะไม่ทันแล้ว — เตือนหาผักเสริม
+  const nearShort = weeks.find(w => w.i >= 1 && w.i < Math.floor(SEED_TO_HARVEST_DAYS / 7) && w.gap > 2);
+  if (nearShort) {
+    items.push({
+      level: 'danger', icon: '⚠️',
+      title: `อีก ${nearShort.i} สัปดาห์ (${shortDate(nearShort.ws)}) ผลผลิตจะได้ ~${fmt(nearShort.supply)}/${WEEKLY_TARGET_KG} กก. — ขาด ${fmt(nearShort.gap)} กก.`,
+      action: `เพาะไม่ทันรอบนี้แล้ว — เตรียมหาผักเสริม หรือแจ้งลูกค้าล่วงหน้า`
+    });
+  }
+
+  // 2) เลยกำหนดเก็บ
+  if (d.overdue > 0) items.push({ level: 'danger', icon: '🔴', title: `มี ${d.overdue} แปลงเลยกำหนดเก็บแล้ว`, action: 'รีบเก็บเกี่ยวก่อนผักแก่/เสีย' });
+  // 3) ใกล้เก็บ
+  if (d.nearHarvest > 0) items.push({ level: 'info', icon: '🟡', title: `${d.nearHarvest} แปลงใกล้เก็บใน 5 วัน`, action: 'เตรียมแผนเก็บและลูกค้ารับซื้อ' });
+  // 4) ปลูกไม่ครบเป้า/สัปดาห์
+  if (d.thisWeekPlots < 4) items.push({ level: 'warn', icon: '🌱', title: `สัปดาห์นี้ปลูกแล้ว ${d.thisWeekPlots}/4 แปลง`, action: `ปลูกอีก ${4 - d.thisWeekPlots} แปลงให้ครบ ไม่งั้นผักไม่พอส่ง` });
+  // 5) ออเดอร์วันนี้ยังไม่ส่ง
+  const undel = (d.todayOrders || []).filter(o => !o.delivered);
+  if (undel.length) {
+    const kg = undel.reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+    items.push({ level: 'info', icon: '🚚', title: `ออเดอร์วันนี้ยังไม่ส่ง ${undel.length} ราย (${fmt(kg)} กก.)`, action: 'จัดของและส่งให้ครบวันนี้' });
+  }
+
+  if (!items.length) {
+    el.innerHTML = `<div class="advice-card good"><div class="advice-emoji">✅</div><div class="advice-body"><div class="advice-title">ทุกอย่างเป็นไปตามแผน</div><div class="advice-action">ผลผลิตพอเป้าทุกสัปดาห์ · ไม่มีเรื่องด่วน</div></div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="advice-head">💡 คำแนะนำวันนี้ <span class="advice-count">${items.length}</span></div>
+    ${items.map(it => `
+      <div class="advice-card ${it.level}">
+        <div class="advice-emoji">${it.icon}</div>
+        <div class="advice-body">
+          <div class="advice-title">${it.title}</div>
+          <div class="advice-action">${it.action}</div>
+        </div>
+      </div>`).join('')}`;
 }
 
 // ติ๊กถูกออเดอร์วันนี้จากหน้า Dashboard — อัปเดตทันที (optimistic) แล้วค่อยบันทึกเบื้องหลัง
