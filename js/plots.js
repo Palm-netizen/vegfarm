@@ -185,14 +185,21 @@ function renderPlotLots(plots) {
     const dl = Math.round((new Date(h) - new Date(today)) / 86400000);
     return dl < 0 ? `เลยกำหนด ${-dl} วัน` : dl === 0 ? 'เก็บวันนี้' : `อีก ${dl} วัน`;
   };
-  // แถวลำดับเก็บเกี่ยว — สีคลุมเฉพาะป้ายชื่อแปลง (T) ที่เหลือพื้นปกติ (ไม่ลายตา)
-  const fullBar = (plot, h, hue, rank) =>
-    `<div class="pls-row">
-      <span class="pls-rank">${rank}</span>
-      <span class="pls-code" style="background:hsl(${hue},68%,42%)">${plot.plot_code}</span>
-      <span class="pls-veg">${vegLabelMulti(plot.vegetable_type)}</span>
-      <span class="pls-date">${formatDateTH(h)} · ${whenLabel(h)}</span>
-    </div>`;
+  // big = แถบสีเต็มความกว้าง (ใช้ในกล่องเน้น 4 แปลงเก็บก่อน)
+  // ปกติ = สีคลุมเฉพาะป้ายชื่อแปลง (T) ในลำดับของแต่ละล็อต (ไม่ลายตา)
+  const fullBar = (plot, h, hue, rank, big) => big
+    ? `<div class="pls-bar" style="background:hsl(${hue},70%,43%)">
+        <span class="pls-rankw">${rank}</span>
+        <span class="pls-code2">${plot.plot_code}</span>
+        <span class="pls-veg2">${vegLabelMulti(plot.vegetable_type)}</span>
+        <span class="pls-date2">${formatDateTH(h)} · ${whenLabel(h)}</span>
+      </div>`
+    : `<div class="pls-row">
+        <span class="pls-rank">${rank}</span>
+        <span class="pls-code" style="background:hsl(${hue},68%,42%)">${plot.plot_code}</span>
+        <span class="pls-veg">${vegLabelMulti(plot.vegetable_type)}</span>
+        <span class="pls-date">${formatDateTH(h)} · ${whenLabel(h)}</span>
+      </div>`;
 
   // สรุปเป้าหมายด้านบน
   const headHtml = `
