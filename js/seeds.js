@@ -107,6 +107,7 @@ async function saveSeedBatch() {
   const countVal = parseInt(document.getElementById('seed-count').value);
   const weather = document.querySelector('input[name="weather"]:checked')?.value;
   const notes = document.getElementById('seed-notes').value;
+  const sower = document.getElementById('seed-sower').value.trim();
 
   // Veg types
   const vegTypes = [];
@@ -130,6 +131,7 @@ async function saveSeedBatch() {
     survival_rate: survivalRate,
     estimated_kg: parseFloat(estKg),
     harvest_date: harvestDate,
+    sower: sower || null,
     notes
   };
 
@@ -166,6 +168,7 @@ function resetSeedForm() {
   editSeedId = null;
   document.getElementById('seed-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('seed-count').value = '';
+  document.getElementById('seed-sower').value = '';
   document.getElementById('seed-notes').value = '';
   document.getElementById('seed-harvest-date').value = '';
   document.querySelectorAll('.veg-checkbox').forEach(i => { i.classList.remove('checked'); i.querySelector('input').checked = false; });
@@ -202,7 +205,7 @@ async function loadSeedBatches() {
           <button class="btn btn-danger btn-sm" onclick="deleteSeedBatch('${b.id}')">ลบ</button>
         </div>
       </div>
-      <div class="shc-meta">${formatDateTH(b.seed_date)} · ${weatherLabel[b.weather_condition] || b.weather_condition} · ${b.seed_count} เมล็ด · รอด ${b.survival_rate}%</div>
+      <div class="shc-meta">${formatDateTH(b.seed_date)} · ${weatherLabel[b.weather_condition] || b.weather_condition} · ${b.seed_count} เมล็ด · รอด ${b.survival_rate}%${b.sower ? ` · 👤 ${b.sower}` : ''}</div>
       <div class="shc-result">คาดได้ <b>${b.estimated_kg} kg</b> · เก็บ ${formatDateTH(b.harvest_date)}</div>
     </div>`).join('');
 
@@ -216,6 +219,7 @@ async function editSeedBatch(id) {
   editSeedId = id;
   document.getElementById('seed-date').value = b.seed_date;
   document.getElementById('seed-count').value = b.seed_count;
+  document.getElementById('seed-sower').value = b.sower || '';
   document.getElementById('seed-notes').value = b.notes || '';
 
   // veg types
@@ -246,12 +250,23 @@ async function deleteSeedBatch(id) {
   if (!(await vfConfirm('ลบรายการนี้ใช่ไหม?', { okLabel: 'ลบ' }))) return;
   setLoading(true);
   try {
+    // เก็บข้อมูลไว้ก่อนลบ เผื่อกดย้อนกลับ (เผลอลบผิด)
+    const { data: prev } = await db.from('seed_batches').select('*').eq('id', id).single();
     // ปลดการอ้างอิงจากแปลงก่อน (กัน foreign-key ของ plots.seed_batch_id)
     await db.from('plots').update({ seed_batch_id: null }).eq('seed_batch_id', id);
     const { error } = await db.from('seed_batches').delete().eq('id', id);
     if (error) throw error;
-    showToast('ลบแล้ว');
     loadSeedBatches();
+    // ปุ่มย้อนกลับ: นำรายการที่เพิ่งลบกลับมา
+    if (prev) {
+      vfOfferUndo('ลบรอบเพาะแล้ว', async () => {
+        const { id: _drop, created_at: _c, updated_at: _u, ...restore } = prev;
+        await db.from('seed_batches').insert(restore);
+        loadSeedBatches();
+      });
+    } else {
+      showToast('ลบแล้ว');
+    }
   } catch (err) {
     showToast('ลบไม่สำเร็จ: ' + (err.message || err), 'error');
     console.error(err);

@@ -12,10 +12,13 @@ CREATE TABLE IF NOT EXISTS seed_batches (
   survival_rate NUMERIC(5,2),       -- คำนวณจาก weather
   harvest_date DATE,                -- seed_date + 45 วัน
   estimated_kg NUMERIC(8,2),        -- คำนวณจาก weather + seed_count
+  sower TEXT,                       -- ชื่อคนเพาะ
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+-- เผื่อสร้างตารางไว้ก่อนหน้า ให้เพิ่มคอลัมน์ชื่อคนเพาะ
+ALTER TABLE seed_batches ADD COLUMN IF NOT EXISTS sower TEXT;
 
 -- 2. แปลงปลูก (Plots T1-T15)
 CREATE TABLE IF NOT EXISTS plots (
