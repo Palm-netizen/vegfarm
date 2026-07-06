@@ -4,77 +4,59 @@ async function loadDashboard() {
   setLoading(true);
   try {
     const today = new Date().toISOString().split('T')[0];
+    // วันจันทร์ของสัปดาห์นี้
+    const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
+    const weekStart = wd.toISOString().split('T')[0];
 
-    // 1. จำนวนรอบปลูกปัจจุบัน
-    const { data: activePlots } = await db
-      .from('plots')
-      .select('*')
-      .eq('is_harvested', false)
-      .not('plant_date', 'is', null);
+    // ยิงทุก query พร้อมกัน (parallel) แทนที่จะรอทีละอัน → หน้าแรกโหลดเร็วขึ้นมาก
+    const [
+      activePlotsR, batchesR, problemPlotsR, todayTodosR,
+      recentProblemsR, chartBatchesR, weekOrdersR, todayOrdersR
+    ] = await Promise.all([
+      db.from('plots').select('*').eq('is_harvested', false).not('plant_date', 'is', null),
+      db.from('seed_batches').select('survival_rate').order('created_at', { ascending: false }).limit(5),
+      db.from('problems').select('plot_code').eq('resolved', false),
+      db.from('todos').select('*').eq('todo_date', today),
+      db.from('problems').select('*').order('problem_date', { ascending: false }).limit(3),
+      db.from('seed_batches').select('seed_date, seed_count, estimated_kg, weather_condition').order('seed_date', { ascending: false }).limit(6),
+      db.from('orders').select('customer_name,kg,delivered,order_date').eq('week_start', weekStart),
+      db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today),
+    ]);
+
+    // 1. จำนวนรอบปลูกปัจจุบัน (ใช้ซ้ำเป็น "แปลงที่กำลังปลูก" ด้วย)
+    const activePlots = activePlotsR.data || [];
 
     // 2. อัตรารอดเฉลี่ย
-    const { data: batches } = await db
-      .from('seed_batches')
-      .select('survival_rate')
-      .order('created_at', { ascending: false })
-      .limit(5);
-    const avgSurvival = batches?.length
+    const batches = batchesR.data || [];
+    const avgSurvival = batches.length
       ? (batches.reduce((s, b) => s + (b.survival_rate || 0), 0) / batches.length).toFixed(1)
       : 0;
 
     // 3. แปลงที่มีปัญหา
-    const { data: problemPlots } = await db
-      .from('problems')
-      .select('plot_code')
-      .eq('resolved', false);
-    const uniqueProblemPlots = [...new Set(problemPlots?.map(p => p.plot_code) || [])];
+    const uniqueProblemPlots = [...new Set((problemPlotsR.data || []).map(p => p.plot_code))];
 
-    // 4. งานวันนี้
-    const { data: todayTodos } = await db
-      .from('todos')
-      .select('*')
-      .eq('todo_date', today);
+    // 4-6. งานวันนี้ / ปัญหาล่าสุด / กราฟ
+    const todayTodos = todayTodosR.data || [];
+    const recentProblems = recentProblemsR.data || [];
+    const chartBatches = chartBatchesR.data || [];
 
-    // 5. ปัญหาล่าสุด 3 รายการ
-    const { data: recentProblems } = await db
-      .from('problems')
-      .select('*')
-      .order('problem_date', { ascending: false })
-      .limit(3);
-
-    // 6. ข้อมูลกราฟ - 6 รอบล่าสุด
-    const { data: chartBatches } = await db
-      .from('seed_batches')
-      .select('seed_date, seed_count, estimated_kg, weather_condition')
-      .order('seed_date', { ascending: false })
-      .limit(6);
-
-    // 7. แปลงที่กำลังปลูก — แสดงทั้งหมด พร้อมวันเก็บเกี่ยว (วันปลูก + 45 − อายุต้นกล้า)
-    const { data: pendingPlots } = await db
-      .from('plots')
-      .select('*')
-      .eq('is_harvested', false)
-      .not('plant_date', 'is', null);
-    const growingPlots = (pendingPlots || [])
+    // 7. แปลงที่กำลังปลูก — พร้อมวันเก็บเกี่ยว (วันปลูก + 45 − อายุต้นกล้า)
+    const growingPlots = activePlots
       .map(p => {
         const harvest = p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0)));
         return { ...p, harvest, daysLeft: Math.round((new Date(harvest) - new Date(today)) / 86400000) };
       })
       .sort((a, b) => a.daysLeft - b.daysLeft);
 
-    // 8. แผนส่งผักสัปดาห์นี้ — ผลผลิตที่จะเก็บใน 7 วัน เทียบกับออเดอร์/ยอดที่ลูกค้าต้องการ
+    // 8. แผนส่งผักสัปดาห์นี้
     const supplyPlots = growingPlots.filter(p => p.daysLeft <= 7);
     const supplyKg = supplyPlots.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
 
-    // วันจันทร์ของสัปดาห์นี้
-    const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
-    const weekStart = wd.toISOString().split('T')[0];
-    const { data: weekOrdersAll } = await db.from('orders').select('customer_name,kg,delivered,order_date').eq('week_start', weekStart);
     // หักออเดอร์ของวันนี้ออก (โชว์แยกในส่วน "ออเดอร์วันนี้ที่ต้องส่ง") — ไม่บวกซ้ำ
-    const weekOrders = (weekOrdersAll || []).filter(o => o.order_date !== today);
+    const weekOrders = (weekOrdersR.data || []).filter(o => o.order_date !== today);
 
     let demandCustomers, demandKg, ordersMode;
-    if (weekOrders && weekOrders.length) {
+    if (weekOrders.length) {
       ordersMode = true;
       demandCustomers = weekOrders.map(o => ({ name: o.customer_name, weekly_kg: o.kg, delivered: o.delivered, type: 'customer' }))
         .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
@@ -88,20 +70,20 @@ async function loadDashboard() {
     }
 
     // 9. ออเดอร์วันนี้ที่ต้องส่ง
-    const { data: todayOrders } = await db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today);
+    const todayOrders = todayOrdersR.data || [];
 
     // Render
     renderDashboardStats({
-      activePlots: activePlots?.length || 0,
+      activePlots: activePlots.length,
       avgSurvival,
       problemPlotsCount: uniqueProblemPlots.length,
       problemPlotsList: uniqueProblemPlots,
-      todayTodos: todayTodos || [],
-      recentProblems: recentProblems || [],
-      chartBatches: (chartBatches || []).reverse(),
+      todayTodos,
+      recentProblems,
+      chartBatches: chartBatches.slice().reverse(),
       growingPlots,
       weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers, ordersMode },
-      todayOrders: todayOrders || []
+      todayOrders
     });
 
   } catch (err) {
