@@ -185,13 +185,13 @@ function renderPlotLots(plots) {
     const dl = Math.round((new Date(h) - new Date(today)) / 86400000);
     return dl < 0 ? `เลยกำหนด ${-dl} วัน` : dl === 0 ? 'เก็บวันนี้' : `อีก ${dl} วัน`;
   };
-  // แถบสีเต็มความกว้าง (คลุมทั้งข้อความ)
-  const fullBar = (plot, h, hue, rank, big) =>
-    `<div class="pls-bar${big ? ' big' : ''}" style="background:hsl(${hue},70%,43%)">
-      <span class="pls-rankw">${rank}</span>
-      <span class="pls-code2">${plot.plot_code}</span>
-      <span class="pls-veg2">${vegLabelMulti(plot.vegetable_type)}</span>
-      <span class="pls-date2">${formatDateTH(h)} · ${whenLabel(h)}</span>
+  // แถวลำดับเก็บเกี่ยว — สีคลุมเฉพาะป้ายชื่อแปลง (T) ที่เหลือพื้นปกติ (ไม่ลายตา)
+  const fullBar = (plot, h, hue, rank) =>
+    `<div class="pls-row">
+      <span class="pls-rank">${rank}</span>
+      <span class="pls-code" style="background:hsl(${hue},68%,42%)">${plot.plot_code}</span>
+      <span class="pls-veg">${vegLabelMulti(plot.vegetable_type)}</span>
+      <span class="pls-date">${formatDateTH(h)} · ${whenLabel(h)}</span>
     </div>`;
 
   // สรุปเป้าหมายด้านบน
