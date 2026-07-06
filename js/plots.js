@@ -131,11 +131,21 @@ async function loadAllPlots() {
       info.textContent = 'ว่าง';
     }
   });
-
-  renderPlotLots(plots || []);
 }
 
-// จัดล็อตแปลง: รวมแปลงที่ปลูกในสัปดาห์เดียวกัน (จ.–อา.) เป็นล็อต ตั้งชื่ออัตโนมัติ แสดงด้านล่าง
+// เปิดหน้าต่างล็อตการปลูก (ดึงข้อมูลแปลงล่าสุด แล้วจัดกลุ่ม)
+async function openPlotLots() {
+  const modal = document.getElementById('plot-lots-modal');
+  document.getElementById('plot-lots').innerHTML = '<div class="empty-state">กำลังโหลด...</div>';
+  modal.style.display = 'flex';
+  const { data: plots } = await db.from('plots').select('*');
+  renderPlotLots(plots || []);
+}
+function closePlotLots() {
+  document.getElementById('plot-lots-modal').style.display = 'none';
+}
+
+// จัดล็อตแปลง: รวมแปลงที่ปลูกในสัปดาห์เดียวกัน (จ.–อา.) เป็นล็อต ตั้งชื่ออัตโนมัติ
 function renderPlotLots(plots) {
   const el = document.getElementById('plot-lots');
   if (!el) return;

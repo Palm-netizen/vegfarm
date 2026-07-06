@@ -307,6 +307,7 @@
     <div class="section-sub">แตะที่แปลง T1–T15 เพื่อบันทึกหรือแก้ไขข้อมูล</div>
 
     <div class="plots-summary" id="plots-summary"></div>
+    <button class="btn btn-outline" style="width:100%;margin:0 0 14px;justify-content:center;gap:8px" onclick="openPlotLots()">📦 ดูล็อตการปลูก (จัดกลุ่มแปลงที่ปลูกใน 7 วัน)</button>
     <div class="plot-grid" id="plot-grid"></div>
 
     <div class="card" id="plot-detail-section" style="display:none">
@@ -367,10 +368,6 @@
       <div class="growth-divider"><span class="gd-label">ประวัติรอบปลูก</span></div>
       <div class="hist-list" id="plot-cycles-history"></div>
     </div>
-
-    <div class="growth-divider"><span class="gd-label">ล็อตแปลงปลูก (จัดกลุ่มตามสัปดาห์ที่ปลูก)</span></div>
-    <div class="text-sub" style="margin-bottom:10px">รวมแปลงที่ปลูกภายในสัปดาห์เดียวกัน (7 วัน จันทร์–อาทิตย์) เป็นล็อต ตั้งชื่อให้อัตโนมัติ</div>
-    <div id="plot-lots"></div>
   </div>
 </div>
 
@@ -1019,6 +1016,17 @@
   </div>
 </div>
 
+<!-- ===== PLOT LOTS POPUP (ล็อตการปลูก) ===== -->
+<div class="modal-overlay" id="plot-lots-modal" onclick="if(event.target===this)closePlotLots()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📦 ล็อตการปลูก</div>
+    <div class="text-sub" style="margin-bottom:12px">จัดกลุ่มแปลงที่ปลูกภายในสัปดาห์เดียวกัน (7 วัน จันทร์–อาทิตย์) ตั้งชื่อให้อัตโนมัติ</div>
+    <div id="plot-lots"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px" onclick="closePlotLots()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== PROBLEM DETAIL POPUP ===== -->
 <div class="modal-overlay" id="prob-detail-modal" onclick="if(event.target===this)closeProblemDetail()">
   <div class="modal-sheet">
@@ -1092,7 +1100,7 @@
 <script defer src="js/dashboard.js?v=13"></script>
 <script defer src="js/seeds.js?v=8"></script>
 <script defer src="js/batches.js?v=4"></script>
-<script defer src="js/plots.js?v=15"></script>
+<script defer src="js/plots.js?v=16"></script>
 <script defer src="js/problems.js?v=9"></script>
 <script defer src="js/calendar.js?v=2"></script>
 <script defer src="js/todos.js?v=2"></script>
