@@ -181,6 +181,18 @@ function renderPlotLots(plots) {
   };
 
   const today = new Date().toISOString().split('T')[0];
+  const whenLabel = h => {
+    const dl = Math.round((new Date(h) - new Date(today)) / 86400000);
+    return dl < 0 ? `เลยกำหนด ${-dl} วัน` : dl === 0 ? 'เก็บวันนี้' : `อีก ${dl} วัน`;
+  };
+  // แถบสีเต็มความกว้าง (คลุมทั้งข้อความ)
+  const fullBar = (plot, h, hue, rank, big) =>
+    `<div class="pls-bar${big ? ' big' : ''}" style="background:hsl(${hue},70%,43%)">
+      <span class="pls-rankw">${rank}</span>
+      <span class="pls-code2">${plot.plot_code}</span>
+      <span class="pls-veg2">${vegLabelMulti(plot.vegetable_type)}</span>
+      <span class="pls-date2">${formatDateTH(h)} · ${whenLabel(h)}</span>
+    </div>`;
 
   // สรุปเป้าหมายด้านบน
   const headHtml = `
@@ -189,6 +201,17 @@ function renderPlotLots(plots) {
       <div class="lt-row"><span>🌱 ต้องปลูกให้ครบ/สัปดาห์</span><b>${LOT_PLOTS_PER_WEEK} แปลง</b></div>
       <div class="lt-note">ปลูกให้ครบ ${LOT_PLOTS_PER_WEEK} แปลงทุกสัปดาห์ ไม่งั้นผักจะไม่พอส่งออเดอร์</div>
     </div>`;
+
+  // เน้น 4 แปลงที่จะเก็บได้ก่อน (ทั้งฟาร์ม) — วางแผนขายตามลำดับ
+  const allH = plots.filter(p => p.plant_date && !p.is_harvested)
+    .map(p => ({ p, h: p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0))) }))
+    .sort((a, b) => (a.h < b.h ? -1 : (a.h > b.h ? 1 : 0)));
+  const focus4 = allH.slice(0, LOT_PLOTS_PER_WEEK);
+  const focusHtml = focus4.length ? `
+    <div class="focus-card">
+      <div class="focus-head">🎯 ${focus4.length} แปลงที่จะเก็บได้ก่อน — ขายตามลำดับนี้</div>
+      ${focus4.map((x, i) => fullBar(x.p, x.h, Math.round(18 + 112 * (focus4.length > 1 ? i / (focus4.length - 1) : 0)), i + 1, true)).join('')}
+    </div>` : '';
 
   const lotsHtml = display.map(w => {
     const code = `แปลง-W${String(w.runNo).padStart(3, '0')}`;
@@ -211,18 +234,9 @@ function renderPlotLots(plots) {
       p, h: p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0)))
     })).sort((a, b) => (a.h < b.h ? -1 : (a.h > b.h ? 1 : 0)));
     const n = withH.length;
-    const seq = withH.map((x, i) => {
-      const hue = Math.round(18 + 112 * (n > 1 ? i / (n - 1) : 0));   // 18=ส้ม(ก่อน) → 130=เขียว(หลัง)
-      const daysLeft = Math.round((new Date(x.h) - new Date(today)) / 86400000);
-      const when = daysLeft < 0 ? `เลย ${-daysLeft} วัน` : daysLeft === 0 ? 'วันนี้' : `อีก ${daysLeft} วัน`;
-      return `
-        <div class="pls-row">
-          <span class="pls-rank">${i + 1}</span>
-          <span class="pls-code" style="background:hsl(${hue},68%,42%)">${x.p.plot_code}</span>
-          <span class="pls-veg">${vegLabelMulti(x.p.vegetable_type)}</span>
-          <span class="pls-date">${formatDateTH(x.h)} · ${when}</span>
-        </div>`;
-    }).join('');
+    const seq = withH.map((x, i) =>
+      fullBar(x.p, x.h, Math.round(18 + 112 * (n > 1 ? i / (n - 1) : 0)), i + 1, false)
+    ).join('');
 
     return `
       <div class="batch-card ${complete ? 'ready' : 'danger'}">
@@ -238,7 +252,7 @@ function renderPlotLots(plots) {
       </div>`;
   }).join('');
 
-  el.innerHTML = headHtml + lotsHtml;
+  el.innerHTML = headHtml + focusHtml + lotsHtml;
 }
 
 function selectPlot(code) {
