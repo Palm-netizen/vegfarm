@@ -50,7 +50,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=41">
+<link rel="stylesheet" href="css/style.css?v=42">
 </head>
 <body>
 
@@ -419,8 +419,8 @@ if('serviceWorker' in navigator){
 
     <div class="card">
       <div class="form-group">
-        <label class="form-label">เลือกแปลง</label>
-        <select id="problem-plot-select" class="form-control"></select>
+        <label class="form-label">เลือกแปลง (เลือกได้หลายแปลง — ปัญหาเดียวกันบันทึกครั้งเดียว)</label>
+        <div class="plot-chip-group" id="problem-plot-group"></div>
         <div id="problem-plot-info"></div>
       </div>
       <div class="form-group">
@@ -1149,7 +1149,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/seeds.js?v=9"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
-<script defer src="js/problems.js?v=9"></script>
+<script defer src="js/problems.js?v=10"></script>
 <script defer src="js/calendar.js?v=3"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=14"></script>

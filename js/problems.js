@@ -27,14 +27,18 @@ function compressImage(file, maxDim = 1280, quality = 0.7) {
 }
 
 function initProblems() {
-  // Populate plot select T1-T15
-  const sel = document.getElementById('problem-plot-select');
-  sel.innerHTML = '<option value="">-- เลือกแปลง --</option>' +
-    Array.from({ length: 15 }, (_, i) => `<option value="T${i + 1}">T${i + 1}</option>`).join('');
+  // เลือกแปลงแบบหลายแปลง (T1-T15)
+  const group = document.getElementById('problem-plot-group');
+  group.innerHTML = Array.from({ length: 15 }, (_, i) =>
+    `<label class="plot-chip"><input type="checkbox" value="T${i + 1}"> T${i + 1}</label>`).join('');
+  group.querySelectorAll('input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      cb.closest('.plot-chip').classList.toggle('checked', cb.checked);
+      updatePlotSelectionInfo();
+    });
+  });
 
   document.getElementById('problem-date').value = new Date().toISOString().split('T')[0];
-
-  sel.addEventListener('change', () => loadPlotCycleInfo(sel.value));
 
   document.getElementById('problem-photo-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -71,66 +75,72 @@ function initProblems() {
   loadProblemDatabase();
 }
 
-async function loadPlotCycleInfo(code) {
-  if (!code) {
-    document.getElementById('problem-plot-info').innerHTML = '';
-    return;
-  }
-  const { data: plot } = await db.from('plots').select('*').eq('plot_code', code).single();
-  const { data: cycles } = await db.from('plot_cycles').select('actual_kg').eq('plot_code', code);
-
-  const totalHarvested = cycles?.reduce((s, c) => s + (parseFloat(c.actual_kg) || 0), 0) || 0;
-
-  document.getElementById('problem-plot-info').innerHTML = `
-    <div class="card" style="background:var(--primary-tint);padding:10px;margin-top:8px">
-      <div class="text-sub">แปลง ${code} • รอบปลูกที่ <strong>${plot?.cycle_count || 1}</strong> • เก็บเกี่ยวรวม <strong>${totalHarvested.toFixed(1)} kg</strong></div>
-    </div>`;
+function getSelectedProblemPlots() {
+  return [...document.querySelectorAll('#problem-plot-group input:checked')].map(cb => cb.value);
+}
+function setProblemPlots(codes) {
+  const set = new Set(codes || []);
+  document.querySelectorAll('#problem-plot-group .plot-chip').forEach(item => {
+    const cb = item.querySelector('input');
+    cb.checked = set.has(cb.value);
+    item.classList.toggle('checked', cb.checked);
+  });
+  updatePlotSelectionInfo();
+}
+function updatePlotSelectionInfo() {
+  const codes = getSelectedProblemPlots();
+  const el = document.getElementById('problem-plot-info');
+  el.innerHTML = codes.length
+    ? `<div class="text-sub" style="margin-top:8px">เลือกแล้ว ${codes.length} แปลง: <strong>${codes.join(', ')}</strong>${codes.length > 1 ? ' — จะบันทึกปัญหาเดียวกันให้ทุกแปลง' : ''}</div>`
+    : '';
 }
 
 async function saveProblem() {
-  const plotCode = document.getElementById('problem-plot-select').value;
+  const plots = getSelectedProblemPlots();
   const date = document.getElementById('problem-date').value;
   const type = document.getElementById('problem-type-value').value;
   const severity = document.getElementById('problem-severity-value').value;
   const description = document.getElementById('problem-description').value;
   const solution = document.getElementById('problem-solution').value;
 
-  if (!plotCode) return showToast('กรุณาเลือกแปลง', 'error');
+  if (!plots.length) return showToast('กรุณาเลือกแปลงอย่างน้อย 1 แปลง', 'error');
   if (!date) return showToast('กรุณาระบุวันที่', 'error');
   if (!type) return showToast('กรุณาเลือกประเภทปัญหา', 'error');
   if (!severity) return showToast('กรุณาระบุความรุนแรง', 'error');
 
   setLoading(true);
   try {
-    // เก็บรูปเป็น data URL (ย่อแล้วในขั้นเลือกรูป) — บันทึกเร็ว และแสดงย้อนหลังได้เสมอ
     const photoUrl = problemPhotoDataUrl || null;
 
     if (editProblemId) {
-      // แก้ไขรายการเดิม
-      const patch = { plot_code: plotCode, problem_date: date, problem_type: type, severity, description, solution, photo_url: photoUrl };
+      // แก้ไขรายการเดิม — 1 รายการ = 1 แปลง (ใช้แปลงแรกที่เลือก)
+      const patch = { plot_code: plots[0], problem_date: date, problem_type: type, severity, description, solution, photo_url: photoUrl };
       const { error } = await db.from('problems').update(patch).eq('id', editProblemId);
       if (error) throw error;
       showToast('แก้ไขปัญหาสำเร็จ');
     } else {
-      const { data: plot } = await db.from('plots').select('cycle_count').eq('plot_code', plotCode).single();
-
-      const { error } = await vfInsertUndoable('problems', {
-        plot_code: plotCode,
-        problem_date: date,
-        problem_type: type,
-        severity,
-        description,
-        solution,
-        photo_url: photoUrl,
-        cycle_number: plot?.cycle_count || 1
-      }, 'บันทึกปัญหาสำเร็จ', () => loadProblemDatabase());
-      if (error) throw error;
-
+      // บันทึกปัญหาเดียวกันให้ทุกแปลงที่เลือก (1 รายการต่อแปลง เพื่อติดตาม/แก้แยกกันได้)
+      const { data: plotRows } = await db.from('plots').select('plot_code,cycle_count');
+      const cycleOf = code => (plotRows || []).find(p => p.plot_code === code)?.cycle_count || 1;
+      const insertedIds = [];
+      for (const code of plots) {
+        const { data, error } = await db.from('problems').insert({
+          plot_code: code, problem_date: date, problem_type: type, severity,
+          description, solution, photo_url: photoUrl, cycle_number: cycleOf(code)
+        }).select();
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row && row.id) insertedIds.push(row.id);
+      }
       await db.from('calendar_activities').insert({
-        activity_date: date,
-        activity_type: 'problem',
-        plot_code: plotCode,
-        summary: `ปัญหา${problemTypeLabel(type)} แปลง ${plotCode}`
+        activity_date: date, activity_type: 'problem',
+        plot_code: plots.join(','),
+        summary: `ปัญหา${problemTypeLabel(type)} แปลง ${plots.join(', ')}`
+      });
+      // ปุ่มย้อนกลับ: ลบทุกรายการที่เพิ่งบันทึก
+      vfOfferUndo(`บันทึกปัญหา ${plots.length} แปลงแล้ว`, async () => {
+        for (const id of insertedIds) await db.from('problems').delete().eq('id', id);
+        loadProblemDatabase();
       });
     }
     resetProblemForm();
@@ -144,7 +154,7 @@ async function saveProblem() {
 }
 
 function resetProblemForm() {
-  document.getElementById('problem-plot-select').value = '';
+  setProblemPlots([]);
   document.getElementById('problem-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('problem-description').value = '';
   document.getElementById('problem-solution').value = '';
@@ -166,8 +176,7 @@ async function editProblem(id) {
   const { data: p } = await db.from('problems').select('*').eq('id', id).single();
   if (!p) return;
   editProblemId = id;
-  document.getElementById('problem-plot-select').value = p.plot_code || '';
-  loadPlotCycleInfo(p.plot_code);
+  setProblemPlots(p.plot_code ? [p.plot_code] : []);
   document.getElementById('problem-date').value = p.problem_date || '';
   document.getElementById('problem-description').value = p.description || '';
   document.getElementById('problem-solution').value = p.solution || '';
