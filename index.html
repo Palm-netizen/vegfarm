@@ -50,7 +50,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=36">
+<link rel="stylesheet" href="css/style.css?v=37">
 </head>
 <body>
 
@@ -123,6 +123,7 @@ if('serviceWorker' in navigator){
     <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
 
     <div id="dash-advice"></div>
+    <button class="btn btn-outline" style="width:100%;margin-bottom:16px;gap:8px" onclick="openAssistant()">🤖 ถามผู้ช่วยฟาร์ม (เรื่องเพาะ/ผลผลิต/เป้าหมาย)</button>
 
     <div class="stat-grid">
       <div class="stat-card">
@@ -1044,6 +1045,22 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== ผู้ช่วยฟาร์ม (AI ในตัว ฟรี) ===== -->
+<div class="modal-overlay" id="assist-modal" onclick="if(event.target===this)closeAssistant()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🤖 ผู้ช่วยฟาร์ม</div>
+    <div class="text-sub" style="margin-bottom:10px">ตอบจากสูตร+ข้อมูลของแอป · ทำงานในเครื่อง ฟรี ไม่ต้องต่อเน็ต</div>
+    <div id="assist-chips" class="assist-chips"></div>
+    <div id="assist-log" class="assist-log"></div>
+    <div class="assist-input-row">
+      <input id="assist-input" class="form-control" placeholder="พิมพ์คำถาม เช่น อยากได้ 60 โล เพาะกี่เมล็ด" autocomplete="off" onkeydown="if(event.key==='Enter')assistSend()">
+      <button class="btn btn-primary" style="flex:none" onclick="assistSend()">ถาม</button>
+    </div>
+    <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="closeAssistant()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== PLOT LOTS POPUP (ล็อตการปลูก) ===== -->
 <div class="modal-overlay" id="plot-lots-modal" onclick="if(event.target===this)closePlotLots()">
   <div class="modal-sheet">
@@ -1134,6 +1151,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=14"></script>
 <script defer src="js/customers.js?v=9"></script>
+<script defer src="js/assistant.js?v=1"></script>
 <script defer src="js/app.js?v=9"></script>
 </body>
 </html>
