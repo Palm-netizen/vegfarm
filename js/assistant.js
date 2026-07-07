@@ -107,52 +107,37 @@ async function matchCustomerName(qRaw) {
   return best;
 }
 
-// ตรวจช่วงเวลาที่ถามสำหรับข้อมูลลูกค้า (ค่าเริ่มต้น = สัปดาห์นี้)
-function custPeriod(q) {
-  if (q.includes('เดือน')) return 'month';
-  if (q.includes('ทั้งหมด') || q.includes('ตั้งแต่') || q.includes('ที่ผ่านมา') || q.includes('รวมทั้งหมด')) return 'all';
-  return 'week';   // สัปดาห์/อาทิตย์ หรือไม่ระบุ
-}
-
-// สรุปการซื้อของลูกค้ารายคน — แสดงเฉพาะช่วงที่ถาม + ข้อความคัดลอกแจ้งยอด
+// สรุปการซื้อของลูกค้ารายคน — โชว์ครบทั้งสัปดาห์/เดือน/ทั้งหมด + ข้อความคัดลอกแจ้งยอด
 const TH_DAY_ABBR = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];   // index = (getDay()+6)%7
-async function dataCustomerDetail(name, period) {
+async function dataCustomerDetail(name) {
   const D = assistDates();
   const { data } = await db.from('income').select('income_date,kg_sold,total_amount').eq('buyer', name);
   const rows = data || [];
   if (!rows.length) return `👤 ${name}\nยังไม่มีประวัติการซื้อ`;
   const agg = list => list.reduce((a, r) => { a.kg += parseFloat(r.kg_sold || 0); a.amt += parseFloat(r.total_amount || 0); a.n++; return a; }, { kg: 0, amt: 0, n: 0 });
-
-  if (period === 'month') {
-    const m = agg(rows.filter(r => r.income_date >= D.monthStart && r.income_date < D.nextMonth));
-    if (!m.n) return { text: `👤 ${name} · เดือนนี้\nยังไม่มียอด`, copyText: `${name} เดือนนี้ยังไม่มียอดค่ะ` };
-    return {
-      text: `👤 ${name} · เดือนนี้\nรวม ${kgt(m.kg)} กก. · ${bht(m.amt)} (${m.n} ครั้ง)`,
-      copyText: `สรุปยอด ${name} (เดือนนี้)\nรวม ${kgt(m.kg)} กก. ${m.n} ครั้ง\nรวมเงิน ${bht(m.amt)}`
-    };
-  }
-
-  if (period === 'all') {
-    const a = agg(rows);
-    const months = new Set(rows.map(r => (r.income_date || '').slice(0, 7)).filter(Boolean)).size;
-    return {
-      text: `👤 ${name} · ทั้งหมด\nรวม ${kgt(a.kg)} กก. · ${bht(a.amt)} (${a.n} ครั้ง)\nซื้อมาแล้ว ${months} เดือน`,
-      copyText: `สรุปยอด ${name} (ทั้งหมด)\nรวม ${kgt(a.kg)} กก. ${a.n} ครั้ง\nรวมเงิน ${bht(a.amt)}`
-    };
-  }
-
-  // สัปดาห์นี้ — แยกรายวัน เช่น จ4 + อ3 + พฤ3 = 10 กก.
   const weekRows = rows.filter(r => r.income_date >= D.weekStart && r.income_date < addDays(D.weekStart, 7));
-  const w = agg(weekRows);
-  if (!w.n) return { text: `👤 ${name} · สัปดาห์นี้\nยังไม่มียอด`, copyText: `${name} สัปดาห์นี้ยังไม่มียอดค่ะ` };
+  const week = agg(weekRows);
+  const month = agg(rows.filter(r => r.income_date >= D.monthStart && r.income_date < D.nextMonth));
+  const all = agg(rows);
+  const months = new Set(rows.map(r => (r.income_date || '').slice(0, 7)).filter(Boolean)).size;
+
+  // แยกรายวันในสัปดาห์นี้ เช่น จ4 + อ3 + พฤ3 = 10 กก.
   const byDay = {};
   weekRows.forEach(r => { const i = (new Date(r.income_date + 'T00:00:00').getDay() + 6) % 7; byDay[i] = (byDay[i] || 0) + parseFloat(r.kg_sold || 0); });
   const dayParts = Object.keys(byDay).map(Number).sort((a, b) => a - b).map(i => `${TH_DAY_ABBR[i]}${kgt(byDay[i])}`);
-  const weekBreak = `${dayParts.join(' + ')} = ${kgt(w.kg)} กก.`;
-  return {
-    text: `👤 ${name} · สัปดาห์นี้\n${weekBreak} · ${bht(w.amt)} (${w.n} ครั้ง)`,
-    copyText: `สรุปยอด ${name} (สัปดาห์นี้)\n${weekBreak}\nรวมเงิน ${bht(w.amt)}`
-  };
+  const weekBreak = dayParts.length ? `${dayParts.join(' + ')} = ${kgt(week.kg)} กก.` : 'ยังไม่ซื้อ';
+
+  const line = (lb, a) => `${lb}: ${a.n} ครั้ง · ${kgt(a.kg)} กก. · ${bht(a.amt)}`;
+  const text =
+    `👤 ${name}\n` +
+    `สัปดาห์นี้: ${weekBreak}${week.amt ? ` · ${bht(week.amt)}` : ''}\n` +
+    `${line('เดือนนี้', month)}\n${line('ทั้งหมด', all)}\nซื้อมาแล้ว ${months} เดือน`;
+
+  const copyText = dayParts.length
+    ? `สรุปยอด ${name} (สัปดาห์นี้)\n${weekBreak}\nรวมเงิน ${bht(week.amt)}`
+    : `${name} สัปดาห์นี้ยังไม่มียอดค่ะ`;
+
+  return { text, copyText };
 }
 
 async function dataPlots() {
@@ -261,7 +246,7 @@ async function vfAssistAnswer(qRaw) {
   // ลูกค้ารายคน — ถ้ามีชื่อลูกค้าในคำถาม + ถามเรื่องซื้อ/ยอด
   if (has('ซื้อ', 'ยอดซื้อ', 'กี่ครั้ง', 'ซื้อไป', 'ซื้อมา', 'กี่บาท', 'เท่าไหร่', 'กี่โล', 'ประวัติ') && !has('เยอะสุด', 'มากสุด', 'ดีสุด', 'อันดับ')) {
     const name = await matchCustomerName(qRaw);
-    if (name) return dataCustomerDetail(name, custPeriod(q));
+    if (name) return dataCustomerDetail(name);
   }
 
   // ลูกค้าที่ซื้อเยอะสุด / อันดับ
