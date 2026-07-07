@@ -78,15 +78,48 @@ async function dataCustomers() {
 async function dataFinance(kind) {
   const D = assistDates();
   const FIXED = (typeof FIXED_MONTHLY !== 'undefined') ? FIXED_MONTHLY : 11100;
-  const [{ data: inc }, { data: exp }] = await Promise.all([
+  const [{ data: inc }, { data: exp }, per] = await Promise.all([
     db.from('income').select('total_amount').gte('income_date', D.monthStart).lt('income_date', D.nextMonth),
-    db.from('expenses').select('amount').gte('expense_date', D.monthStart).lt('expense_date', D.nextMonth)
+    db.from('expenses').select('amount').gte('expense_date', D.monthStart).lt('expense_date', D.nextMonth),
+    db.from('personal_expenses').select('amount').gte('expense_date', D.monthStart).lt('expense_date', D.nextMonth)
   ]);
   const income = (inc || []).reduce((s, r) => s + parseFloat(r.total_amount || 0), 0);
   const expense = (exp || []).reduce((s, r) => s + parseFloat(r.amount || 0), 0) + FIXED;
-  if (kind === 'expense') return `📤 รายจ่ายเดือนนี้: ${bht(expense)}\n(รวมค่าคงที่ ค่าแรง+ค่าไฟ ${bht(FIXED)})`;
+  const personal = ((per && per.data) || []).reduce((s, r) => s + parseFloat(r.amount || 0), 0);
   const profit = income - expense;
+  if (kind === 'expense') return `📤 รายจ่ายฟาร์มเดือนนี้: ${bht(expense)}\n(รวมค่าคงที่ ค่าแรง+ค่าไฟ ${bht(FIXED)})`;
+  if (kind === 'personal') return `🧍 รายจ่ายส่วนตัวเดือนนี้: ${bht(personal)}`;
+  if (kind === 'savings') return `🏦 เงินเหลือเก็บเดือนนี้: ${bht(profit - personal)}\n(กำไรฟาร์ม ${bht(profit)} − ส่วนตัว ${bht(personal)})`;
   return `📊 กำไรเดือนนี้: ${bht(profit)}\nรายรับ ${bht(income)} − รายจ่าย ${bht(expense)}`;
+}
+
+// หาชื่อลูกค้าที่ถูกกล่าวถึงในคำถาม (ชื่อที่ยาวสุดที่เป็นส่วนหนึ่งของประโยค)
+async function matchCustomerName(qRaw) {
+  const [{ data: custs }, { data: inc }] = await Promise.all([
+    db.from('customers').select('name'),
+    db.from('income').select('buyer')
+  ]);
+  const names = new Set();
+  (custs || []).forEach(c => c.name && names.add(c.name));
+  (inc || []).forEach(r => r.buyer && names.add(r.buyer));
+  let best = null;
+  names.forEach(n => { if (n && n.length >= 2 && qRaw.includes(n) && (!best || n.length > best.length)) best = n; });
+  return best;
+}
+
+// สรุปการซื้อของลูกค้ารายคน
+async function dataCustomerDetail(name) {
+  const D = assistDates();
+  const { data } = await db.from('income').select('income_date,kg_sold,total_amount').eq('buyer', name);
+  const rows = data || [];
+  if (!rows.length) return `👤 ${name}\nยังไม่มีประวัติการซื้อ`;
+  const agg = list => list.reduce((a, r) => { a.kg += parseFloat(r.kg_sold || 0); a.amt += parseFloat(r.total_amount || 0); a.n++; return a; }, { kg: 0, amt: 0, n: 0 });
+  const week = agg(rows.filter(r => r.income_date >= D.weekStart));
+  const month = agg(rows.filter(r => r.income_date >= D.monthStart && r.income_date < D.nextMonth));
+  const all = agg(rows);
+  const months = new Set(rows.map(r => (r.income_date || '').slice(0, 7)).filter(Boolean)).size;
+  const line = (lb, a) => `${lb}: ${a.n} ครั้ง · ${kgt(a.kg)} กก. · ${bht(a.amt)}`;
+  return `👤 ${name}\n${line('สัปดาห์นี้', week)}\n${line('เดือนนี้', month)}\n${line('ทั้งหมด', all)}\nซื้อมาแล้ว ${months} เดือน`;
 }
 
 async function dataPlots() {
@@ -192,6 +225,12 @@ async function vfAssistAnswer(qRaw) {
   // เหตุผลของคำแนะนำ
   if (has('เหตุผล') || (has('ทำไม') && has('แนะนำ', 'คำแนะนำ', 'เตือน'))) return adviceReason();
 
+  // ลูกค้ารายคน — ถ้ามีชื่อลูกค้าในคำถาม + ถามเรื่องซื้อ/ยอด
+  if (has('ซื้อ', 'ยอดซื้อ', 'กี่ครั้ง', 'ซื้อไป', 'ซื้อมา', 'กี่บาท', 'เท่าไหร่', 'กี่โล', 'ประวัติ') && !has('เยอะสุด', 'มากสุด', 'ดีสุด', 'อันดับ')) {
+    const name = await matchCustomerName(qRaw);
+    if (name) return dataCustomerDetail(name);
+  }
+
   // ลูกค้าที่ซื้อเยอะสุด / อันดับ
   if (has('ลูกค้า', 'ซื้อ', 'คน') && has('เยอะสุด', 'มากสุด', 'ดีสุด', 'อันดับ', 'ประจำ', 'บ่อยสุด')) return dataTopCustomer();
 
@@ -201,8 +240,14 @@ async function vfAssistAnswer(qRaw) {
   // ยอดขาย / รายรับ
   if (has('ขาย', 'ยอดขาย', 'รายรับ', 'รายได้', 'ได้เงิน', 'ได้กี่บาท')) return dataSales(periodOf(q));
 
-  // รายจ่าย
-  if (has('รายจ่าย', 'ค่าใช้จ่าย', 'จ่ายไป')) return dataFinance('expense');
+  // เงินเหลือเก็บ
+  if (has('เหลือเก็บ', 'เงินเก็บ', 'เงินออม', 'ออมได้')) return dataFinance('savings');
+
+  // รายจ่ายส่วนตัว
+  if (has('ส่วนตัว')) return dataFinance('personal');
+
+  // รายจ่าย(ฟาร์ม)
+  if (has('รายจ่าย', 'ค่าใช้จ่าย', 'จ่ายไป', 'ต้นทุน')) return dataFinance('expense');
 
   // กำไร
   if (has('กำไร')) return dataFinance('profit');
@@ -228,7 +273,7 @@ async function vfAssistAnswer(qRaw) {
 }
 
 function assistHelp() {
-  return 'ลองถามแบบนี้ได้ค่ะ 🙂\n\n📊 ข้อมูลฟาร์ม\n• "ขายได้เท่าไหร่เดือนนี้"\n• "มีลูกค้ากี่คน"\n• "กำไรเดือนนี้"\n• "ตอนนี้ปลูกกี่แปลง"\n• "ลูกค้าคนไหนซื้อเยอะสุด"\n\n🧮 คำนวณ/วางแผน\n• "อยากได้ 60 โล เพาะกี่เมล็ด"\n• "เพาะ 1500 เมล็ด ได้กี่โล"\n\n💡 "ทำไมถึงแนะนำแบบนี้"';
+  return 'พิมพ์ถามได้อิสระเลยค่ะ 🙂 ตัวอย่าง\n\n📊 ข้อมูลฟาร์ม\n• "ขายได้เท่าไหร่เดือนนี้/สัปดาห์นี้/วันนี้"\n• "มีลูกค้ากี่คน" · "กำไร/รายจ่าย/เงินเหลือเก็บเดือนนี้"\n• "ตอนนี้ปลูกกี่แปลง" · "มีปัญหากี่เรื่อง"\n\n👤 ลูกค้ารายคน (พิมพ์ชื่อได้เลย)\n• "พี่ส้มซื้อไปกี่ครั้ง กี่บาท"\n• "ร้านเจ๊แดง ซื้ออาทิตย์นี้เท่าไหร่"\n\n🧮 วางแผน\n• "อยากได้ 60 โล เพาะกี่เมล็ด"\n\n💡 "ทำไมถึงแนะนำแบบนี้"';
 }
 
 // ===== UI =====
@@ -236,7 +281,7 @@ function openAssistant() {
   const chips = document.getElementById('assist-chips');
   if (chips) chips.innerHTML = ASSIST_CHIPS.map(c => `<button class="assist-chip" onclick="assistAsk('${c.replace(/'/g, "\\'")}')">${c}</button>`).join('');
   const log = document.getElementById('assist-log');
-  if (log && !log.childElementCount) assistPush('bot', 'สวัสดีค่ะ 🌱 ถามข้อมูลฟาร์ม (ยอดขาย/ลูกค้า/กำไร) วางแผนการเพาะ หรือเหตุผลคำแนะนำได้เลย — แตะคำถามด่วนด้านบน หรือพิมพ์เองก็ได้');
+  if (log && !log.childElementCount) assistPush('bot', 'สวัสดีค่ะ 🌱 พิมพ์ถามได้อิสระเลย เช่น ยอดขาย/กำไร/ลูกค้า, "พี่ส้มซื้อไปกี่บาท", วางแผนการเพาะ หรือเหตุผลคำแนะนำ — แตะคำถามด่วนด้านบน หรือพิมพ์เองก็ได้');
   document.getElementById('assist-modal').style.display = 'flex';
 }
 function closeAssistant() { document.getElementById('assist-modal').style.display = 'none'; }
