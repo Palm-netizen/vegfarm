@@ -2,13 +2,14 @@
 // ตอบคำถามเรื่องการเพาะ/ผลผลิต/เป้าหมาย + เรียกดูข้อมูลที่บันทึกในแอป + อธิบายเหตุผลคำแนะนำ
 
 const ASSIST_CHIPS = [
+  'ผักจะขาดอีกเมื่อไหร่',
+  'ช่วงนี้ต้องระวังอะไร',
   'ขายได้เท่าไหร่เดือนนี้',
   'มีลูกค้ากี่คน',
   'กำไรเดือนนี้เท่าไหร่',
   'ตอนนี้ปลูกกี่แปลง',
   'ทำไมถึงแนะนำแบบนี้',
   'อยากได้ 90 โล เพาะกี่เมล็ด',
-  'เพาะ 1000 เมล็ด ได้กี่โล',
   'ลูกค้าคนไหนซื้อเยอะสุด'
 ];
 
@@ -37,6 +38,7 @@ function assistDates() {
 const bht = x => '฿' + x.toLocaleString('th-TH', { maximumFractionDigits: 0 });
 const kgt = x => x.toLocaleString('th-TH', { maximumFractionDigits: 1 });
 const cnt = x => x.toLocaleString('th-TH');
+const shortDate = ds => new Date(ds).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
 
 function periodOf(q) {
   if (q.includes('วันนี้')) return 'today';
@@ -187,6 +189,48 @@ async function dataTodayOrders() {
   return `🚚 ออเดอร์วันนี้: ${rows.length} ราย รวม ${kgt(kg)} กก.\nส่งแล้ว ${kgt(done)} กก. · เหลือ ${kgt(kg - done)} กก.`;
 }
 
+// ผักจะขาดอีกเมื่อไหร่ + เพราะอะไร + แก้ยังไง (พยากรณ์ 8 สัปดาห์)
+async function assistShortage() {
+  const D = assistDates();
+  const c = assistCtx();
+  const target = c.target;
+  const { data } = await db.from('seed_batches').select('harvest_date,estimated_kg').gte('harvest_date', D.today);
+  const seeds = data || [];
+  const HORIZON = 8;
+  const weeks = [];
+  for (let i = 0; i < HORIZON; i++) {
+    const ws = addDays(D.weekStart, i * 7), we = addDays(D.weekStart, (i + 1) * 7);
+    const supply = seeds.filter(b => b.harvest_date >= ws && b.harvest_date < we).reduce((s, b) => s + parseFloat(b.estimated_kg || 0), 0);
+    weeks.push({ i, ws, supply, gap: target - supply });
+  }
+  const firstShort = weeks.find(w => w.i >= 1 && w.gap > 2);
+  if (!firstShort) return `✅ พยากรณ์ 8 สัปดาห์ข้างหน้า ผลผลิตพอเป้า ${target} กก./สัปดาห์ — ยังไม่มีช่วงที่ผักขาด`;
+  const lead = Math.floor(45 / 7);   // ~6 สัปดาห์
+  const seedsNeed = (typeof seedsForKg === 'function') ? seedsForKg(firstShort.gap) : Math.ceil(firstShort.gap / c.yps / 50) * 50;
+  const fix = firstShort.i >= lead
+    ? `🌱 เพาะเพิ่ม ~${cnt(seedsNeed)} เมล็ดในสัปดาห์นี้ (${c.season.label}) — เก็บได้ทันใน ~45 วัน`
+    : `⏱️ ใกล้เกินกว่าจะเพาะทันรอบนี้ (ต้องใช้ ~45 วัน) — เตรียมหาผักเสริม/รับจากเครือข่าย หรือแจ้งลูกค้าล่วงหน้า และเพาะเพิ่มสำหรับสัปดาห์ถัดไป`;
+  return `📉 ผักจะเริ่มขาดช่วงสัปดาห์ ${shortDate(firstShort.ws)} (อีก ${firstShort.i} สัปดาห์)\n` +
+    `จะได้ ~${kgt(firstShort.supply)}/${target} กก. — ขาด ${kgt(firstShort.gap)} กก.\n\n` +
+    `❓ เพราะอะไร: ผลผลิตที่จะเก็บช่วงนั้น (จากที่เพาะไว้ ~6 สัปดาห์ก่อน) ยังไม่พอเป้า ${target} กก.\n` +
+    `🛠️ วิธีแก้: ${fix}`;
+}
+
+// ช่วงนี้ต้องระวัง/ใส่ใจอะไร (ตามฤดู + สถานะฟาร์มจริง)
+async function assistSeasonCare() {
+  const c = assistCtx();
+  const tips = {
+    rainy: '🌧️ หน้าฝน (ฝนสลับแดด) · อัตรารอด 70%\n⚠️ ระวัง: รากเน่า · เชื้อรา · ใบอิ่มน้ำ\n✅ ควรทำ: ยกแปลง/ทำร่องระบายน้ำ อย่าให้แฉะ · ลดรดน้ำช่วงฝนชุก · หมั่นเช็คใบล่าง',
+    hot: '☀️ หน้าร้อน · อัตรารอด 70%\n⚠️ ระวัง: ใบไหม้ · ขาดน้ำ · ผักเหี่ยว\n✅ ควรทำ: รดน้ำเช้า-เย็น · พรางแสงช่วงบ่าย · คลุมโคนกันน้ำระเหย',
+    cold: '❄️ หน้าหนาว · อัตรารอด 90% (สูงสุด)\n✅ ช่วงดีที่สุดในการเพาะ ผักโตงาม\n⚠️ ระวัง: น้ำค้างแรง · เพลี้ย · รดน้ำแต่พอดี'
+  };
+  let out = tips[c.weather] || tips.hot;
+  const items = window.vfLastAdvice || [];
+  if (items.length) out += '\n\n📌 ช่วงนี้ในฟาร์มควรใส่ใจ:\n' + items.map(it => `${it.icon} ${it.title}`).join('\n');
+  else out += '\n\n📌 ตอนนี้สถานะฟาร์มปกติดี ไม่มีเรื่องด่วน ✅';
+  return out;
+}
+
 function adviceReason() {
   const items = window.vfLastAdvice || [];
   const base = 'คำแนะนำมาจากการพยากรณ์ผลผลิต 8 สัปดาห์ล่วงหน้า (เก็บได้ = เพาะ+45วัน) เทียบเป้า 90 กก./สัปดาห์ + สถานะแปลง/ออเดอร์';
@@ -242,6 +286,12 @@ async function vfAssistAnswer(qRaw) {
 
   // เหตุผลของคำแนะนำ
   if (has('เหตุผล') || (has('ทำไม') && has('แนะนำ', 'คำแนะนำ', 'เตือน'))) return adviceReason();
+
+  // ผักจะขาดอีกเมื่อไหร่ / เพราะอะไร / แก้ยังไง
+  if (has('ขาด') && (has('ผัก', 'ผลผลิต', 'เมื่อไหร่', 'ตอนไหน', 'อีกเมื่อ', 'พอ'))) return assistShortage();
+
+  // ช่วงนี้ต้องระวัง/ใส่ใจอะไร (ตามฤดู)
+  if (has('ระวัง', 'ใส่ใจ', 'ดูแล') || (has('ช่วงนี้') && has('อะไร', 'ต้องทำ'))) return assistSeasonCare();
 
   // ลูกค้ารายคน — ถ้ามีชื่อลูกค้าในคำถาม + ถามเรื่องซื้อ/ยอด
   if (has('ซื้อ', 'ยอดซื้อ', 'กี่ครั้ง', 'ซื้อไป', 'ซื้อมา', 'กี่บาท', 'เท่าไหร่', 'กี่โล', 'ประวัติ') && !has('เยอะสุด', 'มากสุด', 'ดีสุด', 'อันดับ')) {
