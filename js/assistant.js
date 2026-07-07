@@ -107,19 +107,39 @@ async function matchCustomerName(qRaw) {
   return best;
 }
 
-// สรุปการซื้อของลูกค้ารายคน
+// สรุปการซื้อของลูกค้ารายคน + รายละเอียดรายวันในสัปดาห์ + ข้อความคัดลอกแจ้งยอด
+const TH_DAY_ABBR = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];   // index = (getDay()+6)%7
 async function dataCustomerDetail(name) {
   const D = assistDates();
   const { data } = await db.from('income').select('income_date,kg_sold,total_amount').eq('buyer', name);
   const rows = data || [];
   if (!rows.length) return `👤 ${name}\nยังไม่มีประวัติการซื้อ`;
   const agg = list => list.reduce((a, r) => { a.kg += parseFloat(r.kg_sold || 0); a.amt += parseFloat(r.total_amount || 0); a.n++; return a; }, { kg: 0, amt: 0, n: 0 });
-  const week = agg(rows.filter(r => r.income_date >= D.weekStart));
+  const weekEnd = addDays(D.weekStart, 7);
+  const weekRows = rows.filter(r => r.income_date >= D.weekStart && r.income_date < weekEnd);
+  const week = agg(weekRows);
   const month = agg(rows.filter(r => r.income_date >= D.monthStart && r.income_date < D.nextMonth));
   const all = agg(rows);
   const months = new Set(rows.map(r => (r.income_date || '').slice(0, 7)).filter(Boolean)).size;
+
+  // แยกรายวันในสัปดาห์นี้ เช่น จ4 + อ3 + พฤ3 = 10 กก.
+  const byDay = {};
+  weekRows.forEach(r => { const i = (new Date(r.income_date + 'T00:00:00').getDay() + 6) % 7; byDay[i] = (byDay[i] || 0) + parseFloat(r.kg_sold || 0); });
+  const dayParts = Object.keys(byDay).map(Number).sort((a, b) => a - b).map(i => `${TH_DAY_ABBR[i]}${kgt(byDay[i])}`);
+  const weekBreak = dayParts.length ? `${dayParts.join(' + ')} = ${kgt(week.kg)} กก.` : 'ยังไม่ซื้อ';
+
   const line = (lb, a) => `${lb}: ${a.n} ครั้ง · ${kgt(a.kg)} กก. · ${bht(a.amt)}`;
-  return `👤 ${name}\n${line('สัปดาห์นี้', week)}\n${line('เดือนนี้', month)}\n${line('ทั้งหมด', all)}\nซื้อมาแล้ว ${months} เดือน`;
+  const text =
+    `👤 ${name}\n` +
+    `สัปดาห์นี้: ${weekBreak}${week.amt ? ` · ${bht(week.amt)}` : ''}\n` +
+    `${line('เดือนนี้', month)}\n${line('ทั้งหมด', all)}\nซื้อมาแล้ว ${months} เดือน`;
+
+  // ข้อความสำหรับคัดลอกไปแจ้งลูกค้า
+  const copyText = dayParts.length
+    ? `สรุปยอด ${name} (สัปดาห์นี้)\n${weekBreak}\nรวมเงิน ${bht(week.amt)}`
+    : `${name} สัปดาห์นี้ยังไม่มียอดค่ะ`;
+
+  return { text, copyText };
 }
 
 async function dataPlots() {
@@ -291,14 +311,35 @@ function assistClear() {
   if (log) { log.innerHTML = ''; assistPush('bot', 'ล้างแชทแล้วค่ะ ✨ ถามใหม่ได้เลย'); }
 }
 
-function assistPush(who, text) {
+function assistPush(who, text, copyText) {
   const log = document.getElementById('assist-log');
   if (!log) return;
   const div = document.createElement('div');
   div.className = 'assist-msg ' + who;
-  div.textContent = text;
+  div.appendChild(document.createTextNode(text));
+  if (copyText) {
+    const btn = document.createElement('button');
+    btn.className = 'assist-copy';
+    btn.textContent = '📋 คัดลอกยอดไปแจ้งลูกค้า';
+    btn.addEventListener('click', () => assistCopy(copyText, btn));
+    div.appendChild(btn);
+  }
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
+}
+
+function assistCopy(text, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = '✅ คัดลอกแล้ว'; setTimeout(() => { btn.textContent = t; }, 1600); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => assistCopyFallback(text, done));
+  } else assistCopyFallback(text, done);
+}
+function assistCopyFallback(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); done && done(); } catch (e) { showToast('คัดลอกไม่สำเร็จ', 'error'); }
+  document.body.removeChild(ta);
 }
 
 function assistAsk(q) {
@@ -319,5 +360,6 @@ async function assistSend() {
   let ans;
   try { ans = await vfAssistAnswer(q); } catch (e) { console.error(e); ans = 'ขออภัย ดึงข้อมูลไม่สำเร็จค่ะ'; }
   wait.remove();
-  assistPush('bot', ans || assistHelp());
+  if (ans && typeof ans === 'object' && ans.text) assistPush('bot', ans.text, ans.copyText);
+  else assistPush('bot', ans || assistHelp());
 }

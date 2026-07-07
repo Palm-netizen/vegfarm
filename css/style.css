@@ -760,6 +760,8 @@ select.form-control { cursor: pointer; }
 .assist-msg { max-width: 85%; padding: 9px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .assist-msg.user { align-self: flex-end; background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
 .assist-msg.bot { align-self: flex-start; background: var(--bg); color: var(--ink); border-bottom-left-radius: 4px; }
+.assist-copy { display: block; margin-top: 10px; border: none; background: var(--primary); color: #fff; font-family: var(--font-body); font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.assist-copy:active { transform: scale(.96); }
 .assist-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .assist-clear { border: 1px solid var(--line); background: var(--bg); color: var(--ink-soft); font-family: var(--font-body); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; flex: none; }
 .assist-clear:active { background: var(--danger); color: #fff; }
