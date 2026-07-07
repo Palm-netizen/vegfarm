@@ -50,7 +50,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=37">
+<link rel="stylesheet" href="css/style.css?v=39">
 </head>
 <body>
 
@@ -1049,15 +1049,18 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="assist-modal" onclick="if(event.target===this)closeAssistant()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">🤖 ผู้ช่วยฟาร์ม</div>
-    <div class="text-sub" style="margin-bottom:10px">ตอบจากสูตร+ข้อมูลของแอป · ทำงานในเครื่อง ฟรี ไม่ต้องต่อเน็ต</div>
+    <div class="assist-titlebar">
+      <div class="modal-title" style="margin:0">🤖 ผู้ช่วยฟาร์ม</div>
+      <button class="assist-clear" onclick="assistClear()">🗑 ล้างแชท</button>
+    </div>
+    <div class="text-sub" style="margin-bottom:10px">ถามข้อมูลฟาร์ม/วางแผน/เหตุผลคำแนะนำ · ทำงานในเครื่อง ฟรี ไม่ต้องต่อเน็ต</div>
     <div id="assist-chips" class="assist-chips"></div>
     <div id="assist-log" class="assist-log"></div>
     <div class="assist-input-row">
-      <input id="assist-input" class="form-control" placeholder="พิมพ์คำถาม เช่น อยากได้ 60 โล เพาะกี่เมล็ด" autocomplete="off" onkeydown="if(event.key==='Enter')assistSend()">
-      <button class="btn btn-primary" style="flex:none" onclick="assistSend()">ถาม</button>
+      <textarea id="assist-input" class="form-control assist-textarea" rows="2" placeholder="พิมพ์คำถาม เช่น ขายได้เท่าไหร่เดือนนี้ / อยากได้ 60 โล เพาะกี่เมล็ด" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();assistSend();}"></textarea>
+      <button class="btn btn-primary assist-send" onclick="assistSend()">ถาม</button>
     </div>
-    <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="closeAssistant()">ปิด</button>
+    <button class="btn btn-outline" style="width:100%;margin-top:10px" onclick="closeAssistant()">ปิด</button>
   </div>
 </div>
 
@@ -1151,7 +1154,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=14"></script>
 <script defer src="js/customers.js?v=9"></script>
-<script defer src="js/assistant.js?v=1"></script>
+<script defer src="js/assistant.js?v=3"></script>
 <script defer src="js/app.js?v=9"></script>
 </body>
 </html>

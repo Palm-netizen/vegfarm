@@ -391,6 +391,7 @@ function renderAdvice(d) {
     items.push({ level: 'info', icon: '🚚', title: `ออเดอร์วันนี้ยังไม่ส่ง ${undel.length} ราย (${fmt(kg)} กก.)`, action: 'จัดของและส่งให้ครบวันนี้' });
   }
 
+  window.vfLastAdvice = items;   // เก็บไว้ให้ผู้ช่วยอธิบายเหตุผล
   if (!items.length) {
     el.innerHTML = `<div class="advice-card good"><div class="advice-emoji">✅</div><div class="advice-body"><div class="advice-title">ทุกอย่างเป็นไปตามแผน</div><div class="advice-action">ผลผลิตพอเป้าทุกสัปดาห์ · ไม่มีเรื่องด่วน</div></div></div>`;
     return;
