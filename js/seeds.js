@@ -4,6 +4,12 @@ let editSeedId = null;
 const MONTHLY_SEED_GOAL_KG = 360;            // เป้าหมายเพาะฟิก 360 กก./เดือน (90 กก./สัปดาห์)
 // เป้าหมายเพาะรายคน (เมล็ด/สัปดาห์)
 const SOWER_WEEKLY_TARGET = { 'มาริโอ้': 1000, '애플': 2000 };
+// ชื่อเดิม → ชื่อใหม่ (แปลงให้อัตโนมัติทั้งประวัติเก่าและการนับเป้า)
+const SOWER_ALIAS = { 'ปาล์ม': 'มาริโอ้', 'เปิ้ล': '애플' };
+function sowerName(raw) { return SOWER_ALIAS[raw] || raw || ''; }
+function sowerRawNames(displayName) {
+  return [displayName, ...Object.keys(SOWER_ALIAS).filter(o => SOWER_ALIAS[o] === displayName)];
+}
 
 // ฤดูปัจจุบันตามเดือน (ไทย) + อัตรารอด (ฟิกตามฤดู)
 function currentSeason(d = new Date()) {
@@ -93,9 +99,10 @@ async function sowerWeekSeeds(name) {
   const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
   const weekStart = wd.toISOString().split('T')[0];
   const weekEnd = addDays(weekStart, 7);
-  const { data } = await db.from('seed_batches').select('seed_count,seed_date,sower').eq('sower', name);
+  const raws = new Set(sowerRawNames(name));
+  const { data } = await db.from('seed_batches').select('seed_count,seed_date,sower');
   return (data || [])
-    .filter(b => b.seed_date >= weekStart && b.seed_date < weekEnd)
+    .filter(b => raws.has(b.sower) && b.seed_date >= weekStart && b.seed_date < weekEnd)
     .reduce((s, b) => s + (parseInt(b.seed_count) || 0), 0);
 }
 
@@ -249,7 +256,7 @@ async function loadSeedBatches() {
           <button class="btn btn-danger btn-sm" onclick="deleteSeedBatch('${b.id}')">ลบ</button>
         </div>
       </div>
-      <div class="shc-meta">${formatDateTH(b.seed_date)} · ${weatherLabel[b.weather_condition] || b.weather_condition} · ${b.seed_count} เมล็ด · รอด ${b.survival_rate}%${b.sower ? ` · 👤 ${b.sower}` : ''}</div>
+      <div class="shc-meta">${formatDateTH(b.seed_date)} · ${weatherLabel[b.weather_condition] || b.weather_condition} · ${b.seed_count} เมล็ด · รอด ${b.survival_rate}%${b.sower ? ` · 👤 ${sowerName(b.sower)}` : ''}</div>
       <div class="shc-result">คาดได้ <b>${b.estimated_kg} kg</b> · เก็บ ${formatDateTH(b.harvest_date)}</div>
     </div>`).join('');
 
@@ -263,8 +270,8 @@ async function editSeedBatch(id) {
   editSeedId = id;
   document.getElementById('seed-date').value = b.seed_date;
   document.getElementById('seed-count').value = b.seed_count;
-  document.getElementById('seed-sower').value = b.sower || '';
-  document.querySelectorAll('#seed-sower-group .sower-chip').forEach(x => x.classList.toggle('active', x.dataset.sower === b.sower));
+  document.getElementById('seed-sower').value = sowerName(b.sower);
+  document.querySelectorAll('#seed-sower-group .sower-chip').forEach(x => x.classList.toggle('active', x.dataset.sower === sowerName(b.sower)));
   document.getElementById('seed-notes').value = b.notes || '';
 
   // veg types
