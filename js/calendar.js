@@ -85,16 +85,22 @@ async function renderCalendar() {
   });
 }
 
+function calSeedSchedule() {
+  return (typeof SEED_SCHEDULE !== 'undefined') ? SEED_SCHEDULE : { sower: 'มาริโอ้', days: [3, 5], perDay: 500 };
+}
+
 function renderCalDay(date, todayStr, isOtherMonth) {
   const dateStr = date.toISOString().split('T')[0];
   const events = calActivitiesCache[dateStr] || [];
   const harvest = calHarvestCache[dateStr] || [];
+  const isSeedDay = calSeedSchedule().days.includes(date.getDay());
   const hasProblems = events.some(e => e.activity_type === 'problem');
   const classes = ['cal-day'];
   if (dateStr === todayStr) classes.push('today');
   if (events.length) classes.push('has-events');
   if (hasProblems) classes.push('has-problems');
   if (harvest.length) classes.push('cal-harvest');
+  if (isSeedDay) classes.push('cal-seedday');
   if (isOtherMonth) classes.push('text-sub');
 
   const dots = events.slice(0, 4).map(e => {
@@ -102,9 +108,13 @@ function renderCalDay(date, todayStr, isOtherMonth) {
     return `<span class="cal-dot ${dotClass}"></span>`;
   }).join('');
 
+  const label = harvest.length ? '<div class="cal-harvest-label">เก็บผัก</div>'
+    : isSeedDay ? '<div class="cal-seed-label">🌱เพาะ</div>'
+    : `<div>${dots}</div>`;
+
   return `<div class="${classes.join(' ')}" data-date="${dateStr}" style="${isOtherMonth ? 'opacity:0.35' : ''}">
     <div class="day-num">${date.getDate()}</div>
-    ${harvest.length ? '<div class="cal-harvest-label">เก็บผัก</div>' : `<div>${dots}</div>`}
+    ${label}
   </div>`;
 }
 
@@ -114,6 +124,16 @@ function showDayDetail(dateStr) {
   const panel = document.getElementById('cal-detail-panel');
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '-');
+
+  // การ์ดวันเพาะประจำ (มาริโอ้ พุธ/ศุกร์)
+  const sched = calSeedSchedule();
+  let seedHtml = '';
+  if (sched.days.includes(new Date(dateStr + 'T00:00:00').getDay())) {
+    seedHtml = `<div class="card cal-seed-card" style="padding:8px 14px;margin-bottom:10px">
+      <div class="card-title" style="margin:6px 0 4px;color:var(--accent)">🌱 วันเพาะประจำ</div>
+      <div class="cyc-sub"><b>${sched.sower}</b> ต้องเพาะ <b>${sched.perDay.toLocaleString('th-TH')}</b> เมล็ด</div>
+    </div>`;
+  }
 
   // การ์ดวันเก็บผัก (สำหรับวางแผนขาย)
   let harvestHtml = '';
@@ -125,16 +145,16 @@ function showDayDetail(dateStr) {
     </div>`;
   }
 
-  if (!events.length && !harvest.length) {
+  if (!events.length && !harvest.length && !seedHtml) {
     panel.innerHTML = `<div class="card"><div class="card-title">${formatDateTH(dateStr)}</div><div class="empty-state" style="padding:16px">ไม่มีกิจกรรม</div></div>`;
     return;
   }
-  if (!events.length) { panel.innerHTML = `<div class="card-title" style="margin:6px 0">${formatDateTH(dateStr)}</div>` + harvestHtml; return; }
+  if (!events.length) { panel.innerHTML = `<div class="card-title" style="margin:6px 0">${formatDateTH(dateStr)}</div>` + seedHtml + harvestHtml; return; }
 
   const typeIcon = { seeding: '🌱', planting: '🪴', harvesting: '🧺', problem: '⚠️', todo: '📋' };
   const typeLabel = { seeding: 'เพาะเมล็ด', planting: 'ปลูกผัก', harvesting: 'เก็บเกี่ยว', problem: 'ปัญหา', todo: 'งาน' };
 
-  panel.innerHTML = harvestHtml + `<div class="card" style="padding:8px 14px">
+  panel.innerHTML = seedHtml + harvestHtml + `<div class="card" style="padding:8px 14px">
     <div class="card-title" style="margin:6px 0 4px">${formatDateTH(dateStr)}</div>
     ${events.map(e => `
       <div class="cyc-card">

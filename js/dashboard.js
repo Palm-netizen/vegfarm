@@ -11,7 +11,7 @@ async function loadDashboard() {
     // ยิงทุก query พร้อมกัน (parallel) แทนที่จะรอทีละอัน → หน้าแรกโหลดเร็วขึ้นมาก
     const [
       activePlotsR, batchesR, problemPlotsR, todayTodosR,
-      recentProblemsR, chartBatchesR, weekOrdersR, todayOrdersR, futureSeedsR
+      recentProblemsR, chartBatchesR, weekOrdersR, todayOrdersR, futureSeedsR, todaySeedsR
     ] = await Promise.all([
       db.from('plots').select('*').eq('is_harvested', false).not('plant_date', 'is', null),
       db.from('seed_batches').select('survival_rate').order('created_at', { ascending: false }).limit(5),
@@ -22,6 +22,7 @@ async function loadDashboard() {
       db.from('orders').select('customer_name,kg,delivered,order_date').eq('week_start', weekStart),
       db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today),
       db.from('seed_batches').select('harvest_date, estimated_kg').gte('harvest_date', today),
+      db.from('seed_batches').select('seed_count,sower').eq('seed_date', today),
     ]);
 
     // 1. จำนวนรอบปลูกปัจจุบัน (ใช้ซ้ำเป็น "แปลงที่กำลังปลูก" ด้วย)
@@ -73,9 +74,14 @@ async function loadDashboard() {
     // 9. ออเดอร์วันนี้ที่ต้องส่ง
     const todayOrders = todayOrdersR.data || [];
 
+    // จำนวนเมล็ดที่มาริโอ้เพาะวันนี้ (รวมชื่อเดิม "ปาล์ม")
+    const marioSeededToday = (todaySeedsR.data || [])
+      .filter(b => b.sower === SEED_SCHEDULE.sower || b.sower === 'ปาล์ม')
+      .reduce((s, b) => s + (parseInt(b.seed_count) || 0), 0);
+
     // 10. คำแนะนำ/แจ้งเตือนอัจฉริยะ
     renderAdvice({
-      today, weekStart,
+      today, weekStart, marioSeededToday,
       futureSeeds: futureSeedsR.data || [],
       growingPlots, todayOrders,
       thisWeekPlots: activePlots.filter(p => {
@@ -329,6 +335,8 @@ function renderWeeklyPlan() {
 // ===== คำแนะนำ/แจ้งเตือนอัจฉริยะ — แปลงข้อมูลเป็นคำแนะนำในการตัดสินใจ =====
 const WEEKLY_TARGET_KG = (typeof LOT_ORDER_TARGET_KG !== 'undefined') ? LOT_ORDER_TARGET_KG : 90;
 const SEED_TO_HARVEST_DAYS = 45;
+// ตารางเพาะประจำ: มาริโอ้ เพาะทุกวันพุธ(3) กับ ศุกร์(5) วันละ 500 เมล็ด
+const SEED_SCHEDULE = { sower: 'มาริโอ้', days: [3, 5], perDay: 500 };
 
 // จำนวนเมล็ดที่ต้องเพาะเพื่อให้ได้ผลผลิต kg ที่ต้องการ (ตามฤดูปัจจุบัน) ปัดขึ้นเป็นหลัก 50
 function seedsForKg(kg) {
@@ -389,6 +397,17 @@ function renderAdvice(d) {
   if (undel.length) {
     const kg = undel.reduce((s, o) => s + parseFloat(o.kg || 0), 0);
     items.push({ level: 'info', icon: '🚚', title: `ออเดอร์วันนี้ยังไม่ส่ง ${undel.length} ราย (${fmt(kg)} กก.)`, action: 'จัดของและส่งให้ครบวันนี้' });
+  }
+
+  // 6) เตือนวันเพาะประจำของมาริโอ้ (ทุกพุธ/ศุกร์) — แสดงบนสุด
+  if (SEED_SCHEDULE.days.includes(new Date().getDay())) {
+    const done = d.marioSeededToday || 0;
+    const need = Math.max(0, SEED_SCHEDULE.perDay - done);
+    if (need > 0) {
+      items.unshift({ level: 'warn', icon: '🌱', title: `วันนี้วันเพาะของ ${SEED_SCHEDULE.sower} — เพาะให้ครบ ${fmt(SEED_SCHEDULE.perDay)} เมล็ด`, action: `เพาะแล้ว ${fmt(done)} · ขาดอีก ${fmt(need)} เมล็ด ไม่งั้นผักจะไม่พอส่ง` });
+    } else {
+      items.unshift({ level: 'good', icon: '🌱', title: `วันเพาะของ ${SEED_SCHEDULE.sower} — เพาะครบ ${fmt(SEED_SCHEDULE.perDay)} เมล็ดแล้ว ✅`, action: 'เยี่ยมมาก ครบตามแผนแล้ว' });
+    }
   }
 
   window.vfLastAdvice = items;   // เก็บไว้ให้ผู้ช่วยอธิบายเหตุผล

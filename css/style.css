@@ -526,6 +526,10 @@ select.form-control { cursor: pointer; }
 .cal-day.cal-harvest.today .cal-harvest-label { color: #fff; }
 .cal-harvest-card { border: 2px solid #15803D; }
 [data-theme="dark"] .cal-harvest-card { border-color: #22C55E; }
+/* วันเพาะประจำ (พุธ/ศุกร์) */
+.cal-day.cal-seedday:not(.cal-harvest):not(.today) { border: 1.5px dashed var(--accent); }
+.cal-seed-label { font-size: 8px; font-weight: 800; color: var(--accent); line-height: 1; margin-top: 3px; letter-spacing: -0.3px; }
+.cal-seed-card { border: 2px solid var(--accent); }
 
 .cal-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin: 1px 1px 0 0; }
 .dot-seed     { background: var(--accent); }
