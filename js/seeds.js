@@ -3,7 +3,7 @@
 let editSeedId = null;
 const MONTHLY_SEED_GOAL_KG = 360;            // เป้าหมายเพาะฟิก 360 กก./เดือน (90 กก./สัปดาห์)
 // เป้าหมายเพาะรายคน (เมล็ด/สัปดาห์)
-const SOWER_WEEKLY_TARGET = { 'ปาล์ม': 1000, 'เปิ้ล': 2000 };
+const SOWER_WEEKLY_TARGET = { 'มาริโอ้': 1000, '애플': 2000 };
 
 // ฤดูปัจจุบันตามเดือน (ไทย) + อัตรารอด (ฟิกตามฤดู)
 function currentSeason(d = new Date()) {
@@ -115,7 +115,7 @@ async function checkSowerTarget(name) {
 
   // ยังไม่ครบเป้า → ป๊อปอัพแจ้งเตือนทันที
   if (remaining > 0) {
-    const color = name === 'ปาล์ม' ? 'var(--primary)' : '#EAB308';
+    const color = name === 'มาริโอ้' ? 'var(--primary)' : '#EAB308';
     document.getElementById('sower-warn-body').innerHTML =
       `<div class="confirm-msg" style="margin-bottom:6px"><span class="sower-name-box" style="background:${color}">${name}</span> ยังเพาะไม่ครบเป้าสัปดาห์นี้</div>
        <div class="sower-warn-nums">
