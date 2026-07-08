@@ -50,7 +50,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=42">
+<link rel="stylesheet" href="css/style.css?v=43">
 </head>
 <body>
 
@@ -218,11 +218,11 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">บันทึกการเพาะ ระบบคำนวณอัตรารอดและวันเก็บเกี่ยวให้อัตโนมัติ</div>
 
-    <!-- เป้าหมายเพาะรายเดือน (กิโลคาดการณ์) -->
+    <!-- เป้าหมายเพาะรายเดือน (ฟิก 360 กก./เดือน = 90 กก./สัปดาห์) -->
     <div class="card seed-goal-card">
       <div class="goal-head">
         <span class="card-title" style="margin:0">เป้าหมายเพาะเดือนนี้ (กก. คาดการณ์)</span>
-        <input type="number" id="seed-goal-input" class="goal-input" min="0" placeholder="เช่น 100" oninput="onSeedGoalChange()">
+        <span class="goal-fixed">360 กก./เดือน<br><small>(90 กก./สัปดาห์)</small></span>
       </div>
       <div class="goal-bar"><div class="goal-bar-fill" id="seed-goal-fill"></div></div>
       <div class="goal-status" id="seed-goal-status"></div>
@@ -274,8 +274,13 @@ if('serviceWorker' in navigator){
       </div>
 
       <div class="form-group">
-        <label class="form-label">ชื่อคนเพาะ</label>
-        <input type="text" id="seed-sower" class="form-control" placeholder="เช่น พี่สมชาย" autocomplete="off">
+        <label class="form-label">ชื่อคนเพาะ (เลือก)</label>
+        <div class="sower-group" id="seed-sower-group">
+          <button type="button" class="sower-chip sower-palm" data-sower="ปาล์ม" onclick="selectSower('ปาล์ม')">ปาล์ม</button>
+          <button type="button" class="sower-chip sower-peel" data-sower="เปิ้ล" onclick="selectSower('เปิ้ล')">เปิ้ล</button>
+        </div>
+        <input type="hidden" id="seed-sower">
+        <div id="sower-progress" class="text-sub" style="margin-top:8px"></div>
       </div>
       <div class="form-group">
         <label class="form-label">หมายเหตุ</label>
@@ -1090,6 +1095,17 @@ if('serviceWorker' in navigator){
   <img id="img-viewer-img" src="" alt="">
 </div>
 
+<!-- ===== แจ้งเตือนเป้าเพาะคนเพาะ ===== -->
+<div class="modal-overlay" id="sower-warn-modal" style="display:none" onclick="if(event.target===this)closeSowerWarn()">
+  <div class="modal-sheet confirm-sheet">
+    <div class="confirm-icon">⚠️</div>
+    <div id="sower-warn-body"></div>
+    <div class="confirm-actions" style="margin-top:14px">
+      <button class="btn btn-primary" style="width:100%" onclick="closeSowerWarn()">รับทราบ</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== CONFIRM DIALOG ===== -->
 <div class="modal-overlay" id="vf-confirm" style="display:none" onclick="if(event.target===this)vfConfirmResolve(false)">
   <div class="modal-sheet confirm-sheet">
@@ -1146,7 +1162,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=7"></script>
 <script defer src="js/dashboard.js?v=14"></script>
-<script defer src="js/seeds.js?v=9"></script>
+<script defer src="js/seeds.js?v=10"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
 <script defer src="js/problems.js?v=10"></script>

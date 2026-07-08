@@ -761,6 +761,16 @@ select.form-control { cursor: pointer; }
 .pls-code { flex: none; color: #fff; font-weight: 800; font-size: 14px; padding: 3px 12px; border-radius: 999px; font-family: var(--font-display); min-width: 42px; text-align: center; }
 .pls-veg { flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pls-date { flex: none; font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+/* เป้าหมายเพาะฟิก + เลือกคนเพาะ */
+.goal-fixed { font-family: var(--font-display); font-weight: 800; color: var(--primary); text-align: right; font-size: 15px; line-height: 1.2; }
+.goal-fixed small { font-weight: 600; color: var(--ink-soft); font-size: 11px; }
+.sower-group { display: flex; gap: 10px; }
+.sower-chip { flex: 1; padding: 13px; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); font-family: var(--font-body); font-weight: 800; font-size: 15px; color: var(--ink); cursor: pointer; transition: all .15s; }
+.sower-chip.sower-palm.active { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(22,163,74,.3); }
+.sower-chip.sower-peel.active { background: #EAB308; border-color: #EAB308; color: #3a2e05; box-shadow: 0 4px 12px rgba(202,138,4,.3); }
+.sower-name-box { display: inline-block; padding: 2px 12px; border-radius: 8px; color: #fff; font-weight: 800; }
+.sower-warn-nums { text-align: left; font-size: 14px; line-height: 1.7; background: var(--bg); border-radius: 10px; padding: 10px 14px; margin-top: 6px; }
+
 /* เลือกแปลงแบบหลายแปลง (หน้าปัญหา) */
 .plot-chip-group { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .plot-chip { position: relative; display: flex; align-items: center; justify-content: center; padding: 9px 0; border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 13px; font-weight: 700; color: var(--ink-soft); cursor: pointer; user-select: none; }

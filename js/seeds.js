@@ -1,13 +1,9 @@
 // js/seeds.js — บันทึกรอบเพาะเมล็ด
 
 let editSeedId = null;
-const SEED_GOAL_KEY = 'vf_seed_goal_kg';
-
-function onSeedGoalChange() {
-  const v = parseFloat(document.getElementById('seed-goal-input').value) || 0;
-  try { localStorage.setItem(SEED_GOAL_KEY, v); } catch (e) {}
-  renderSeedGoal();
-}
+const MONTHLY_SEED_GOAL_KG = 360;            // เป้าหมายเพาะฟิก 360 กก./เดือน (90 กก./สัปดาห์)
+// เป้าหมายเพาะรายคน (เมล็ด/สัปดาห์)
+const SOWER_WEEKLY_TARGET = { 'ปาล์ม': 1000, 'เปิ้ล': 2000 };
 
 // ฤดูปัจจุบันตามเดือน (ไทย) + อัตรารอด (ฟิกตามฤดู)
 function currentSeason(d = new Date()) {
@@ -24,7 +20,7 @@ async function renderSeedGoal() {
     const s = currentSeason();
     ssEl.innerHTML = `🌤️ ฤดูนี้: <b>${s.label}</b> · อัตรารอด <b style="color:var(--primary)">${s.rate}%</b>`;
   }
-  const goal = parseFloat(localStorage.getItem(SEED_GOAL_KEY)) || 0;
+  const goal = MONTHLY_SEED_GOAL_KG;
   const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
   const start = `${yr}-${mo}-01`;
   const nm = new Date(yr, now.getMonth() + 1, 1);
@@ -79,13 +75,59 @@ function initSeeds() {
   document.getElementById('seed-count').addEventListener('input', updateSeedCalc);
   document.getElementById('seed-date').addEventListener('change', updateSeedCalc);
 
-  // Monthly seeding goal
-  const savedGoal = parseFloat(localStorage.getItem(SEED_GOAL_KEY)) || 0;
-  if (savedGoal > 0) document.getElementById('seed-goal-input').value = savedGoal;
   renderSeedGoal();
-
   loadSeedBatches();
 }
+
+// ===== เลือกคนเพาะ + เช็กเป้ารายสัปดาห์ =====
+async function selectSower(name) {
+  document.getElementById('seed-sower').value = name;
+  document.querySelectorAll('#seed-sower-group .sower-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.sower === name));
+  await checkSowerTarget(name);
+}
+
+// นับจำนวนเมล็ดที่คนนี้เพาะในสัปดาห์นี้ (จันทร์–อาทิตย์)
+async function sowerWeekSeeds(name) {
+  const today = new Date().toISOString().split('T')[0];
+  const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
+  const weekStart = wd.toISOString().split('T')[0];
+  const weekEnd = addDays(weekStart, 7);
+  const { data } = await db.from('seed_batches').select('seed_count,seed_date,sower').eq('sower', name);
+  return (data || [])
+    .filter(b => b.seed_date >= weekStart && b.seed_date < weekEnd)
+    .reduce((s, b) => s + (parseInt(b.seed_count) || 0), 0);
+}
+
+async function checkSowerTarget(name) {
+  const target = SOWER_WEEKLY_TARGET[name] || 0;
+  const done = await sowerWeekSeeds(name);
+  const remaining = Math.max(0, target - done);
+  const cnt = n => n.toLocaleString('th-TH');
+
+  // แถบความคืบหน้าใต้ปุ่มเลือกชื่อ
+  const prog = document.getElementById('sower-progress');
+  if (prog) {
+    prog.innerHTML = remaining > 0
+      ? `${name} เพาะแล้ว <b>${cnt(done)}</b>/${cnt(target)} เมล็ด/สัปดาห์ · <b style="color:var(--danger)">ขาดอีก ${cnt(remaining)}</b>`
+      : `${name} เพาะครบเป้าแล้ว ✅ (${cnt(done)}/${cnt(target)} เมล็ด)`;
+  }
+
+  // ยังไม่ครบเป้า → ป๊อปอัพแจ้งเตือนทันที
+  if (remaining > 0) {
+    const color = name === 'ปาล์ม' ? 'var(--primary)' : '#EAB308';
+    document.getElementById('sower-warn-body').innerHTML =
+      `<div class="confirm-msg" style="margin-bottom:6px"><span class="sower-name-box" style="background:${color}">${name}</span> ยังเพาะไม่ครบเป้าสัปดาห์นี้</div>
+       <div class="sower-warn-nums">
+         <div>เป้าหมาย: <b>${cnt(target)}</b> เมล็ด/สัปดาห์</div>
+         <div>เพาะแล้ว: <b>${cnt(done)}</b> เมล็ด</div>
+         <div>ขาดอีก: <b style="color:var(--danger)">${cnt(remaining)}</b> เมล็ด</div>
+       </div>
+       <div style="color:var(--danger);font-weight:700;margin-top:8px">❗ ต้องเพาะให้ครบ ไม่งั้นผักจะไม่พอส่ง</div>`;
+    document.getElementById('sower-warn-modal').style.display = 'flex';
+  }
+}
+function closeSowerWarn() { document.getElementById('sower-warn-modal').style.display = 'none'; }
 
 function updateSeedCalc() {
   const count = parseInt(document.getElementById('seed-count').value) || 0;
@@ -169,6 +211,8 @@ function resetSeedForm() {
   document.getElementById('seed-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('seed-count').value = '';
   document.getElementById('seed-sower').value = '';
+  document.querySelectorAll('#seed-sower-group .sower-chip').forEach(b => b.classList.remove('active'));
+  document.getElementById('sower-progress').innerHTML = '';
   document.getElementById('seed-notes').value = '';
   document.getElementById('seed-harvest-date').value = '';
   document.querySelectorAll('.veg-checkbox').forEach(i => { i.classList.remove('checked'); i.querySelector('input').checked = false; });
@@ -220,6 +264,7 @@ async function editSeedBatch(id) {
   document.getElementById('seed-date').value = b.seed_date;
   document.getElementById('seed-count').value = b.seed_count;
   document.getElementById('seed-sower').value = b.sower || '';
+  document.querySelectorAll('#seed-sower-group .sower-chip').forEach(x => x.classList.toggle('active', x.dataset.sower === b.sower));
   document.getElementById('seed-notes').value = b.notes || '';
 
   // veg types
