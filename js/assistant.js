@@ -205,14 +205,15 @@ async function assistShortage() {
   }
   const firstShort = weeks.find(w => w.i >= 1 && w.gap > 2);
   if (!firstShort) return `✅ พยากรณ์ 8 สัปดาห์ข้างหน้า ผลผลิตพอเป้า ${target} กก./สัปดาห์ — ยังไม่มีช่วงที่ผักขาด`;
-  const lead = Math.floor(45 / 7);   // ~6 สัปดาห์
+  const lead = Math.round(45 / 7);   // ~6 สัปดาห์ (เพาะ→เก็บ)
+  const sowIn = firstShort.i - lead;  // ต้องเพาะอีกกี่สัปดาห์ (0 = สัปดาห์นี้)
   const seedsNeed = (typeof seedsForKg === 'function') ? seedsForKg(firstShort.gap) : Math.ceil(firstShort.gap / c.yps / 50) * 50;
-  const fix = firstShort.i >= lead
-    ? `🌱 เพาะเพิ่ม ~${cnt(seedsNeed)} เมล็ดในสัปดาห์นี้ (${c.season.label}) — เก็บได้ทันใน ~45 วัน`
-    : `⏱️ ใกล้เกินกว่าจะเพาะทันรอบนี้ (ต้องใช้ ~45 วัน) — เตรียมหาผักเสริม/รับจากเครือข่าย หรือแจ้งลูกค้าล่วงหน้า และเพาะเพิ่มสำหรับสัปดาห์ถัดไป`;
+  let fix;
+  if (sowIn < 0) fix = `⏱️ ใกล้เกินกว่าจะเพาะทันรอบนี้ (ต้องใช้ ~45 วัน) — เตรียมหาผักเสริม/แจ้งลูกค้าล่วงหน้า`;
+  else { const when = sowIn === 0 ? 'สัปดาห์นี้' : sowIn === 1 ? 'สัปดาห์หน้า' : `อีก ${sowIn} สัปดาห์`; fix = `🌱 เพาะเพิ่ม ~${cnt(seedsNeed)} เมล็ด ${when} (${c.season.label}) — จะเก็บได้ทันสัปดาห์นั้นพอดี ~45 วัน`; }
   return `📉 ผักจะเริ่มขาดช่วงสัปดาห์ ${shortDate(firstShort.ws)} (อีก ${firstShort.i} สัปดาห์)\n` +
     `จะได้ ~${kgt(firstShort.supply)}/${target} กก. — ขาด ${kgt(firstShort.gap)} กก.\n\n` +
-    `❓ เพราะอะไร: ผลผลิตที่จะเก็บช่วงนั้น (จากที่เพาะไว้ ~6 สัปดาห์ก่อน) ยังไม่พอเป้า ${target} กก.\n` +
+    `❓ เพราะอะไร: ผลผลิตช่วงนั้นต้องเพาะไว้ ~6 สัปดาห์ก่อน — เมล็ดที่เพาะสัปดาห์นี้จะไปเก็บสัปดาห์ที่ ${lead} เท่านั้น ต้องเพาะต่อเนื่องทุกสัปดาห์\n` +
     `🛠️ วิธีแก้: ${fix}`;
 }
 

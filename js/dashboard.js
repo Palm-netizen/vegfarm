@@ -366,24 +366,19 @@ function renderAdvice(d) {
       .reduce((s, b) => s + (parseFloat(b.estimated_kg) || 0), 0);
     weeks.push({ i, ws, supply, gap: WEEKLY_TARGET_KG - supply });
   }
-  // สัปดาห์ที่การเพาะ "สัปดาห์นี้" จะไปโผล่ (≈45 วัน ≈ สัปดาห์ที่ 6-7) และยังขาดเป้า
-  const seedableShort = weeks.find(w => w.i >= Math.floor(SEED_TO_HARVEST_DAYS / 7) && w.gap > 2);
-  if (seedableShort) {
-    const seeds = seedsForKg(seedableShort.gap);
-    items.push({
-      level: 'warn', icon: '📉',
-      title: `อีก ${seedableShort.i} สัปดาห์ (${shortDate(seedableShort.ws)}) ผลผลิตจะได้ ~${fmt(seedableShort.supply)}/${WEEKLY_TARGET_KG} กก. — ขาด ${fmt(seedableShort.gap)} กก.`,
-      action: `🌱 ควรเพาะเพิ่ม ~${fmt(seeds)} เมล็ดในสัปดาห์นี้ เพื่อให้ทันเป้า ${WEEKLY_TARGET_KG} กก./สัปดาห์`
-    });
-  }
-  // ขาดในระยะใกล้ (< 6 สัปดาห์) ที่เพาะไม่ทันแล้ว — เตือนหาผักเสริม
-  const nearShort = weeks.find(w => w.i >= 1 && w.i < Math.floor(SEED_TO_HARVEST_DAYS / 7) && w.gap > 2);
-  if (nearShort) {
-    items.push({
-      level: 'danger', icon: '⚠️',
-      title: `อีก ${nearShort.i} สัปดาห์ (${shortDate(nearShort.ws)}) ผลผลิตจะได้ ~${fmt(nearShort.supply)}/${WEEKLY_TARGET_KG} กก. — ขาด ${fmt(nearShort.gap)} กก.`,
-      action: `เพาะไม่ทันรอบนี้แล้ว — เตรียมหาผักเสริม หรือแจ้งลูกค้าล่วงหน้า`
-    });
+  // เมล็ดที่เพาะ "สัปดาห์นี้" จะไปเก็บอีก ~lead สัปดาห์ (45 วัน) — แนะช่วงเวลาเพาะให้ตรงสัปดาห์ที่ขาด
+  const lead = Math.round(SEED_TO_HARVEST_DAYS / 7);   // ≈ 6 สัปดาห์
+  const firstShort = weeks.find(w => w.i >= 1 && w.gap > 2);
+  if (firstShort) {
+    const sowIn = firstShort.i - lead;   // ต้องเพาะอีกกี่สัปดาห์ข้างหน้า (0 = สัปดาห์นี้)
+    const seeds = seedsForKg(firstShort.gap);
+    const head = `สัปดาห์ ${shortDate(firstShort.ws)} (อีก ${firstShort.i} สัปดาห์) จะได้ ~${fmt(firstShort.supply)}/${WEEKLY_TARGET_KG} กก. — ขาด ${fmt(firstShort.gap)} กก.`;
+    if (sowIn < 0) {
+      items.push({ level: 'danger', icon: '⚠️', title: head, action: 'เพาะไม่ทันรอบนี้แล้ว (ต้องใช้ ~45 วัน) — เตรียมหาผักเสริม/แจ้งลูกค้าล่วงหน้า' });
+    } else {
+      const when = sowIn === 0 ? 'สัปดาห์นี้' : sowIn === 1 ? 'สัปดาห์หน้า' : `อีก ${sowIn} สัปดาห์`;
+      items.push({ level: 'warn', icon: '📉', title: head, action: `🌱 เพาะเพิ่ม ~${fmt(seeds)} เมล็ด${sowIn === 0 ? ' ในสัปดาห์นี้' : ' ' + when} (เก็บได้ทันสัปดาห์นั้น ~45 วัน)` });
+    }
   }
 
   // 2) เลยกำหนดเก็บ
