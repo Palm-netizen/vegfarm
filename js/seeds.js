@@ -93,11 +93,11 @@ async function selectSower(name) {
   await checkSowerTarget(name);
 }
 
-// นับจำนวนเมล็ดที่คนนี้เพาะในสัปดาห์นี้ (จันทร์–อาทิตย์)
-async function sowerWeekSeeds(name) {
+// นับจำนวนเมล็ดที่คนนี้เพาะในสัปดาห์ (weekOffset 0 = สัปดาห์นี้, -1 = อาทิตย์ที่แล้ว)
+async function sowerWeekSeeds(name, weekOffset = 0) {
   const today = new Date().toISOString().split('T')[0];
   const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
-  const weekStart = wd.toISOString().split('T')[0];
+  const weekStart = addDays(wd.toISOString().split('T')[0], weekOffset * 7);
   const weekEnd = addDays(weekStart, 7);
   const raws = new Set(sowerRawNames(name));
   const { data } = await db.from('seed_batches').select('seed_count,seed_date,sower');
@@ -108,29 +108,35 @@ async function sowerWeekSeeds(name) {
 
 async function checkSowerTarget(name) {
   const target = SOWER_WEEKLY_TARGET[name] || 0;
-  const done = await sowerWeekSeeds(name);
-  const remaining = Math.max(0, target - done);
+  const thisWeek = await sowerWeekSeeds(name, 0);
+  const lastWeek = await sowerWeekSeeds(name, -1);
+  const lastShort = Math.max(0, target - lastWeek);           // อาทิตย์ที่แล้วขาดเท่าไหร่ → ต้องชดเชย
+  const effTarget = target + lastShort;                       // ต้องเพาะสัปดาห์นี้ = เป้าปกติ + ชดเชย
+  const need = Math.max(0, effTarget - thisWeek);
   const cnt = n => n.toLocaleString('th-TH');
 
   // แถบความคืบหน้าใต้ปุ่มเลือกชื่อ
   const prog = document.getElementById('sower-progress');
   if (prog) {
-    prog.innerHTML = remaining > 0
-      ? `${name} เพาะแล้ว <b>${cnt(done)}</b>/${cnt(target)} เมล็ด/สัปดาห์ · <b style="color:var(--danger)">ขาดอีก ${cnt(remaining)}</b>`
-      : `${name} เพาะครบเป้าแล้ว ✅ (${cnt(done)}/${cnt(target)} เมล็ด)`;
+    let html = `${name} สัปดาห์นี้เพาะ <b>${cnt(thisWeek)}</b>/${cnt(target)} เมล็ด`;
+    if (lastShort > 0) html += ` · <b style="color:var(--danger)">อาทิตย์ที่แล้วขาด ${cnt(lastShort)}</b> (ต้องชดเชย)`;
+    html += need > 0 ? ` · <b style="color:var(--danger)">ต้องเพาะอีก ${cnt(need)}</b>` : ` · ครบแล้ว ✅`;
+    prog.innerHTML = html;
   }
 
-  // ยังไม่ครบเป้า → ป๊อปอัพแจ้งเตือนทันที
-  if (remaining > 0) {
+  // ยังไม่ครบ (รวมชดเชยอาทิตย์ที่แล้ว) → ป๊อปอัพแจ้งเตือนทันที
+  if (need > 0) {
     const color = name === 'มาริโอ้' ? 'var(--primary)' : '#EAB308';
     document.getElementById('sower-warn-body').innerHTML =
-      `<div class="confirm-msg" style="margin-bottom:6px"><span class="sower-name-box" style="background:${color}">${name}</span> ยังเพาะไม่ครบเป้าสัปดาห์นี้</div>
+      `<div class="confirm-msg" style="margin-bottom:6px"><span class="sower-name-box" style="background:${color}">${name}</span> ${lastShort > 0 ? 'ต้องเพาะเพิ่ม (มีของค้างอาทิตย์ที่แล้ว)' : 'ยังเพาะไม่ครบเป้าสัปดาห์นี้'}</div>
        <div class="sower-warn-nums">
-         <div>เป้าหมาย: <b>${cnt(target)}</b> เมล็ด/สัปดาห์</div>
-         <div>เพาะแล้ว: <b>${cnt(done)}</b> เมล็ด</div>
-         <div>ขาดอีก: <b style="color:var(--danger)">${cnt(remaining)}</b> เมล็ด</div>
+         <div>เป้าปกติ/สัปดาห์: <b>${cnt(target)}</b> เมล็ด</div>
+         ${lastShort > 0 ? `<div>⏮️ อาทิตย์ที่แล้วเพาะ ${cnt(lastWeek)}/${cnt(target)} — ชดเชย <b style="color:var(--danger)">+${cnt(lastShort)}</b></div>
+         <div>รวมต้องเพาะสัปดาห์นี้: <b>${cnt(effTarget)}</b> เมล็ด</div>` : ''}
+         <div>สัปดาห์นี้เพาะแล้ว: <b>${cnt(thisWeek)}</b> เมล็ด</div>
+         <div>ต้องเพาะเพิ่มอีก: <b style="color:var(--danger);font-size:16px">${cnt(need)}</b> เมล็ด</div>
        </div>
-       <div style="color:var(--danger);font-weight:700;margin-top:8px">❗ ต้องเพาะให้ครบ ไม่งั้นผักจะไม่พอส่ง</div>`;
+       <div style="color:var(--danger);font-weight:700;margin-top:8px">❗ เพาะให้ครบสัปดาห์นี้เพื่อแก้ให้ทันเวลา ไม่งั้นผักจะไม่พอส่ง</div>`;
     document.getElementById('sower-warn-modal').style.display = 'flex';
   }
 }
