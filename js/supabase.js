@@ -359,6 +359,12 @@ async function vfUpdateUndoable(table, id, patch, msg, onDone) {
   return { error: null };
 }
 
+// ปิดป๊อปอัพที่ครอบปุ่มนี้อยู่ (ปุ่มกากบาท)
+function vfCloseModal(btn) {
+  const ov = btn.closest('.modal-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
 // แสดงรูปขนาดใหญ่ (lightbox) — แตะที่ไหนก็ปิด
 function openImageViewer(src) {
   if (!src) return;

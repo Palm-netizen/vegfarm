@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=44">
+<link rel="stylesheet" href="css/style.css?v=45">
 </head>
 <body>
 
@@ -1002,6 +1002,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="cust-modal" onclick="if(event.target===this)closeCustomerModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
     <div class="modal-title" id="cust-modal-title">เพิ่มลูกค้าใหม่</div>
 
     <div class="form-group">
@@ -1046,6 +1047,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="cust-detail-modal" onclick="if(event.target===this)closeCustomerDetail()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
     <div class="modal-title" id="cust-detail-name">ลูกค้า</div>
     <div id="cust-detail-body"></div>
     <button class="btn btn-outline" style="width:100%;margin-top:16px" onclick="closeCustomerDetail()">ปิด</button>
@@ -1056,6 +1058,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="assist-modal" onclick="if(event.target===this)closeAssistant()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
     <div class="assist-titlebar">
       <div class="modal-title" style="margin:0">🤖 ผู้ช่วยฟาร์ม</div>
       <button class="assist-clear" onclick="assistClear()">🗑 ล้างแชท</button>
@@ -1075,6 +1078,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="plot-lots-modal" onclick="if(event.target===this)closePlotLots()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
     <div class="modal-title">📦 ล็อตการปลูก</div>
     <div class="text-sub" style="margin-bottom:12px">จัดกลุ่มแปลงที่ปลูกภายในสัปดาห์เดียวกัน (7 วัน จันทร์–อาทิตย์) ตั้งชื่อให้อัตโนมัติ</div>
     <div id="plot-lots"></div>
@@ -1086,6 +1090,7 @@ if('serviceWorker' in navigator){
 <div class="modal-overlay" id="prob-detail-modal" onclick="if(event.target===this)closeProblemDetail()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
     <div class="modal-title" id="prob-detail-title">ปัญหา</div>
     <div id="prob-detail-body"></div>
     <button class="btn btn-outline" style="width:100%;margin-top:16px" onclick="closeProblemDetail()">ปิด</button>
@@ -1162,7 +1167,7 @@ if('serviceWorker' in navigator){
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=7"></script>
+<script defer src="js/supabase.js?v=8"></script>
 <script defer src="js/dashboard.js?v=16"></script>
 <script defer src="js/seeds.js?v=12"></script>
 <script defer src="js/batches.js?v=4"></script>

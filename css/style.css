@@ -791,7 +791,7 @@ select.form-control { cursor: pointer; }
 .assist-msg.bot { align-self: flex-start; background: var(--bg); color: var(--ink); border-bottom-left-radius: 4px; }
 .assist-copy { display: block; margin-top: 10px; border: none; background: var(--primary); color: #fff; font-family: var(--font-body); font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
 .assist-copy:active { transform: scale(.96); }
-.assist-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.assist-titlebar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-right: 42px; }
 .assist-clear { border: 1px solid var(--line); background: var(--bg); color: var(--ink-soft); font-family: var(--font-body); font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px; cursor: pointer; flex: none; }
 .assist-clear:active { background: var(--danger); color: #fff; }
 .assist-input-row { display: flex; gap: 8px; align-items: stretch; }
@@ -986,7 +986,15 @@ select.form-control { cursor: pointer; }
   padding:24px 20px 32px; width:100%; max-width:600px;
   max-height:90vh; overflow-y:auto;
   animation: slideUp 0.3s ease;
+  position: relative;
 }
+.modal-x {
+  position: absolute; top: 14px; right: 14px; z-index: 5;
+  width: 34px; height: 34px; flex: none; border: none; cursor: pointer;
+  border-radius: 50%; background: var(--bg); color: var(--ink-soft);
+  font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+.modal-x:active { transform: scale(.9); background: var(--line); }
 @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
 .modal-handle {
   width:40px; height:4px; border-radius:2px; background:var(--line);
