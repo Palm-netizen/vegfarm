@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=45">
+<link rel="stylesheet" href="css/style.css?v=46">
 </head>
 <body>
 
@@ -125,7 +125,8 @@ if('serviceWorker' in navigator){
     <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
 
     <div id="dash-advice"></div>
-    <button class="btn btn-outline" style="width:100%;margin-bottom:16px;gap:8px" onclick="openAssistant()">🤖 ถามผู้ช่วยฟาร์ม (เรื่องเพาะ/ผลผลิต/เป้าหมาย)</button>
+    <button class="btn btn-outline" style="width:100%;margin-bottom:10px;gap:8px" onclick="openAssistant()">🤖 ถามผู้ช่วยฟาร์ม (เรื่องเพาะ/ผลผลิต/เป้าหมาย)</button>
+    <button class="btn btn-outline" style="width:100%;margin-bottom:16px;gap:8px" onclick="openCapacity()">🧮 กำลังการผลิต (Capacity Planner)</button>
 
     <div class="stat-grid">
       <div class="stat-card">
@@ -1074,6 +1075,26 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== กำลังการผลิต (Capacity Planner) ===== -->
+<div class="modal-overlay" id="capacity-modal" onclick="if(event.target===this)closeCapacity()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
+    <div class="modal-title">🧮 กำลังการผลิต (Capacity Planner)</div>
+    <div class="text-sub" style="margin-bottom:12px">กรอก 5 ค่า แล้วดูว่าต้องปลูก/เพาะเท่าไหร่ · แปลงพอมั้ย · วางแผนล่วงหน้าก่อนผักขาด</div>
+    <div class="cap-inputs">
+      <div class="form-group"><label class="form-label">ออเดอร์ (กก./สัปดาห์)</label><input type="number" id="cap-order" class="form-control" min="0" oninput="calcCapacity()"></div>
+      <div class="form-group"><label class="form-label">ต้นต่อกิโล</label><input type="number" id="cap-ppk" class="form-control" min="0" oninput="calcCapacity()"></div>
+      <div class="form-group"><label class="form-label">ต้นต่อแปลง</label><input type="number" id="cap-ppp" class="form-control" min="0" oninput="calcCapacity()"></div>
+      <div class="form-group"><label class="form-label">จำนวนแปลง (มี)</label><input type="number" id="cap-plots" class="form-control" min="0" oninput="calcCapacity()"></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">ระยะเวลาปลูกจริงในแปลง (วัน) — เช่น 30 วัน, หน้าฝน 40</label><input type="number" id="cap-days" class="form-control" min="0" oninput="calcCapacity()"></div>
+    </div>
+    <div class="growth-divider"><span class="gd-label">ผลการคำนวณ</span></div>
+    <div id="cap-result"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:14px" onclick="closeCapacity()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== PLOT LOTS POPUP (ล็อตการปลูก) ===== -->
 <div class="modal-overlay" id="plot-lots-modal" onclick="if(event.target===this)closePlotLots()">
   <div class="modal-sheet">
@@ -1168,7 +1189,7 @@ if('serviceWorker' in navigator){
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=8"></script>
-<script defer src="js/dashboard.js?v=16"></script>
+<script defer src="js/dashboard.js?v=17"></script>
 <script defer src="js/seeds.js?v=13"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
@@ -1178,6 +1199,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/finance.js?v=14"></script>
 <script defer src="js/customers.js?v=9"></script>
 <script defer src="js/assistant.js?v=10"></script>
+<script defer src="js/capacity.js?v=1"></script>
 <script defer src="js/app.js?v=9"></script>
 </body>
 </html>

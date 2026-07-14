@@ -372,12 +372,13 @@ function renderAdvice(d) {
   if (firstShort) {
     const sowIn = firstShort.i - lead;   // ต้องเพาะอีกกี่สัปดาห์ข้างหน้า (0 = สัปดาห์นี้)
     const seeds = seedsForKg(firstShort.gap);
-    const head = `สัปดาห์ ${shortDate(firstShort.ws)} (อีก ${firstShort.i} สัปดาห์) จะได้ ~${fmt(firstShort.supply)}/${WEEKLY_TARGET_KG} กก. — ขาด ${fmt(firstShort.gap)} กก.`;
+    // แจ้งล่วงหน้าแบบ "ป้องกันก่อนเกิด" — บอกว่าอีก N สัปดาห์จะเก็บได้แค่เท่าไหร่ + ทางเลือก
+    const head = `อีก ${firstShort.i} สัปดาห์ (${shortDate(firstShort.ws)}) จะเก็บได้แค่ ~${fmt(firstShort.supply)} กก. (เป้า ${WEEKLY_TARGET_KG})`;
     if (sowIn < 0) {
-      items.push({ level: 'danger', icon: '⚠️', title: head, action: 'เพาะไม่ทันรอบนี้แล้ว (ต้องใช้ ~45 วัน) — เตรียมหาผักเสริม/แจ้งลูกค้าล่วงหน้า' });
+      items.push({ level: 'danger', icon: '⚠️', title: head, action: `เพาะไม่ทันรอบนี้ (ต้องใช้ ~45 วัน) → ปรับแผนส่งลูกค้า · ลดรับออเดอร์ชั่วคราว · หรือหาผักเสริม` });
     } else {
       const when = sowIn === 0 ? 'สัปดาห์นี้' : sowIn === 1 ? 'สัปดาห์หน้า' : `อีก ${sowIn} สัปดาห์`;
-      items.push({ level: 'warn', icon: '📉', title: head, action: `🌱 เพาะเพิ่ม ~${fmt(seeds)} เมล็ด${sowIn === 0 ? ' ในสัปดาห์นี้' : ' ' + when} (เก็บได้ทันสัปดาห์นั้น ~45 วัน)` });
+      items.push({ level: 'warn', icon: '📉', title: head, action: `มีเวลาเตรียม ${firstShort.i} สัปดาห์ → 🌱 เพาะเพิ่ม ~${fmt(seeds)} เมล็ด${sowIn === 0 ? ' สัปดาห์นี้' : ' ' + when} · หรือปรับแผนส่ง/ลดรับออเดอร์` });
     }
   }
 
