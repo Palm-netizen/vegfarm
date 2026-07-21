@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=46">
+<link rel="stylesheet" href="css/style.css?v=47">
 </head>
 <body>
 
@@ -230,6 +230,25 @@ if('serviceWorker' in navigator){
       <div class="goal-bar"><div class="goal-bar-fill" id="seed-goal-fill"></div></div>
       <div class="goal-status" id="seed-goal-status"></div>
       <div class="goal-season" id="seed-season"></div>
+    </div>
+
+    <!-- ดูยอดการเพาะรายคน (เลือกชื่อ + ช่วงวันที่) -->
+    <div class="card" id="sower-report-card">
+      <div class="card-title">📊 ดูยอดการเพาะรายคน</div>
+      <div class="sower-group">
+        <button type="button" class="sower-chip sower-palm" data-sower="มาริโอ้" onclick="reportSower('มาริโอ้')">มาริโอ้</button>
+        <button type="button" class="sower-chip sower-peel" data-sower="애플" onclick="reportSower('애플')">애플</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div class="form-group" style="margin:0"><label class="form-label">จากวันที่</label><input type="date" id="report-from" class="form-control" onchange="renderSowerReport()"></div>
+        <div class="form-group" style="margin:0"><label class="form-label">ถึงวันที่</label><input type="date" id="report-to" class="form-control" onchange="renderSowerReport()"></div>
+      </div>
+      <div class="report-quick">
+        <button type="button" onclick="reportRange('week')">สัปดาห์นี้</button>
+        <button type="button" onclick="reportRange('month')">เดือนนี้</button>
+        <button type="button" onclick="reportRange('all')">ทั้งหมด</button>
+      </div>
+      <div id="sower-report-result"></div>
     </div>
 
     <div class="card" id="seed-form-section">
@@ -1190,7 +1209,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=8"></script>
 <script defer src="js/dashboard.js?v=17"></script>
-<script defer src="js/seeds.js?v=13"></script>
+<script defer src="js/seeds.js?v=14"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
 <script defer src="js/problems.js?v=10"></script>

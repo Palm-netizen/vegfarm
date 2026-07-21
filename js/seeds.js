@@ -83,6 +83,10 @@ function initSeeds() {
 
   renderSeedGoal();
   loadSeedBatches();
+
+  // รายงานการเพาะรายคน — ตั้งค่าเริ่มต้น (มาริโอ้ · เดือนนี้)
+  document.querySelectorAll('#sower-report-card .sower-chip').forEach(b => b.classList.toggle('active', b.dataset.sower === reportSowerName));
+  reportRange('month');
 }
 
 // ===== เลือกคนเพาะ + เช็กเป้ารายสัปดาห์ =====
@@ -141,6 +145,46 @@ async function checkSowerTarget(name) {
   }
 }
 function closeSowerWarn() { document.getElementById('sower-warn-modal').style.display = 'none'; }
+
+// ===== ดูยอดการเพาะรายคน (เลือกชื่อ + ช่วงวันที่) =====
+let reportSowerName = 'มาริโอ้';
+function reportSower(name) {
+  reportSowerName = name;
+  document.querySelectorAll('#sower-report-card .sower-chip').forEach(b => b.classList.toggle('active', b.dataset.sower === name));
+  renderSowerReport();
+}
+function reportRange(period) {
+  const today = new Date().toISOString().split('T')[0];
+  let from = '';
+  if (period === 'week') { const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow); from = wd.toISOString().split('T')[0]; }
+  else if (period === 'month') { from = today.slice(0, 8) + '01'; }
+  document.getElementById('report-from').value = from;
+  document.getElementById('report-to').value = period === 'all' ? '' : today;
+  renderSowerReport();
+}
+async function renderSowerReport() {
+  const el = document.getElementById('sower-report-result');
+  if (!el) return;
+  const from = document.getElementById('report-from').value;
+  const to = document.getElementById('report-to').value;
+  const raws = new Set(sowerRawNames(reportSowerName));
+  const { data } = await db.from('seed_batches').select('seed_count,seed_date,estimated_kg,sower').order('seed_date', { ascending: false });
+  let rows = (data || []).filter(b => raws.has(b.sower));
+  if (from) rows = rows.filter(b => b.seed_date >= from);
+  if (to) rows = rows.filter(b => b.seed_date <= to);
+  const cnt = n => n.toLocaleString('th-TH');
+  const seeds = rows.reduce((s, b) => s + (parseInt(b.seed_count) || 0), 0);
+  const kg = rows.reduce((s, b) => s + parseFloat(b.estimated_kg || 0), 0);
+  el.innerHTML =
+    `<div class="report-summary">
+       <div><span>${cnt(rows.length)}</span>รอบ</div>
+       <div><span>${cnt(seeds)}</span>เมล็ด</div>
+       <div><span>~${kg.toLocaleString('th-TH', { maximumFractionDigits: 1 })}</span>กก. คาด</div>
+     </div>` +
+    (rows.length
+      ? `<div class="report-list">${rows.slice(0, 30).map(b => `<div class="report-item"><span>${formatDateTH(b.seed_date)}</span><b>${cnt(parseInt(b.seed_count) || 0)} เมล็ด</b></div>`).join('')}</div>`
+      : '<div class="text-sub" style="text-align:center;padding:12px">ไม่มีการเพาะในช่วงนี้</div>');
+}
 
 function updateSeedCalc() {
   const count = parseInt(document.getElementById('seed-count').value) || 0;
