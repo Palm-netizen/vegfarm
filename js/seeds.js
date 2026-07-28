@@ -3,7 +3,7 @@
 let editSeedId = null;
 const MONTHLY_SEED_GOAL_KG = 360;            // เป้าหมายเพาะฟิก 360 กก./เดือน (90 กก./สัปดาห์)
 // เป้าหมายเพาะรายคน (เมล็ด/สัปดาห์)
-const SOWER_WEEKLY_TARGET = { 'มาริโอ้': 1000, '애플': 2000 };
+const SOWER_WEEKLY_TARGET = { 'มาริโอ้': 500, '애플': 2000 };
 // ชื่อเดิม → ชื่อใหม่ (แปลงให้อัตโนมัติทั้งประวัติเก่าและการนับเป้า)
 const SOWER_ALIAS = { 'ปาล์ม': 'มาริโอ้', 'เปิ้ล': '애플' };
 function sowerName(raw) { return SOWER_ALIAS[raw] || raw || ''; }

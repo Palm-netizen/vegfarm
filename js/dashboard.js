@@ -335,8 +335,8 @@ function renderWeeklyPlan() {
 // ===== คำแนะนำ/แจ้งเตือนอัจฉริยะ — แปลงข้อมูลเป็นคำแนะนำในการตัดสินใจ =====
 const WEEKLY_TARGET_KG = (typeof LOT_ORDER_TARGET_KG !== 'undefined') ? LOT_ORDER_TARGET_KG : 90;
 const SEED_TO_HARVEST_DAYS = 45;
-// ตารางเพาะประจำ: มาริโอ้ เพาะทุกวันพุธ(3) กับ ศุกร์(5) วันละ 500 เมล็ด
-const SEED_SCHEDULE = { sower: 'มาริโอ้', days: [3, 5], perDay: 500 };
+// ตารางเพาะประจำ: มาริโอ้ เพาะทุกวันพุธ(3) กับ ศุกร์(5) วันละ 250 เมล็ด (รวม 500/สัปดาห์)
+const SEED_SCHEDULE = { sower: 'มาริโอ้', days: [3, 5], perDay: 250 };
 
 // จำนวนเมล็ดที่ต้องเพาะเพื่อให้ได้ผลผลิต kg ที่ต้องการ (ตามฤดูปัจจุบัน) ปัดขึ้นเป็นหลัก 50
 function seedsForKg(kg) {
