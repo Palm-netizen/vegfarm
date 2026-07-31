@@ -298,8 +298,14 @@ let dashWeeklyPlan = null;
 function renderWeeklyPlan() {
   const wkEl = document.getElementById('dash-weekly-plan');
   if (!wkEl || !dashWeeklyPlan) return;
-  const { supplyKg, demandKg, demandCustomers, ordersMode } = dashWeeklyPlan;
+  const { supplyKg, demandKg, demandCustomers, ordersMode, supplyPlots } = dashWeeklyPlan;
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '');
+  // รายการแปลงที่จะเก็บได้ใน 7 วัน (ระบุว่าแปลงไหนบ้าง)
+  const h7 = (supplyPlots || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
+  const h7List = h7.length
+    ? `<div class="h7-list">${h7.map(p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`).join('')}</div>`
+    : `<div class="text-sub" style="padding:4px 0 8px">ยังไม่มีแปลงที่จะเก็บใน 7 วัน</div>`;
   // ออเดอร์วันนี้ที่ "ส่งแล้ว" → หักออกจากยอดสัปดาห์
   const deliveredToday = (dashTodayOrders || []).filter(o => o.delivered)
     .reduce((s, o) => s + parseFloat(o.kg || 0), 0);
@@ -323,6 +329,7 @@ function renderWeeklyPlan() {
   wkEl.innerHTML = `
     <div class="savings-card" style="padding:14px 0">
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
+      ${h7List}
       <div class="savings-row"><span>${demandLabel}</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
       ${deliveredRow}
       <div class="savings-divider"></div>
