@@ -19,7 +19,7 @@ async function loadDashboard() {
       db.from('todos').select('*').eq('todo_date', today),
       db.from('problems').select('*').order('problem_date', { ascending: false }).limit(3),
       db.from('seed_batches').select('seed_date, seed_count, estimated_kg, weather_condition').order('seed_date', { ascending: false }).limit(6),
-      db.from('orders').select('customer_name,kg,delivered,order_date').eq('week_start', weekStart),
+      db.from('orders').select('id,customer_name,kg,delivered,order_date').eq('week_start', weekStart),
       db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today),
       db.from('seed_batches').select('harvest_date, estimated_kg').gte('harvest_date', today),
       db.from('seed_batches').select('seed_count,sower').eq('seed_date', today),
@@ -60,12 +60,12 @@ async function loadDashboard() {
     let demandCustomers, demandKg, ordersMode;
     if (weekOrders.length) {
       ordersMode = true;
-      demandCustomers = weekOrders.map(o => ({ name: o.customer_name, weekly_kg: o.kg, delivered: o.delivered, type: 'customer' }))
+      demandCustomers = weekOrders.map(o => ({ id: o.id, name: o.customer_name, weekly_kg: o.kg, delivered: o.delivered, type: 'customer' }))
         .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
       demandKg = weekOrders.reduce((s, o) => s + (parseFloat(o.kg) || 0), 0);
     } else {
       ordersMode = false;
-      const { data: customers } = await db.from('customers').select('name,weekly_kg,type');
+      const { data: customers } = await db.from('customers').select('id,name,weekly_kg,type');
       demandCustomers = (customers || []).filter(c => parseFloat(c.weekly_kg) > 0)
         .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
       demandKg = demandCustomers.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0);
@@ -319,11 +319,14 @@ function renderWeeklyPlan() {
     ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>
        <div class="savings-row"><span>คงเหลือต้องส่ง</span><b style="color:var(--accent)">${kg(remainDemand)} กก.</b></div>`
     : '';
+  const esc = s => String(s || '').replace(/'/g, "\\'");
   const custList = demandCustomers.length
     ? demandCustomers.map(c => `
-      <div class="pe-row">
-        <span class="pe-desc">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
-        <span class="pe-amt" style="color:var(--accent)">${kg(parseFloat(c.weekly_kg))} กก.</span>
+      <div class="deliv-row">
+        <span class="deliv-name">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
+        <span class="deliv-kg">${kg(parseFloat(c.weekly_kg))} กก.</span>
+        <button class="deliv-act" onclick="editDeliveryItem('${c.id}', ${ordersMode}, ${parseFloat(c.weekly_kg) || 0}, '${esc(c.name)}')" aria-label="แก้ไข">✏️</button>
+        <button class="deliv-act del" onclick="deleteDeliveryItem('${c.id}', ${ordersMode}, '${esc(c.name)}')" aria-label="ลบ">🗑</button>
       </div>`).join('')
     : `<div class="text-sub" style="padding:8px 0">${ordersMode ? '' : 'ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์'}</div>`;
   wkEl.innerHTML = `
@@ -337,6 +340,35 @@ function renderWeeklyPlan() {
     </div>
     <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง ${ordersMode ? '' : '<span style="font-weight:400">(ตั้งออเดอร์รายสัปดาห์ได้ที่หน้าลูกค้า)</span>'}</div>
     <div class="card" style="padding:4px 14px">${custList}</div>`;
+}
+
+// แก้ไขจำนวน กก. ในรายชื่อที่ต้องส่ง (ออเดอร์ หรือ ยอด/สัปดาห์ของลูกค้า)
+async function editDeliveryItem(id, ordersMode, currentKg, name) {
+  const input = prompt(`แก้จำนวน กก. ที่ต้องส่งให้ "${name}"`, currentKg);
+  if (input === null) return;
+  const v = parseFloat(input);
+  if (isNaN(v) || v < 0) return showToast('กรุณาใส่ตัวเลขที่ถูกต้อง', 'error');
+  setLoading(true);
+  try {
+    if (ordersMode) await db.from('orders').update({ kg: v }).eq('id', id);
+    else await db.from('customers').update({ weekly_kg: v }).eq('id', id);
+    showToast('แก้ไขแล้ว');
+    loadDashboard();
+  } catch (e) { console.error(e); showToast('แก้ไขไม่สำเร็จ', 'error'); }
+  finally { setLoading(false); }
+}
+// ลบออกจากรายชื่อที่ต้องส่ง (ออเดอร์ → ลบทิ้ง · ลูกค้า → เอายอด/สัปดาห์ออก ไม่ลบลูกค้า)
+async function deleteDeliveryItem(id, ordersMode, name) {
+  const msg = ordersMode ? `ลบออเดอร์ของ "${name}" สัปดาห์นี้?` : `เอา "${name}" ออกจากรายการส่ง? (ไม่ลบลูกค้า)`;
+  if (!(await vfConfirm(msg, { okLabel: 'ลบ' }))) return;
+  setLoading(true);
+  try {
+    if (ordersMode) await db.from('orders').delete().eq('id', id);
+    else await db.from('customers').update({ weekly_kg: 0 }).eq('id', id);
+    showToast('ลบออกจากรายการแล้ว');
+    loadDashboard();
+  } catch (e) { console.error(e); showToast('ลบไม่สำเร็จ', 'error'); }
+  finally { setLoading(false); }
 }
 
 // ===== คำแนะนำ/แจ้งเตือนอัจฉริยะ — แปลงข้อมูลเป็นคำแนะนำในการตัดสินใจ =====
