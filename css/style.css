@@ -1104,14 +1104,17 @@ select.form-control { cursor: pointer; }
 
 /* ===== Upcoming harvest list ===== */
 .harvest-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 0; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 9px;
+  padding: 7px 0; border-bottom: 1px solid var(--line);
 }
 .harvest-item:last-child { border-bottom: none; }
 .harvest-item.overdue { background: rgba(239,68,68,.04); border-radius: 10px; padding-left: 8px; padding-right: 8px; }
+.harvest-item .badge { padding: 3px 9px; font-size: 10.5px; flex: none; }
+.harvest-veg { font-weight: 700; font-size: 13px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.harvest-date { font-size: 11.5px; color: var(--ink-soft); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .harvest-tag {
-  font-size: 12px; font-weight: 700; white-space: nowrap;
-  padding: 4px 10px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 700; white-space: nowrap;
+  padding: 3px 9px; border-radius: 999px; flex: none;
   background: var(--primary-tint); color: var(--primary);
 }
 .harvest-tag.soon { background: #FEF3C7; color: #D97706; }

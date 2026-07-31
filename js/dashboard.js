@@ -153,9 +153,9 @@ function renderDashboardStats(data) {
           return `
         <div class="harvest-item ${overdue ? 'overdue' : ''}">
           <span class="badge badge-green">${p.plot_code}</span>
-          <div style="flex:1">
-            <div style="font-weight:600">${(typeof vegLabelMulti==='function'?vegLabelMulti:vegLabel)(p.vegetable_type)}</div>
-            <div class="text-sub">เก็บเกี่ยว ${formatDateTH(p.harvest)}${p.estimated_kg ? ` · คาด ${parseFloat(p.estimated_kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.` : ''}</div>
+          <div style="flex:1;min-width:0">
+            <div class="harvest-veg">${(typeof vegLabelMulti==='function'?vegLabelMulti:vegLabel)(p.vegetable_type)}</div>
+            <div class="harvest-date">เก็บ ${new Date(p.harvest).toLocaleDateString('th-TH',{day:'numeric',month:'short'})}${p.estimated_kg ? ` · ${parseFloat(p.estimated_kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.` : ''}</div>
           </div>
           <span class="harvest-tag ${overdue ? 'overdue' : (p.daysLeft <= 2 ? 'soon' : '')}">${label}</span>
         </div>`;
