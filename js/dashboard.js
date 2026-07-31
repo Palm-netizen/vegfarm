@@ -53,6 +53,9 @@ async function loadDashboard() {
     // 8. แผนส่งผักสัปดาห์นี้
     const supplyPlots = growingPlots.filter(p => p.daysLeft <= 7);
     const supplyKg = supplyPlots.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
+    // ผักที่จะเก็บได้ใน 14 วัน (สำหรับวางแผนกลางเดือน) — แยกส่วนเพิ่ม 8-14 วัน
+    const supplyPlots14 = growingPlots.filter(p => p.daysLeft > 7 && p.daysLeft <= 14);
+    const supplyKg14 = supplyKg + supplyPlots14.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
 
     // หักออเดอร์ของวันนี้ออก (โชว์แยกในส่วน "ออเดอร์วันนี้ที่ต้องส่ง") — ไม่บวกซ้ำ
     const weekOrders = (weekOrdersR.data || []).filter(o => o.order_date !== today);
@@ -102,7 +105,7 @@ async function loadDashboard() {
       recentProblems,
       chartBatches: chartBatches.slice().reverse(),
       growingPlots,
-      weeklyPlan: { supplyKg, demandKg, supplyPlots, demandCustomers, ordersMode },
+      weeklyPlan: { supplyKg, supplyKg14, demandKg, supplyPlots, supplyPlots14, demandCustomers, ordersMode },
       todayOrders
     });
 
@@ -298,14 +301,18 @@ let dashWeeklyPlan = null;
 function renderWeeklyPlan() {
   const wkEl = document.getElementById('dash-weekly-plan');
   if (!wkEl || !dashWeeklyPlan) return;
-  const { supplyKg, demandKg, demandCustomers, ordersMode, supplyPlots } = dashWeeklyPlan;
+  const { supplyKg, supplyKg14, demandKg, demandCustomers, ordersMode, supplyPlots, supplyPlots14 } = dashWeeklyPlan;
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '');
+  const plotRow = p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`;
   // รายการแปลงที่จะเก็บได้ใน 7 วัน (ระบุว่าแปลงไหนบ้าง)
   const h7 = (supplyPlots || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
   const h7List = h7.length
-    ? `<div class="h7-list">${h7.map(p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`).join('')}</div>`
+    ? `<div class="h7-list">${h7.map(plotRow).join('')}</div>`
     : `<div class="text-sub" style="padding:4px 0 8px">ยังไม่มีแปลงที่จะเก็บใน 7 วัน</div>`;
+  // ส่วนเพิ่ม 8-14 วัน (วางแผนกลางเดือน)
+  const h14 = (supplyPlots14 || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
+  const h14List = h14.length ? `<div class="h7-list">${h14.map(plotRow).join('')}</div>` : '';
   // ออเดอร์วันนี้ที่ "ส่งแล้ว" → หักออกจากยอดสัปดาห์
   const deliveredToday = (dashTodayOrders || []).filter(o => o.delivered)
     .reduce((s, o) => s + parseFloat(o.kg || 0), 0);
@@ -333,6 +340,8 @@ function renderWeeklyPlan() {
     <div class="savings-card" style="padding:14px 0">
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
       ${h7List}
+      <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 14 วัน)</span><b style="color:var(--primary)">${kg(supplyKg14)} กก.</b></div>
+      ${h14List ? `<div class="text-sub" style="margin:2px 0 2px;font-size:11px">เพิ่มอีก 8–14 วัน:</div>${h14List}` : ''}
       <div class="savings-row"><span>${demandLabel}</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
       ${deliveredRow}
       <div class="savings-divider"></div>
