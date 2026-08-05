@@ -304,7 +304,8 @@ function renderWeeklyPlan() {
   const { supplyKg, supplyKg14, demandKg, demandCustomers, ordersMode, supplyPlots, supplyPlots14 } = dashWeeklyPlan;
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '');
-  const plotRow = p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`;
+  const shortD = ds => new Date(ds).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  const plotRow = p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${shortD(p.harvest)} · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`;
   // รายการแปลงที่จะเก็บได้ใน 7 วัน (ระบุว่าแปลงไหนบ้าง)
   const h7 = (supplyPlots || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
   const h7List = h7.length
