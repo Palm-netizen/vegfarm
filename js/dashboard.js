@@ -19,7 +19,7 @@ async function loadDashboard() {
       db.from('todos').select('*').eq('todo_date', today),
       db.from('problems').select('*').order('problem_date', { ascending: false }).limit(3),
       db.from('seed_batches').select('seed_date, seed_count, estimated_kg, weather_condition').order('seed_date', { ascending: false }).limit(6),
-      db.from('orders').select('id,customer_name,kg,delivered,order_date').eq('week_start', weekStart),
+      db.from('orders').select('id,customer_name,kg,delivered,order_date,week_start').gte('week_start', weekStart),
       db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today),
       db.from('seed_batches').select('harvest_date, estimated_kg').gte('harvest_date', today),
       db.from('seed_batches').select('seed_count,sower').eq('seed_date', today),
@@ -57,8 +57,13 @@ async function loadDashboard() {
     const supplyPlots14 = growingPlots.filter(p => p.daysLeft > 7 && p.daysLeft <= 14);
     const supplyKg14 = supplyKg + supplyPlots14.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
 
-    // หักออเดอร์ของวันนี้ออก (โชว์แยกในส่วน "ออเดอร์วันนี้ที่ต้องส่ง") — ไม่บวกซ้ำ
-    const weekOrders = (weekOrdersR.data || []).filter(o => o.order_date !== today);
+    // ออเดอร์ที่จะส่ง — ใช้สัปดาห์นี้ก่อน ถ้าสัปดาห์นี้ไม่มี ให้ใช้สัปดาห์ถัดไปที่มีออเดอร์ (วางแผนล่วงหน้า)
+    const upcomingOrders = weekOrdersR.data || [];
+    const weekStarts = [...new Set(upcomingOrders.map(o => o.week_start))].sort();
+    const planWeekStart = weekStarts.includes(weekStart) ? weekStart : (weekStarts[0] || weekStart);
+    const planIsFuture = planWeekStart !== weekStart;
+    // ออเดอร์ของสัปดาห์แผน (หักออเดอร์วันนี้เฉพาะสัปดาห์นี้ เพราะโชว์แยกในส่วน "ออเดอร์วันนี้")
+    const weekOrders = upcomingOrders.filter(o => o.week_start === planWeekStart && !(planWeekStart === weekStart && o.order_date === today));
 
     let demandCustomers, demandKg, ordersMode;
     if (weekOrders.length) {
@@ -105,7 +110,7 @@ async function loadDashboard() {
       recentProblems,
       chartBatches: chartBatches.slice().reverse(),
       growingPlots,
-      weeklyPlan: { supplyKg, supplyKg14, demandKg, supplyPlots, supplyPlots14, demandCustomers, ordersMode },
+      weeklyPlan: { supplyKg, supplyKg14, demandKg, supplyPlots, supplyPlots14, demandCustomers, ordersMode, planWeekStart, planIsFuture },
       todayOrders
     });
 
@@ -301,10 +306,13 @@ let dashWeeklyPlan = null;
 function renderWeeklyPlan() {
   const wkEl = document.getElementById('dash-weekly-plan');
   if (!wkEl || !dashWeeklyPlan) return;
-  const { supplyKg, supplyKg14, demandKg, demandCustomers, ordersMode, supplyPlots, supplyPlots14 } = dashWeeklyPlan;
+  const { supplyKg, supplyKg14, demandKg, demandCustomers, ordersMode, supplyPlots, supplyPlots14, planWeekStart, planIsFuture } = dashWeeklyPlan;
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '');
   const shortD = ds => new Date(ds).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  const planWeekBanner = planIsFuture
+    ? `<div class="plan-week-banner">📅 ออเดอร์สัปดาห์หน้า · ${shortD(planWeekStart)}–${shortD(addDays(planWeekStart, 6))}</div>`
+    : '';
   const plotRow = p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${shortD(p.harvest)} · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`;
   // รายการแปลงที่จะเก็บได้ใน 7 วัน (ระบุว่าแปลงไหนบ้าง)
   const h7 = (supplyPlots || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
@@ -322,7 +330,7 @@ function renderWeeklyPlan() {
   const balanceTxt = balance >= 0
     ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
     : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
-  const demandLabel = ordersMode ? '📦 ลูกค้าสั่ง (สัปดาห์นี้)' : '📦 ลูกค้าต้องการ/สัปดาห์';
+  const demandLabel = ordersMode ? `📦 ลูกค้าสั่ง (${planIsFuture ? 'สัปดาห์หน้า' : 'สัปดาห์นี้'})` : '📦 ลูกค้าต้องการ/สัปดาห์';
   const deliveredRow = deliveredToday > 0
     ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>
        <div class="savings-row"><span>คงเหลือต้องส่ง</span><b style="color:var(--accent)">${kg(remainDemand)} กก.</b></div>`
@@ -338,6 +346,7 @@ function renderWeeklyPlan() {
       </div>`).join('')
     : `<div class="text-sub" style="padding:8px 0">${ordersMode ? '' : 'ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์'}</div>`;
   wkEl.innerHTML = `
+    ${planWeekBanner}
     <div class="savings-card" style="padding:14px 0">
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
       ${h7List}

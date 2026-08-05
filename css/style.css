@@ -792,6 +792,9 @@ select.form-control { cursor: pointer; }
 .sower-name-box { display: inline-block; padding: 2px 12px; border-radius: 8px; color: #fff; font-weight: 800; }
 .sower-warn-nums { text-align: left; font-size: 14px; line-height: 1.7; background: var(--bg); border-radius: 10px; padding: 10px 14px; margin-top: 6px; }
 
+.plan-week-banner { background: var(--accent-tint, #FEF3C7); color: #B45309; font-size: 12.5px; font-weight: 800; padding: 8px 12px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+[data-theme="dark"] .plan-week-banner { background: #3a2e05; color: #FCD34D; }
+
 /* รายชื่อที่ต้องส่ง — แก้ไข/ลบได้ */
 .deliv-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .deliv-row:last-child { border-bottom: none; }
