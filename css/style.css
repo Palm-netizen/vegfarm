@@ -794,6 +794,12 @@ select.form-control { cursor: pointer; }
 
 .plan-week-banner { background: var(--accent-tint, #FEF3C7); color: #B45309; font-size: 12.5px; font-weight: 800; padding: 8px 12px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
 [data-theme="dark"] .plan-week-banner { background: #3a2e05; color: #FCD34D; }
+/* แท็บเลือกสัปดาห์ (แผนส่งผัก) */
+.plan-tabs { display: flex; gap: 8px; margin: 8px 0 10px; }
+.plan-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink-soft); border-radius: 10px; padding: 8px 6px; cursor: pointer; font-family: var(--font-body); }
+.plan-tab span { font-size: 13px; font-weight: 800; }
+.plan-tab small { font-size: 10px; }
+.plan-tab.active { border-color: var(--primary); background: var(--primary-tint); color: var(--primary); }
 
 /* รายชื่อที่ต้องส่ง — แก้ไข/ลบได้ */
 .deliv-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }

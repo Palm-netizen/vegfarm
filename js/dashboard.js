@@ -57,27 +57,31 @@ async function loadDashboard() {
     const supplyPlots14 = growingPlots.filter(p => p.daysLeft > 7 && p.daysLeft <= 14);
     const supplyKg14 = supplyKg + supplyPlots14.reduce((s, p) => s + (parseFloat(p.estimated_kg) || 0), 0);
 
-    // ออเดอร์ที่จะส่ง — ใช้สัปดาห์นี้ก่อน ถ้าสัปดาห์นี้ไม่มี ให้ใช้สัปดาห์ถัดไปที่มีออเดอร์ (วางแผนล่วงหน้า)
+    // ออเดอร์ที่จะส่ง — สัปดาห์นี้ + สัปดาห์หน้า (เลือกดูได้ + สรุปรวม)
+    const nextWeekStart = addDays(weekStart, 7);
     const upcomingOrders = weekOrdersR.data || [];
-    const weekStarts = [...new Set(upcomingOrders.map(o => o.week_start))].sort();
-    const planWeekStart = weekStarts.includes(weekStart) ? weekStart : (weekStarts[0] || weekStart);
-    const planIsFuture = planWeekStart !== weekStart;
-    // ออเดอร์ของสัปดาห์แผน (หักออเดอร์วันนี้เฉพาะสัปดาห์นี้ เพราะโชว์แยกในส่วน "ออเดอร์วันนี้")
-    const weekOrders = upcomingOrders.filter(o => o.week_start === planWeekStart && !(planWeekStart === weekStart && o.order_date === today));
-
-    let demandCustomers, demandKg, ordersMode;
-    if (weekOrders.length) {
-      ordersMode = true;
-      demandCustomers = weekOrders.map(o => ({ id: o.id, name: o.customer_name, weekly_kg: o.kg, delivered: o.delivered, type: 'customer' }))
-        .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
-      demandKg = weekOrders.reduce((s, o) => s + (parseFloat(o.kg) || 0), 0);
-    } else {
-      ordersMode = false;
-      const { data: customers } = await db.from('customers').select('id,name,weekly_kg,type');
-      demandCustomers = (customers || []).filter(c => parseFloat(c.weekly_kg) > 0)
-        .sort((a, b) => (b.weekly_kg || 0) - (a.weekly_kg || 0));
-      demandKg = demandCustomers.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0);
-    }
+    const thisWeekOrders = upcomingOrders.filter(o => o.week_start === weekStart && o.order_date !== today);
+    const nextWeekOrders = upcomingOrders.filter(o => o.week_start === nextWeekStart);
+    const { data: customersData } = await db.from('customers').select('id,name,weekly_kg,type');
+    const standing = (customersData || []).filter(c => parseFloat(c.weekly_kg) > 0)
+      .sort((a, b) => (parseFloat(b.weekly_kg) || 0) - (parseFloat(a.weekly_kg) || 0));
+    const buildWeek = (orders, start, label, useStanding) => {
+      if (orders.length) return {
+        start, label, ordersMode: true,
+        items: orders.map(o => ({ id: o.id, name: o.customer_name, kg: parseFloat(o.kg) || 0, delivered: o.delivered, type: 'customer' })).sort((a, b) => b.kg - a.kg),
+        kg: orders.reduce((s, o) => s + (parseFloat(o.kg) || 0), 0)
+      };
+      if (useStanding && standing.length) return {
+        start, label, ordersMode: false,
+        items: standing.map(c => ({ id: c.id, name: c.name, kg: parseFloat(c.weekly_kg) || 0, type: c.type })),
+        kg: standing.reduce((s, c) => s + (parseFloat(c.weekly_kg) || 0), 0)
+      };
+      return { start, label, ordersMode: true, items: [], kg: 0 };
+    };
+    const planWeeks = [
+      buildWeek(thisWeekOrders, weekStart, 'สัปดาห์นี้', true),
+      buildWeek(nextWeekOrders, nextWeekStart, 'สัปดาห์หน้า', false)
+    ];
 
     // 9. ออเดอร์วันนี้ที่ต้องส่ง
     const todayOrders = todayOrdersR.data || [];
@@ -110,7 +114,7 @@ async function loadDashboard() {
       recentProblems,
       chartBatches: chartBatches.slice().reverse(),
       growingPlots,
-      weeklyPlan: { supplyKg, supplyKg14, demandKg, supplyPlots, supplyPlots14, demandCustomers, ordersMode, planWeekStart, planIsFuture },
+      weeklyPlan: { supplyKg, supplyKg14, supplyPlots, supplyPlots14, weeks: planWeeks },
       todayOrders
     });
 
@@ -180,6 +184,11 @@ function renderDashboardStats(data) {
 
   // แผนส่งผักสัปดาห์นี้
   dashWeeklyPlan = data.weeklyPlan || null;
+  if (dashWeeklyPlan) {
+    const w = dashWeeklyPlan.weeks || [];
+    // ถ้าสัปดาห์นี้ยังไม่มีออเดอร์ แต่สัปดาห์หน้ามี → เปิดที่สัปดาห์หน้าให้เลย
+    dashPlanWeekIdx = (w[0] && !w[0].items.length && w[1] && w[1].items.length) ? 1 : 0;
+  }
   renderWeeklyPlan();
 
   // Today todos
@@ -301,63 +310,67 @@ function renderTodayOrders() {
     </div>`;
 }
 
-// แผนส่งผักสัปดาห์นี้ — render เฉพาะส่วนนี้ (หักออเดอร์วันนี้ที่ส่งแล้วออกจากยอดสัปดาห์)
+// แผนส่งผัก — สัปดาห์นี้ + สัปดาห์หน้า (เลือกดูได้) + สรุปรวม 2 สัปดาห์
 let dashWeeklyPlan = null;
+let dashPlanWeekIdx = 0;
+function setPlanWeek(i) { dashPlanWeekIdx = i; renderWeeklyPlan(); }
 function renderWeeklyPlan() {
   const wkEl = document.getElementById('dash-weekly-plan');
   if (!wkEl || !dashWeeklyPlan) return;
-  const { supplyKg, supplyKg14, demandKg, demandCustomers, ordersMode, supplyPlots, supplyPlots14, planWeekStart, planIsFuture } = dashWeeklyPlan;
+  const { supplyKg, supplyKg14, supplyPlots, supplyPlots14, weeks } = dashWeeklyPlan;
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '');
   const shortD = ds => new Date(ds).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-  const planWeekBanner = planIsFuture
-    ? `<div class="plan-week-banner">📅 ออเดอร์สัปดาห์หน้า · ${shortD(planWeekStart)}–${shortD(addDays(planWeekStart, 6))}</div>`
-    : '';
   const plotRow = p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${shortD(p.harvest)} · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`;
-  // รายการแปลงที่จะเก็บได้ใน 7 วัน (ระบุว่าแปลงไหนบ้าง)
   const h7 = (supplyPlots || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
-  const h7List = h7.length
-    ? `<div class="h7-list">${h7.map(plotRow).join('')}</div>`
-    : `<div class="text-sub" style="padding:4px 0 8px">ยังไม่มีแปลงที่จะเก็บใน 7 วัน</div>`;
-  // ส่วนเพิ่ม 8-14 วัน (วางแผนกลางเดือน)
+  const h7List = h7.length ? `<div class="h7-list">${h7.map(plotRow).join('')}</div>` : `<div class="text-sub" style="padding:4px 0 8px">ยังไม่มีแปลงที่จะเก็บใน 7 วัน</div>`;
   const h14 = (supplyPlots14 || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
   const h14List = h14.length ? `<div class="h7-list">${h14.map(plotRow).join('')}</div>` : '';
-  // ออเดอร์วันนี้ที่ "ส่งแล้ว" → หักออกจากยอดสัปดาห์
-  const deliveredToday = (dashTodayOrders || []).filter(o => o.delivered)
-    .reduce((s, o) => s + parseFloat(o.kg || 0), 0);
-  const remainDemand = Math.max(0, demandKg - deliveredToday);
-  const balance = supplyKg - remainDemand;
-  const balanceTxt = balance >= 0
-    ? `<span style="color:var(--primary)">เหลือขาย ${kg(balance)} กก.</span>`
-    : `<span style="color:var(--danger)">ขาดอีก ${kg(-balance)} กก.</span>`;
-  const demandLabel = ordersMode ? `📦 ลูกค้าสั่ง (${planIsFuture ? 'สัปดาห์หน้า' : 'สัปดาห์นี้'})` : '📦 ลูกค้าต้องการ/สัปดาห์';
-  const deliveredRow = deliveredToday > 0
-    ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>
-       <div class="savings-row"><span>คงเหลือต้องส่ง</span><b style="color:var(--accent)">${kg(remainDemand)} กก.</b></div>`
-    : '';
+
+  if (dashPlanWeekIdx >= weeks.length) dashPlanWeekIdx = 0;
+  const sel = weeks[dashPlanWeekIdx] || weeks[0];
+  // แท็บเลือกสัปดาห์
+  const tabs = `<div class="plan-tabs">${weeks.map((w, i) =>
+    `<button class="plan-tab ${i === dashPlanWeekIdx ? 'active' : ''}" onclick="setPlanWeek(${i})"><span>${w.label}</span><small>${shortD(w.start)}–${shortD(addDays(w.start, 6))} · ${kg(w.kg)} กก.</small></button>`).join('')}</div>`;
+
+  // ยอดผลผลิตที่จะเก็บได้ในสัปดาห์ที่เลือก (สัปดาห์นี้ = ใน 7 วัน · สัปดาห์หน้า = 8-14 วัน)
+  const selSupply = dashPlanWeekIdx === 0 ? supplyKg : Math.max(0, supplyKg14 - supplyKg);
+  const deliveredToday = dashPlanWeekIdx === 0 ? (dashTodayOrders || []).filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0) : 0;
+  const selDemand = Math.max(0, sel.kg - deliveredToday);
+  const selBalance = selSupply - selDemand;
+  const selBalanceTxt = selBalance >= 0 ? `<span style="color:var(--primary)">เหลือ ${kg(selBalance)} กก.</span>` : `<span style="color:var(--danger)">ขาด ${kg(-selBalance)} กก.</span>`;
+
+  // สรุปรวม 2 สัปดาห์ — ผลผลิต 14 วัน เทียบ ออเดอร์รวม (สัปดาห์นี้ + สัปดาห์หน้า)
+  const demandTotal = weeks.reduce((s, w) => s + w.kg, 0);
+  const combBalance = supplyKg14 - demandTotal;
+  const combTxt = combBalance >= 0 ? `<span style="color:var(--primary)">เหลือ ${kg(combBalance)} กก.</span>` : `<span style="color:var(--danger)">ขาด ${kg(-combBalance)} กก.</span>`;
+
   const esc = s => String(s || '').replace(/'/g, "\\'");
-  const custList = demandCustomers.length
-    ? demandCustomers.map(c => `
+  const custList = sel.items.length
+    ? sel.items.map(c => `
       <div class="deliv-row">
         <span class="deliv-name">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
-        <span class="deliv-kg">${kg(parseFloat(c.weekly_kg))} กก.</span>
-        <button class="deliv-act" onclick="editDeliveryItem('${c.id}', ${ordersMode}, ${parseFloat(c.weekly_kg) || 0}, '${esc(c.name)}')" aria-label="แก้ไข">✏️</button>
-        <button class="deliv-act del" onclick="deleteDeliveryItem('${c.id}', ${ordersMode}, '${esc(c.name)}')" aria-label="ลบ">🗑</button>
+        <span class="deliv-kg">${kg(c.kg)} กก.</span>
+        <button class="deliv-act" onclick="editDeliveryItem('${c.id}', ${sel.ordersMode}, ${c.kg}, '${esc(c.name)}')" aria-label="แก้ไข">✏️</button>
+        <button class="deliv-act del" onclick="deleteDeliveryItem('${c.id}', ${sel.ordersMode}, '${esc(c.name)}')" aria-label="ลบ">🗑</button>
       </div>`).join('')
-    : `<div class="text-sub" style="padding:8px 0">${ordersMode ? '' : 'ยังไม่มีลูกค้าที่ระบุยอด/สัปดาห์'}</div>`;
+    : `<div class="text-sub" style="padding:8px 0">ยังไม่มีออเดอร์${sel.label} (ตั้งได้ที่หน้าลูกค้า)</div>`;
+
   wkEl.innerHTML = `
-    ${planWeekBanner}
     <div class="savings-card" style="padding:14px 0">
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
       ${h7List}
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 14 วัน)</span><b style="color:var(--primary)">${kg(supplyKg14)} กก.</b></div>
       ${h14List ? `<div class="text-sub" style="margin:2px 0 2px;font-size:11px">เพิ่มอีก 8–14 วัน:</div>${h14List}` : ''}
-      <div class="savings-row"><span>${demandLabel}</span><b style="color:var(--accent)">${kg(demandKg)} กก.</b></div>
-      ${deliveredRow}
       <div class="savings-divider"></div>
-      <div class="savings-row savings-total"><span>สรุป</span><span>${balanceTxt}</span></div>
+      ${tabs}
+      <div class="savings-row"><span>📦 ลูกค้าสั่ง (${sel.label})</span><b style="color:var(--accent)">${kg(sel.kg)} กก.</b></div>
+      ${deliveredToday > 0 ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>` : ''}
+      <div class="savings-row savings-total"><span>สรุป${sel.label}</span><span>${selBalanceTxt}</span></div>
+      <div class="savings-divider"></div>
+      <div class="savings-row savings-total"><span>รวม 2 สัปดาห์<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิต 14 วัน (${kg(supplyKg14)}) − ออเดอร์รวม (${kg(demandTotal)})</small></span><span>${combTxt}</span></div>
     </div>
-    <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง ${ordersMode ? '' : '<span style="font-weight:400">(ตั้งออเดอร์รายสัปดาห์ได้ที่หน้าลูกค้า)</span>'}</div>
+    <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง · ${sel.label}</div>
     <div class="card" style="padding:4px 14px">${custList}</div>`;
 }
 
