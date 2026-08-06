@@ -344,12 +344,13 @@ function renderWeeklyPlan() {
   const deliveredTodayThisWk = (dashTodayOrders || []).filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
   const demand0 = Math.max(0, (weeks[0] ? weeks[0].kg : 0) - deliveredTodayThisWk);
   const demand1 = weeks[1] ? weeks[1].kg : 0;
-  const supply0 = supplyWk0;
+  const supply0 = supplyKg;                             // ผักที่จะเก็บได้ใน 7 วัน (ตรงกับที่โชว์)
+  const supply1base = Math.max(0, supplyKg14 - supplyKg); // ผักที่จะเก็บได้ 8–14 วัน (ตรงกับที่โชว์)
   const bal0 = supply0 - demand0;
   const leftover0 = Math.max(0, bal0);                 // ผักสัปดาห์นี้ที่เหลือ (ยังไม่ได้ขาย) → ยกไปสัปดาห์หน้า
-  const supply1 = leftover0 + supplyWk1Harvest;         // ไม่นับผักที่เก็บเกินสัปดาห์หน้า
+  const supply1 = leftover0 + supply1base;
   const bal1 = supply1 - demand1;
-  const combBal = (supplyWk0 + supplyWk1Harvest) - (demand0 + demand1);
+  const combBal = (supply0 + supply1base) - (demand0 + demand1);
   const deliveredToday = dashPlanWeekIdx === 0 ? deliveredTodayThisWk : 0;
 
   const esc = s => String(s || '').replace(/'/g, "\\'");
@@ -375,8 +376,8 @@ function renderWeeklyPlan() {
       <div class="savings-row"><span>📦 ลูกค้าสั่ง (${sel.label})</span><b style="color:var(--accent)">${kg(sel.kg)} กก.</b></div>
       ${deliveredToday > 0 ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>` : ''}
       <div class="savings-divider"></div>
-      <div class="savings-row"><span>สรุปสัปดาห์นี้<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิตสัปดาห์นี้ (${kg(supply0)}) − ออเดอร์ (${kg(demand0)})</small></span><span>${balTxt(bal0)}</span></div>
-      <div class="savings-row"><span>สรุปสัปดาห์หน้า<br><small style="font-weight:400;color:var(--ink-soft)">เหลือจากสัปดาห์นี้ (${kg(leftover0)}) + เก็บสัปดาห์หน้า (${kg(supplyWk1Harvest)}) − ออเดอร์ (${kg(demand1)})</small></span><span>${balTxt(bal1)}</span></div>
+      <div class="savings-row"><span>สรุปสัปดาห์นี้<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิต 7 วัน (${kg(supply0)}) − ออเดอร์ (${kg(demand0)})</small></span><span>${balTxt(bal0)}</span></div>
+      <div class="savings-row"><span>สรุปสัปดาห์หน้า<br><small style="font-weight:400;color:var(--ink-soft)">เหลือจากสัปดาห์นี้ (${kg(leftover0)}) + เก็บ 8–14 วัน (${kg(supply1base)}) − ออเดอร์ (${kg(demand1)})</small></span><span>${balTxt(bal1)}</span></div>
       <div class="savings-row savings-total"><span>รวม 2 สัปดาห์</span><span>${balTxt(combBal)}</span></div>
     </div>
     <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง · ${sel.label}</div>
