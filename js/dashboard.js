@@ -333,17 +333,15 @@ function renderWeeklyPlan() {
   const tabs = `<div class="plan-tabs">${weeks.map((w, i) =>
     `<button class="plan-tab ${i === dashPlanWeekIdx ? 'active' : ''}" onclick="setPlanWeek(${i})"><span>${w.label}</span><small>${shortD(w.start)}–${shortD(addDays(w.start, 6))} · ${kg(w.kg)} กก.</small></button>`).join('')}</div>`;
 
-  // ยอดผลผลิตที่จะเก็บได้ในสัปดาห์ที่เลือก (สัปดาห์นี้ = ใน 7 วัน · สัปดาห์หน้า = 8-14 วัน)
-  const selSupply = dashPlanWeekIdx === 0 ? supplyKg : Math.max(0, supplyKg14 - supplyKg);
-  const deliveredToday = dashPlanWeekIdx === 0 ? (dashTodayOrders || []).filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0) : 0;
-  const selDemand = Math.max(0, sel.kg - deliveredToday);
-  const selBalance = selSupply - selDemand;
-  const selBalanceTxt = selBalance >= 0 ? `<span style="color:var(--primary)">เหลือ ${kg(selBalance)} กก.</span>` : `<span style="color:var(--danger)">ขาด ${kg(-selBalance)} กก.</span>`;
-
-  // สรุปรวม 2 สัปดาห์ — ผลผลิต 14 วัน เทียบ ออเดอร์รวม (สัปดาห์นี้ + สัปดาห์หน้า)
-  const demandTotal = weeks.reduce((s, w) => s + w.kg, 0);
-  const combBalance = supplyKg14 - demandTotal;
-  const combTxt = combBalance >= 0 ? `<span style="color:var(--primary)">เหลือ ${kg(combBalance)} กก.</span>` : `<span style="color:var(--danger)">ขาด ${kg(-combBalance)} กก.</span>`;
+  // เหลือ/ขาด ของแต่ละสัปดาห์ (สัปดาห์นี้ = ผลผลิต 7 วัน · สัปดาห์หน้า = 8-14 วัน)
+  const balTxt = v => v >= 0 ? `<span style="color:var(--primary)">เหลือ ${kg(v)} กก.</span>` : `<span style="color:var(--danger)">ขาด ${kg(-v)} กก.</span>`;
+  const deliveredTodayThisWk = (dashTodayOrders || []).filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
+  const supply0 = supplyKg, supply1 = Math.max(0, supplyKg14 - supplyKg);
+  const demand0 = Math.max(0, (weeks[0] ? weeks[0].kg : 0) - deliveredTodayThisWk);
+  const demand1 = weeks[1] ? weeks[1].kg : 0;
+  const bal0 = supply0 - demand0, bal1 = supply1 - demand1;
+  const combBal = bal0 + bal1;
+  const deliveredToday = dashPlanWeekIdx === 0 ? deliveredTodayThisWk : 0;
 
   const esc = s => String(s || '').replace(/'/g, "\\'");
   const custList = sel.items.length
@@ -367,9 +365,10 @@ function renderWeeklyPlan() {
       ${tabs}
       <div class="savings-row"><span>📦 ลูกค้าสั่ง (${sel.label})</span><b style="color:var(--accent)">${kg(sel.kg)} กก.</b></div>
       ${deliveredToday > 0 ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>` : ''}
-      <div class="savings-row savings-total"><span>สรุป${sel.label}</span><span>${selBalanceTxt}</span></div>
       <div class="savings-divider"></div>
-      <div class="savings-row savings-total"><span>รวม 2 สัปดาห์<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิต 14 วัน (${kg(supplyKg14)}) − ออเดอร์รวม (${kg(demandTotal)})</small></span><span>${combTxt}</span></div>
+      <div class="savings-row"><span>สรุปสัปดาห์นี้<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิต 7 วัน (${kg(supply0)}) − ออเดอร์ (${kg(demand0)})</small></span><span>${balTxt(bal0)}</span></div>
+      <div class="savings-row"><span>สรุปสัปดาห์หน้า<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิต 8–14 วัน (${kg(supply1)}) − ออเดอร์ (${kg(demand1)})</small></span><span>${balTxt(bal1)}</span></div>
+      <div class="savings-row savings-total"><span>รวม 2 สัปดาห์</span><span>${balTxt(combBal)}</span></div>
     </div>
     <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง · ${sel.label}</div>
     <div class="card" style="padding:4px 14px">${custList}</div>`;
