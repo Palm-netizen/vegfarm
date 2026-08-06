@@ -360,8 +360,9 @@ function renderWeeklyPlan() {
     <div class="savings-card" style="padding:14px 0">
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
       ${h7List}
-      <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 14 วัน)</span><b style="color:var(--primary)">${kg(supplyKg14)} กก.</b></div>
-      ${h14List ? `<div class="text-sub" style="margin:2px 0 2px;font-size:11px">เพิ่มอีก 8–14 วัน:</div>${h14List}` : ''}
+      <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (8–14 วัน)</span><b style="color:var(--primary)">${kg(Math.max(0, supplyKg14 - supplyKg))} กก.</b></div>
+      ${h14List || ''}
+      <div class="savings-row savings-total"><span>🌿 รวม (7 + 14 วัน)</span><b style="color:var(--primary)">${kg(supplyKg14)} กก.</b></div>
       <div class="savings-divider"></div>
       ${tabs}
       <div class="savings-row"><span>📦 ลูกค้าสั่ง (${sel.label})</span><b style="color:var(--accent)">${kg(sel.kg)} กก.</b></div>
