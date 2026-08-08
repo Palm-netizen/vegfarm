@@ -307,7 +307,36 @@ function onExpenseCategoryChange() {
   }
 }
 
+// สรุปซื้อของเข้าเดือนนี้ แยกหมวด (เฉพาะของที่ซื้อจริง ไม่รวมค่าแรง/ค่าไฟ)
+async function loadExpenseInputsSummary() {
+  const el = document.getElementById('expense-inputs-summary');
+  if (!el) return;
+  const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
+  const monthStart = `${yr}-${mo}-01`;
+  const nm = new Date(yr, now.getMonth() + 1, 1);
+  const nextMonthStart = `${nm.getFullYear()}-${String(nm.getMonth() + 1).padStart(2, '0')}-01`;
+  const { data } = await db.from('expenses').select('category,amount,expense_date')
+    .gte('expense_date', monthStart).lt('expense_date', nextMonthStart);
+  const catLbl = { seed: 'เมล็ดพันธุ์', fertilizer: 'ปุ๋ย/สารเคมี', equipment: 'อุปกรณ์/เครื่องมือ', packaging: 'บรรจุภัณฑ์', transport: 'ค่าขนส่ง', other: 'อื่นๆ' };
+  const catIcon = { seed: '🌱', fertilizer: '🧪', equipment: '🔧', packaging: '📦', transport: '🚚', other: '📝' };
+  const agg = {};
+  (data || []).forEach(r => {
+    if (r.category === 'labor' || r.category === 'utility') return;   // ไม่นับค่าคงที่
+    agg[r.category] = (agg[r.category] || 0) + parseFloat(r.amount || 0);
+  });
+  const rows = Object.entries(agg).sort((a, b) => b[1] - a[1]);
+  const total = rows.reduce((s, [, v]) => s + v, 0);
+  const fmt = n => `฿${n.toLocaleString('th-TH', { maximumFractionDigits: 0 })}`;
+  if (!rows.length) { el.innerHTML = '<div class="text-sub" style="text-align:center;padding:12px">เดือนนี้ยังไม่มีการซื้อของเข้า</div>'; return; }
+  el.innerHTML = `<div class="card savings-card">
+    ${rows.map(([c, v]) => `<div class="savings-row"><span>${catIcon[c] || '📝'} ${catLbl[c] || c}</span><b style="color:var(--accent)">${fmt(v)}</b></div>`).join('')}
+    <div class="savings-divider"></div>
+    <div class="savings-row savings-total"><span>รวมซื้อของเข้า</span><b style="color:var(--accent)">${fmt(total)}</b></div>
+  </div>`;
+}
+
 async function loadExpenseList() {
+  loadExpenseInputsSummary();
   const {data} = await db.from('expenses').select('*').order('expense_date',{ascending:false}).limit(40);
   const el = document.getElementById('expense-list');
   if (!data?.length) { el.innerHTML='<div class="empty-state">ยังไม่มีรายจ่าย</div>'; return; }

@@ -744,6 +744,9 @@ if('serviceWorker' in navigator){
         <button class="btn btn-primary" id="expense-save-btn" style="background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 8px 20px rgba(245,158,11,0.30)" onclick="saveExpense()">บันทึกรายจ่าย</button>
       </div>
 
+      <div class="growth-divider"><span class="gd-label">สรุปซื้อของเข้าเดือนนี้</span></div>
+      <div id="expense-inputs-summary"></div>
+
       <div class="growth-divider"><span class="gd-label">ประวัติรายจ่าย</span></div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
         <button class="btn btn-outline btn-sm" onclick="exportCSV('expense')">
@@ -1241,7 +1244,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/calendar.js?v=4"></script>
 <script defer src="js/todos.js?v=2"></script>
-<script defer src="js/finance.js?v=15"></script>
+<script defer src="js/finance.js?v=16"></script>
 <script defer src="js/customers.js?v=9"></script>
 <script defer src="js/assistant.js?v=10"></script>
 <script defer src="js/capacity.js?v=2"></script>
