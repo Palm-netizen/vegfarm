@@ -475,7 +475,8 @@ async function loadFinanceSummary() {
                       : (now.getMonth() + 1);
 
   const im=si(incM), iy=si(incY);
-  const em=se(expM)+FIXED_MONTHLY;                      // เดือนนี้ + ค่าคงที่ 1 เดือน
+  const expVar = se(expM);                              // ต้นทุนซื้อของเข้า (ผันแปร) — ไม่รวมค่าคงที่
+  const em=expVar+FIXED_MONTHLY;                        // เดือนนี้ + ค่าคงที่ 1 เดือน
   const ey=se(expY)+FIXED_MONTHLY*monthsElapsed;        // สะสมปี + ค่าคงที่ตามจำนวนเดือน
 
   // Net-profit hero (this month)
@@ -498,9 +499,16 @@ async function loadFinanceSummary() {
   document.getElementById('sum-exp-year').textContent    = fmt(ey);
   document.getElementById('sum-profit-year').textContent = fmt(iy-ey);
 
+  // รายจ่ายแยกประเภท: ต้นทุนซื้อของเข้า (ผันแปร) vs ค่าคงที่ · ส่วนตัวแยกบัญชี
+  const personalM = se(persM);
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('sum-exp-var', fmt(expVar));
+  setTxt('sum-exp-fixed', fmt(FIXED_MONTHLY));
+  setTxt('sum-exp-farm', fmt(em));
+  setTxt('sum-exp-personal', fmt(personalM));
+
   // เงินเหลือเก็บ = กำไรฟาร์ม − รายจ่ายส่วนตัว (ฟาร์มไม่เพี้ยน)
   const farmProfit = im - em;
-  const personalM = se(persM);
   const savings = farmProfit - personalM;
   const elFp = document.getElementById('sum-farm-profit');
   if (elFp) {

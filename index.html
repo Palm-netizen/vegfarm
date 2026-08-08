@@ -867,6 +867,15 @@ if('serviceWorker' in navigator){
         </div>
       </div>
 
+      <div class="growth-divider"><span class="gd-label">รายจ่ายแยกประเภท (เดือนนี้)</span></div>
+      <div class="card savings-card">
+        <div class="savings-row"><span>🛒 ต้นทุนซื้อของเข้า (ผันแปร)</span><span id="sum-exp-var" style="color:var(--accent)">–</span></div>
+        <div class="savings-row"><span>🔧 ค่าคงที่ (ค่าแรง+ค่าไฟ)</span><span id="sum-exp-fixed" style="color:var(--ink-soft)">–</span></div>
+        <div class="savings-divider"></div>
+        <div class="savings-row savings-total"><span>รวมรายจ่ายฟาร์ม</span><span id="sum-exp-farm">–</span></div>
+        <div class="savings-row"><span>🧍 รายจ่ายส่วนตัว (แยกบัญชี)</span><span id="sum-exp-personal" style="color:var(--ink-soft)">–</span></div>
+      </div>
+
       <div class="growth-divider"><span class="gd-label">เงินเหลือเก็บ (หลังหักส่วนตัว)</span></div>
       <div class="card savings-card">
         <div class="savings-row"><span>กำไรฟาร์มเดือนนี้</span><span id="sum-farm-profit" class="sv-pos">–</span></div>
@@ -1232,7 +1241,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/calendar.js?v=4"></script>
 <script defer src="js/todos.js?v=2"></script>
-<script defer src="js/finance.js?v=14"></script>
+<script defer src="js/finance.js?v=15"></script>
 <script defer src="js/customers.js?v=9"></script>
 <script defer src="js/assistant.js?v=10"></script>
 <script defer src="js/capacity.js?v=2"></script>
