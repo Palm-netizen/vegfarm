@@ -425,3 +425,48 @@ function problemTypeLabel(type) {
 function severityLabel2(s) {
   return { low: 'เบา', medium: 'ปานกลาง', high: 'รุนแรง' }[s] || s;
 }
+
+// ===== ประสบการณ์ปัญหารายเดือน (เตรียมรับมือปีหน้า) =====
+const MONTHLOG_NAMES = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+function openMonthLog() {
+  const sel = document.getElementById('monthlog-year');
+  const y = new Date().getFullYear();
+  sel.innerHTML = [y, y - 1, y - 2].map(yr => `<option value="${yr}">ปี ${yr + 543}</option>`).join('');
+  sel.value = y;
+  document.getElementById('monthlog-modal').style.display = 'flex';
+  renderMonthLog();
+}
+function closeMonthLog() { document.getElementById('monthlog-modal').style.display = 'none'; }
+function saveMonthNote(key, val) { try { localStorage.setItem(key, val); showToast('บันทึกบทเรียนแล้ว'); } catch (e) { showToast('บันทึกไม่สำเร็จ', 'error'); } }
+
+async function renderMonthLog() {
+  const body = document.getElementById('monthlog-body');
+  if (!body) return;
+  const year = parseInt(document.getElementById('monthlog-year').value);
+  const { data } = await db.from('problems').select('problem_date,problem_type,severity,plot_code')
+    .gte('problem_date', `${year}-01-01`).lte('problem_date', `${year}-12-31`);
+  const rows = data || [];
+  const byMonth = {};
+  rows.forEach(r => { const m = new Date(r.problem_date + 'T00:00:00').getMonth(); (byMonth[m] = byMonth[m] || []).push(r); });
+  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const list = byMonth[m] || [];
+    const key = `vf_monthlog_${year}_${m}`;
+    const note = localStorage.getItem(key) || '';
+    let summary = '';
+    if (list.length) {
+      const tc = {}; list.forEach(r => { tc[r.problem_type] = (tc[r.problem_type] || 0) + 1; });
+      const types = Object.entries(tc).sort((a, b) => b[1] - a[1]).map(([t, c]) => `${problemTypeLabel(t)} ×${c}`).join(' · ');
+      const plots = [...new Set(list.map(r => r.plot_code).filter(Boolean))];
+      summary = `<div class="ml-types">⚠️ ${types}</div>${plots.length ? `<div class="ml-plots">แปลง: ${plots.join(', ')}</div>` : ''}`;
+    }
+    html += `<div class="ml-month">
+      <div class="ml-head"><b>${MONTHLOG_NAMES[m]}</b>${list.length ? `<span class="ml-count">${list.length} ปัญหา</span>` : '<span class="ml-none">ไม่มีบันทึก</span>'}</div>
+      ${summary}
+      <textarea class="ml-note" placeholder="บทเรียน/สิ่งที่ต้องเตรียมเดือนนี้ปีหน้า เช่น หน้าฝนระวังเชื้อรา กางสแลง..." onchange="saveMonthNote('${key}', this.value)">${esc(note)}</textarea>
+    </div>`;
+  }
+  body.innerHTML = html;
+}

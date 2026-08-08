@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=52">
+<link rel="stylesheet" href="css/style.css?v=53">
 </head>
 <body>
 
@@ -443,6 +443,8 @@ if('serviceWorker' in navigator){
       บันทึกปัญหา
     </div>
     <div class="section-sub">บันทึกปัญหาพร้อมวิธีแก้ไข สร้างฐานข้อมูลสำหรับค้นหาในอนาคต</div>
+
+    <button class="btn btn-outline" style="width:100%;margin-bottom:14px;gap:8px" onclick="openMonthLog()">📅 ประสบการณ์ปัญหารายเดือน (เตรียมรับมือปีหน้า)</button>
 
     <div class="card">
       <div class="form-group">
@@ -1094,6 +1096,21 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== ประสบการณ์ปัญหารายเดือน ===== -->
+<div class="modal-overlay" id="monthlog-modal" onclick="if(event.target===this)closeMonthLog()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
+    <div class="assist-titlebar">
+      <div class="modal-title" style="margin:0">📅 ประสบการณ์ปัญหารายเดือน</div>
+      <select id="monthlog-year" class="form-control" style="width:auto;padding:6px 10px" onchange="renderMonthLog()"></select>
+    </div>
+    <div class="text-sub" style="margin-bottom:10px">สรุปปัญหาที่เจอแต่ละเดือน + จดบทเรียนไว้เตรียมรับมือปีหน้า</div>
+    <div id="monthlog-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="closeMonthLog()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== กำลังการผลิต (Capacity Planner) ===== -->
 <div class="modal-overlay" id="capacity-modal" onclick="if(event.target===this)closeCapacity()">
   <div class="modal-sheet">
@@ -1212,7 +1229,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/seeds.js?v=15"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
-<script defer src="js/problems.js?v=10"></script>
+<script defer src="js/problems.js?v=11"></script>
 <script defer src="js/calendar.js?v=4"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=14"></script>
