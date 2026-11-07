@@ -530,6 +530,36 @@ select.form-control { cursor: pointer; }
 .cal-day.cal-seedday:not(.cal-harvest):not(.today) { border: 1.5px dashed var(--accent); }
 .cal-seed-label { font-size: 8px; font-weight: 800; color: var(--accent); line-height: 1; margin-top: 3px; letter-spacing: -0.3px; }
 .cal-seed-card { border: 2px solid var(--accent); }
+/* ฉีดบำรุงใบ (วันพุธ) — เขียว = ฉีดแล้ว · แดง = ไม่ได้ฉีด · ขอบฟ้า = รอฉีด */
+.cal-foliar { display: inline-block; margin-top: 3px; padding: 2px 3px; border-radius: 5px; font-size: 7.5px; font-weight: 800; line-height: 1; letter-spacing: -0.3px; white-space: nowrap; }
+.cal-foliar.done { background: #16A34A; color: #fff; }
+.cal-foliar.missed { background: #DC2626; color: #fff; }
+.cal-foliar.upcoming { border: 1px solid #0EA5E9; color: #0284C7; }
+[data-theme="dark"] .cal-foliar.upcoming { color: #38BDF8; border-color: #38BDF8; }
+.foliar-day-card.done { border: 2px solid #16A34A; }
+.foliar-day-card.missed { border: 2px solid #DC2626; }
+/* การ์ดแจ้งเตือนหน้าแรก */
+.foliar-card { cursor: pointer; align-items: center; }
+.foliar-btn { flex: none; border: none; border-radius: 10px; padding: 8px 12px; background: var(--primary); color: #fff; font-family: var(--font-body); font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+.foliar-btn:active { transform: scale(.95); }
+/* ตารางฉีด (ป๊อปอัพ) */
+.foliar-summary { font-size: 13.5px; color: var(--ink); background: var(--bg); border-radius: 10px; padding: 9px 12px; margin-bottom: 10px; }
+.foliar-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 12px; margin-bottom: 8px; background: var(--paper); }
+.foliar-row.done { border-left-color: #16A34A; }
+.foliar-row.missed { border-left-color: #DC2626; background: linear-gradient(90deg, rgba(220,38,38,.07), transparent 60%); }
+.foliar-row.upcoming { border-left-color: #0EA5E9; }
+.foliar-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13.5px; color: var(--ink); }
+.foliar-row-main span { font-size: 11.5px; color: var(--ink-soft); }
+.foliar-pill { flex: none; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+.foliar-pill.done { background: rgba(22,163,74,.14); color: #15803D; }
+.foliar-pill.missed { background: rgba(220,38,38,.12); color: #DC2626; }
+.foliar-pill.upcoming { background: rgba(14,165,233,.12); color: #0284C7; }
+[data-theme="dark"] .foliar-pill.done { color: #4ADE80; }
+[data-theme="dark"] .foliar-pill.missed { color: #F87171; }
+[data-theme="dark"] .foliar-pill.upcoming { color: #38BDF8; }
+.foliar-chk { flex: none; width: 30px; height: 30px; border-radius: 8px; border: 2px solid var(--ink-faint); background: transparent; color: #fff; font-size: 17px; font-weight: 900; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.foliar-chk.on { background: #16A34A; border-color: #16A34A; }
+.foliar-chk.off { opacity: .35; cursor: default; }
 
 .cal-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin: 1px 1px 0 0; }
 .dot-seed     { background: var(--accent); }

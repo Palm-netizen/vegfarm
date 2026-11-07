@@ -183,9 +183,19 @@ CREATE TABLE IF NOT EXISTS weekly_batches (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 13. ตารางฉีดบำรุงใบ — 1 แถว = สัปดาห์นั้นฉีดแล้ว (week_start = วันจันทร์ของสัปดาห์)
+CREATE TABLE IF NOT EXISTS foliar_sprays (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  week_start DATE NOT NULL UNIQUE,
+  spray_date DATE NOT NULL,
+  note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
 -- ===========================
+ALTER TABLE foliar_sprays       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE weekly_batches      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seed_batches        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plots               ENABLE ROW LEVEL SECURITY;
@@ -205,7 +215,7 @@ DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'seed_batches','plots','plot_cycles','problems','todos',
-    'calendar_activities','income','expenses','customers','personal_expenses','orders','weekly_batches'
+    'calendar_activities','income','expenses','customers','personal_expenses','orders','weekly_batches','foliar_sprays'
   ] LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Allow all" ON %I;', t);
     EXECUTE format('DROP POLICY IF EXISTS "Allow all for authenticated" ON %I;', t);

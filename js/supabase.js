@@ -223,7 +223,7 @@ async function vfSignOut() {
 const VF_TABLES = [
   'plots', 'seed_batches', 'plot_cycles', 'problems', 'todos',
   'calendar_activities', 'income', 'expenses', 'personal_expenses', 'customers', 'orders',
-  'weekly_batches', '_storage_photos'
+  'weekly_batches', 'foliar_sprays', '_storage_photos'
 ];
 
 function exportAllData() {

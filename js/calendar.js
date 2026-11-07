@@ -34,7 +34,8 @@ async function renderCalendar() {
   // Fetch activities + แปลงที่กำลังปลูก (เพื่อคำนวณวันเก็บผัก)
   const [{ data: activities }, { data: plots }] = await Promise.all([
     db.from('calendar_activities').select('*').gte('activity_date', startDateStr).lte('activity_date', endDateStr),
-    db.from('plots').select('plot_code,vegetable_type,plant_date,plant_age_days,harvest_date,estimated_kg,is_harvested')
+    db.from('plots').select('plot_code,vegetable_type,plant_date,plant_age_days,harvest_date,estimated_kg,is_harvested'),
+    (typeof foliarLoad === 'function') ? foliarLoad(true) : null
   ]);
 
   calActivitiesCache = {};
@@ -112,9 +113,11 @@ function renderCalDay(date, todayStr, isOtherMonth) {
     : isSeedDay ? '<div class="cal-seed-label">🌱เพาะ</div>'
     : `<div>${dots}</div>`;
 
+  const foliar = (typeof foliarCalLabel === 'function') ? foliarCalLabel(date) : '';
   return `<div class="${classes.join(' ')}" data-date="${dateStr}" style="${isOtherMonth ? 'opacity:0.35' : ''}">
     <div class="day-num">${date.getDate()}</div>
     ${label}
+    ${foliar}
   </div>`;
 }
 
@@ -144,6 +147,10 @@ function showDayDetail(dateStr) {
       ${harvest.map(h => `<div class="cyc-sub" style="padding:2px 0"><span class="badge badge-green">${h.code}</span> ${vegName(h.veg)}${h.kg ? ` · ~${kg(h.kg)} กก.` : ''}</div>`).join('')}
     </div>`;
   }
+
+  // การ์ดฉีดบำรุงใบ (วันพุธ) — ติ๊ก/ยกเลิกได้
+  const foliarHtml = (typeof foliarDayCard === 'function') ? foliarDayCard(dateStr) : '';
+  seedHtml = foliarHtml + seedHtml;
 
   if (!events.length && !harvest.length && !seedHtml) {
     panel.innerHTML = `<div class="card"><div class="card-title">${formatDateTH(dateStr)}</div><div class="empty-state" style="padding:16px">ไม่มีกิจกรรม</div></div>`;

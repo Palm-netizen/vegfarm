@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=53">
+<link rel="stylesheet" href="css/style.css?v=54">
 </head>
 <body>
 
@@ -124,6 +124,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
 
+    <div id="dash-foliar"></div>
     <div id="dash-advice"></div>
     <button class="btn btn-outline" style="width:100%;margin-bottom:10px;gap:8px" onclick="openAssistant()">🤖 ถามผู้ช่วยฟาร์ม (เรื่องเพาะ/ผลผลิต/เป้าหมาย)</button>
     <button class="btn btn-outline" style="width:100%;margin-bottom:16px;gap:8px" onclick="openCapacity()">🧮 กำลังการผลิต (Capacity Planner)</button>
@@ -540,6 +541,8 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">กิจกรรมเพาะเมล็ด ปลูก เก็บเกี่ยว และปัญหาในแต่ละวัน</div>
 
+    <button class="btn btn-outline" style="width:100%;margin-bottom:14px;gap:8px" onclick="openFoliarLog()">💧 ตารางฉีดบำรุงใบ (ทุกวันพุธ) — ดู/ติ๊กว่าฉีดแล้ว</button>
+
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <button class="btn btn-outline btn-sm" id="cal-prev">‹ ก่อนหน้า</button>
@@ -553,6 +556,8 @@ if('serviceWorker' in navigator){
         <span><span class="cal-dot dot-plant" style="display:inline-block;margin-right:4px"></span>ปลูก</span>
         <span><span class="cal-dot dot-harvest" style="display:inline-block;margin-right:4px"></span>เก็บเกี่ยว</span>
         <span><span class="cal-dot dot-problem" style="display:inline-block;margin-right:4px"></span>ปัญหา</span>
+        <span><span class="cal-foliar done" style="display:inline-block">💧</span> ฉีดใบแล้ว</span>
+        <span><span class="cal-foliar missed" style="display:inline-block">💧</span> ไม่ได้ฉีด</span>
       </div>
     </div>
     <div id="cal-detail-panel"></div>
@@ -1108,6 +1113,18 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== ตารางฉีดบำรุงใบ ===== -->
+<div class="modal-overlay" id="foliar-modal" onclick="if(event.target===this)closeFoliarLog()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
+    <div class="modal-title">💧 ตารางฉีดบำรุงใบ</div>
+    <div class="text-sub" style="margin-bottom:10px">ฉีดทุกวันพุธ · ฉีดเสร็จแล้วกดช่องติ๊ก → ปฏิทินขึ้นสีเขียว · ถ้าไม่ได้ฉีดจะขึ้นสีแดง</div>
+    <div id="foliar-log-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="closeFoliarLog()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== ประสบการณ์ปัญหารายเดือน ===== -->
 <div class="modal-overlay" id="monthlog-modal" onclick="if(event.target===this)closeMonthLog()">
   <div class="modal-sheet">
@@ -1236,18 +1253,19 @@ if('serviceWorker' in navigator){
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=8"></script>
-<script defer src="js/dashboard.js?v=29"></script>
+<script defer src="js/supabase.js?v=9"></script>
+<script defer src="js/dashboard.js?v=30"></script>
 <script defer src="js/seeds.js?v=15"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>
 <script defer src="js/problems.js?v=11"></script>
-<script defer src="js/calendar.js?v=4"></script>
+<script defer src="js/foliar.js?v=1"></script>
+<script defer src="js/calendar.js?v=5"></script>
 <script defer src="js/todos.js?v=2"></script>
 <script defer src="js/finance.js?v=16"></script>
 <script defer src="js/customers.js?v=9"></script>
 <script defer src="js/assistant.js?v=10"></script>
 <script defer src="js/capacity.js?v=2"></script>
-<script defer src="js/app.js?v=9"></script>
+<script defer src="js/app.js?v=10"></script>
 </body>
 </html>
