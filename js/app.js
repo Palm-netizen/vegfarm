@@ -1,6 +1,6 @@
 // js/app.js — App router & init
 
-const APP_VERSION = 'v2026.07.06 · build 64';
+const APP_VERSION = 'v2026.07.06 · build 65';
 
 const PAGE_INIT = {
   dashboard: loadDashboard,

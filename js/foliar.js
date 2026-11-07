@@ -130,7 +130,7 @@ function foliarCalLabel(date) {
   if (date.getDay() !== FOLIAR_SCHEDULE.day) return '';
   const st = foliarStatus(foliarWeekStart(date));
   if (st === 'none') return '';
-  const txt = { done: '💧ฉีดแล้ว', missed: '💧ไม่ฉีด', upcoming: '💧ฉีดใบ' }[st];
+  const txt = { done: '💧ฉีดแล้ว', missed: '💧ไม่ฉีด', upcoming: '💧บำรุง' }[st];
   return `<div class="cal-foliar ${st}">${txt}</div>`;
 }
 
