@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=54">
+<link rel="stylesheet" href="css/style.css?v=55">
 </head>
 <body>
 
@@ -164,20 +164,14 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
-    <div class="growth-divider"><span class="gd-label">แปลงที่กำลังปลูก (กำหนดเก็บเกี่ยว)</span></div>
-    <div class="card"><div id="dash-harvest-list"></div></div>
+    <div class="growth-divider"><span class="gd-label">สิ่งที่ต้องทำ วันนี้ &amp; พรุ่งนี้</span></div>
+    <div class="card"><div id="dash-todo-list"></div></div>
 
     <div class="growth-divider"><span class="gd-label">ออเดอร์วันนี้ที่ต้องส่ง</span></div>
     <div class="card"><div id="dash-today-orders"></div></div>
 
-    <div class="growth-divider"><span class="gd-label">แผนส่งผักสัปดาห์นี้</span></div>
+    <div class="growth-divider"><span class="gd-label">ผักที่จะเก็บได้ใน 7 วัน</span></div>
     <div class="card"><div id="dash-weekly-plan"></div></div>
-
-    <div class="growth-divider"><span class="gd-label">ปัญหาล่าสุด</span></div>
-    <div class="card"><div id="dash-recent-problems"></div></div>
-
-    <div class="growth-divider"><span class="gd-label">งานวันนี้</span></div>
-    <div class="card"><div id="dash-todos-list"></div></div>
 
     <div class="growth-divider"><span class="gd-label">เปรียบเทียบแต่ละรอบ</span></div>
     <div class="card">
@@ -1254,7 +1248,7 @@ if('serviceWorker' in navigator){
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=9"></script>
-<script defer src="js/dashboard.js?v=30"></script>
+<script defer src="js/dashboard.js?v=31"></script>
 <script defer src="js/seeds.js?v=15"></script>
 <script defer src="js/batches.js?v=4"></script>
 <script defer src="js/plots.js?v=21"></script>

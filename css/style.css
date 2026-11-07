@@ -530,6 +530,13 @@ select.form-control { cursor: pointer; }
 .cal-day.cal-seedday:not(.cal-harvest):not(.today) { border: 1.5px dashed var(--accent); }
 .cal-seed-label { font-size: 8px; font-weight: 800; color: var(--accent); line-height: 1; margin-top: 3px; letter-spacing: -0.3px; }
 .cal-seed-card { border: 2px solid var(--accent); }
+/* To-do วันนี้ + พรุ่งนี้ (หน้าแรก) */
+.dash-todo-group + .dash-todo-group { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.dash-todo-head { display: flex; align-items: baseline; gap: 6px; font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+.dash-todo-head span { font-size: 11.5px; color: var(--ink-soft); }
+.dash-todo-head em { margin-left: auto; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--primary); }
+.dash-todo-group label.todo-item { cursor: pointer; }
+.dash-todo-empty { padding: 4px 0 2px; font-size: 12.5px; }
 /* ฉีดบำรุงใบ (วันพุธ) — เขียว = ฉีดแล้ว · แดง = ไม่ได้ฉีด · ขอบฟ้า = รอฉีด */
 .cal-foliar { display: inline-block; margin-top: 3px; padding: 2px 3px; border-radius: 5px; font-size: 7.5px; font-weight: 800; line-height: 1; letter-spacing: -0.3px; white-space: nowrap; }
 .cal-foliar.done { background: #16A34A; color: #fff; }

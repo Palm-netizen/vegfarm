@@ -11,14 +11,13 @@ async function loadDashboard() {
 
     // ยิงทุก query พร้อมกัน (parallel) แทนที่จะรอทีละอัน → หน้าแรกโหลดเร็วขึ้นมาก
     const [
-      activePlotsR, batchesR, problemPlotsR, todayTodosR,
-      recentProblemsR, chartBatchesR, weekOrdersR, todayOrdersR, futureSeedsR, todaySeedsR
+      activePlotsR, batchesR, problemPlotsR, todosR,
+      chartBatchesR, weekOrdersR, todayOrdersR, futureSeedsR, todaySeedsR
     ] = await Promise.all([
       db.from('plots').select('*').eq('is_harvested', false).not('plant_date', 'is', null),
       db.from('seed_batches').select('survival_rate').order('created_at', { ascending: false }).limit(5),
       db.from('problems').select('plot_code').eq('resolved', false),
-      db.from('todos').select('*').eq('todo_date', today),
-      db.from('problems').select('*').order('problem_date', { ascending: false }).limit(3),
+      db.from('todos').select('*').gte('todo_date', today).lte('todo_date', addDays(today, 1)).order('sort_order', { ascending: true }),
       db.from('seed_batches').select('seed_date, seed_count, estimated_kg, weather_condition').order('seed_date', { ascending: false }).limit(6),
       db.from('orders').select('id,customer_name,kg,delivered,order_date,week_start').gte('week_start', weekStart),
       db.from('orders').select('id,customer_name,vegetable_type,kg,delivered').eq('order_date', today),
@@ -39,8 +38,10 @@ async function loadDashboard() {
     const uniqueProblemPlots = [...new Set((problemPlotsR.data || []).map(p => p.plot_code))];
 
     // 4-6. งานวันนี้ / ปัญหาล่าสุด / กราฟ
-    const todayTodos = todayTodosR.data || [];
-    const recentProblems = recentProblemsR.data || [];
+    // งานวันนี้ + พรุ่งนี้ (To-do)
+    const allTodos = todosR.data || [];
+    const todayTodos = allTodos.filter(t => t.todo_date === today);
+    const tomorrowTodos = allTodos.filter(t => t.todo_date === addDays(today, 1));
     const chartBatches = chartBatchesR.data || [];
 
     // 7. แปลงที่กำลังปลูก — พร้อมวันเก็บเกี่ยว (วันปลูก + 45 − อายุต้นกล้า)
@@ -118,7 +119,8 @@ async function loadDashboard() {
       problemPlotsCount: uniqueProblemPlots.length,
       problemPlotsList: uniqueProblemPlots,
       todayTodos,
-      recentProblems,
+      tomorrowTodos,
+      todayStr: today,
       chartBatches: chartBatches.slice().reverse(),
       growingPlots,
       weeklyPlan: { supplyKg, supplyKg14, supplyWk0, supplyWk1Harvest, supplyPlots, supplyPlots14, weeks: planWeeks },
@@ -147,40 +149,9 @@ function renderDashboardStats(data) {
     ? data.problemPlotsList.join(', ')
     : 'ไม่มีปัญหา';
 
-  // Recent problems
-  const problemHtml = data.recentProblems.length
-    ? data.recentProblems.map(p => `
-        <div class="todo-item" style="border-left:3px solid var(--danger)">
-          <span class="badge badge-danger">${p.plot_code}</span>
-          <div style="flex:1">
-            <div style="font-weight:600">${problemLabel(p.problem_type)}</div>
-            <div class="text-sub">${formatDateTH(p.problem_date)}</div>
-          </div>
-          <span class="severity-${p.severity}">${severityLabel(p.severity)}</span>
-        </div>`).join('')
-    : '<div class="empty-state">ไม่มีปัญหาล่าสุด</div>';
-  el('dash-recent-problems').innerHTML = problemHtml;
-
-  // แปลงที่กำลังปลูก + วันเก็บเกี่ยว
-  const harvestEl = el('dash-harvest-list');
-  if (harvestEl) {
-    harvestEl.innerHTML = data.growingPlots.length
-      ? data.growingPlots.map(p => {
-          const overdue = p.daysLeft < 0;
-          const label = overdue ? `เลยกำหนด ${Math.abs(p.daysLeft)} วัน`
-                      : p.daysLeft === 0 ? 'เก็บวันนี้' : `อีก ${p.daysLeft} วัน`;
-          return `
-        <div class="harvest-item ${overdue ? 'overdue' : ''}">
-          <span class="badge badge-green">${p.plot_code}</span>
-          <div style="flex:1;min-width:0">
-            <div class="harvest-veg">${(typeof vegLabelMulti==='function'?vegLabelMulti:vegLabel)(p.vegetable_type)}</div>
-            <div class="harvest-date">เก็บ ${new Date(p.harvest).toLocaleDateString('th-TH',{day:'numeric',month:'short'})}${p.estimated_kg ? ` · ${parseFloat(p.estimated_kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.` : ''}</div>
-          </div>
-          <span class="harvest-tag ${overdue ? 'overdue' : (p.daysLeft <= 2 ? 'soon' : '')}">${label}</span>
-        </div>`;
-        }).join('')
-      : '<div class="empty-state">ยังไม่มีแปลงที่กำลังปลูก</div>';
-  }
+  // To-do วันนี้ + พรุ่งนี้ (ติ๊กได้เลยจากหน้าแรก)
+  dashTodoData = { today: data.todayTodos, tomorrow: data.tomorrowTodos, todayStr: data.todayStr };
+  renderDashTodos();
 
   // ออเดอร์วันนี้ที่ต้องส่ง
   const toEl = el('dash-today-orders');
@@ -198,18 +169,42 @@ function renderDashboardStats(data) {
   }
   renderWeeklyPlan();
 
-  // Today todos
-  const todoHtml = data.todayTodos.length
-    ? data.todayTodos.slice(0, 5).map(t => `
-        <div class="todo-item ${t.is_done ? 'done' : ''}">
-          <span class="todo-text">• ${t.task}</span>
-          ${t.is_done ? '✅' : ''}
-        </div>`).join('')
-    : '<div class="empty-state">ยังไม่มีงานวันนี้</div>';
-  el('dash-todos-list').innerHTML = todoHtml;
-
   // Chart
   renderDashboardChart(data.chartBatches);
+}
+
+// ===== To-do วันนี้ + พรุ่งนี้ =====
+let dashTodoData = null;
+function renderDashTodos() {
+  const box = document.getElementById('dash-todo-list');
+  if (!box || !dashTodoData) return;
+  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const group = (label, list, dateStr) => {
+    const left = list.filter(t => !t.is_done).length;
+    const rows = list.length
+      ? list.map(t => `
+        <label class="todo-item ${t.is_done ? 'done' : ''}">
+          <input type="checkbox" class="todo-check" ${t.is_done ? 'checked' : ''} onchange="dashToggleTodo('${t.id}', this.checked)">
+          <span class="todo-text">${esc(t.task)}</span>
+        </label>`).join('')
+      : `<div class="text-sub dash-todo-empty">ยังไม่มีงาน</div>`;
+    return `<div class="dash-todo-group">
+      <div class="dash-todo-head"><b>${label}</b> <span>${formatDateTH(dateStr)}</span>
+        <em>${list.length ? (left ? `เหลือ ${left} งาน` : 'เสร็จครบ ✅') : ''}</em></div>
+      ${rows}
+    </div>`;
+  };
+  box.innerHTML = group('📌 วันนี้', dashTodoData.today, dashTodoData.todayStr)
+    + group('🗓 พรุ่งนี้', dashTodoData.tomorrow, addDays(dashTodoData.todayStr, 1))
+    + `<button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px" onclick="showPage('todos')">+ เพิ่ม/แก้ไขงาน</button>`;
+}
+async function dashToggleTodo(id, done) {
+  ['today', 'tomorrow'].forEach(k => (dashTodoData[k] || []).forEach(t => { if (t.id === id) t.is_done = done; }));
+  renderDashTodos();
+  const cnt = document.getElementById('dash-todos-today');
+  if (cnt) cnt.textContent = dashTodoData.today.filter(t => !t.is_done).length + ' งาน';
+  const { error } = await db.from('todos').update({ is_done: done }).eq('id', id);
+  if (error) { showToast('บันทึกไม่สำเร็จ', 'error'); loadDashboard(); }
 }
 
 function renderDashboardChart(batches) {
@@ -324,65 +319,19 @@ function setPlanWeek(i) { dashPlanWeekIdx = i; renderWeeklyPlan(); }
 function renderWeeklyPlan() {
   const wkEl = document.getElementById('dash-weekly-plan');
   if (!wkEl || !dashWeeklyPlan) return;
-  const { supplyKg, supplyKg14, supplyWk0, supplyWk1Harvest, supplyPlots, supplyPlots14, weeks } = dashWeeklyPlan;
+  const { supplyKg, supplyPlots } = dashWeeklyPlan;
   const kg = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const vegName = v => (typeof vegLabelMulti === 'function') ? vegLabelMulti(v) : (v || '');
   const shortD = ds => new Date(ds).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
   const plotRow = p => `<div class="h7-row"><span>🌿 <b>${p.plot_code}</b> ${vegName(p.vegetable_type)}</span><span class="h7-meta">${kg(parseFloat(p.estimated_kg || 0))} กก. · ${shortD(p.harvest)} · ${p.daysLeft <= 0 ? '⚠️ ถึงกำหนด' : 'อีก ' + p.daysLeft + ' วัน'}</span></div>`;
   const h7 = (supplyPlots || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
   const h7List = h7.length ? `<div class="h7-list">${h7.map(plotRow).join('')}</div>` : `<div class="text-sub" style="padding:4px 0 8px">ยังไม่มีแปลงที่จะเก็บใน 7 วัน</div>`;
-  const h14 = (supplyPlots14 || []).slice().sort((a, b) => a.daysLeft - b.daysLeft);
-  const h14List = h14.length ? `<div class="h7-list">${h14.map(plotRow).join('')}</div>` : '';
-
-  if (dashPlanWeekIdx >= weeks.length) dashPlanWeekIdx = 0;
-  const sel = weeks[dashPlanWeekIdx] || weeks[0];
-  // แท็บเลือกสัปดาห์
-  const tabs = `<div class="plan-tabs">${weeks.map((w, i) =>
-    `<button class="plan-tab ${i === dashPlanWeekIdx ? 'active' : ''}" onclick="setPlanWeek(${i})"><span>${w.label}</span><small>${shortD(w.start)}–${shortD(addDays(w.start, 6))} · ${kg(w.kg)} กก.</small></button>`).join('')}</div>`;
-
-  // เหลือ/ขาด ตามสัปดาห์จริง — สัปดาห์นี้ = ผลผลิตถึงสิ้นสัปดาห์นี้ · สัปดาห์หน้า = ผักที่เหลือจากสัปดาห์นี้ + เก็บได้ในสัปดาห์หน้า
-  const balTxt = v => v >= 0 ? `<span style="color:var(--primary)">เหลือ ${kg(v)} กก.</span>` : `<span style="color:var(--danger)">ขาด ${kg(-v)} กก.</span>`;
-  const deliveredTodayThisWk = (dashTodayOrders || []).filter(o => o.delivered).reduce((s, o) => s + parseFloat(o.kg || 0), 0);
-  const demand0 = Math.max(0, (weeks[0] ? weeks[0].kg : 0) - deliveredTodayThisWk);
-  const demand1 = weeks[1] ? weeks[1].kg : 0;
-  const supply0 = supplyKg;                             // ผักที่จะเก็บได้ใน 7 วัน (ตรงกับที่โชว์)
-  const supply1base = Math.max(0, supplyKg14 - supplyKg); // ผักที่จะเก็บได้ 8–14 วัน (ตรงกับที่โชว์)
-  const bal0 = supply0 - demand0;
-  const leftover0 = Math.max(0, bal0);                 // ผักสัปดาห์นี้ที่เหลือ (ยังไม่ได้ขาย) → ยกไปสัปดาห์หน้า
-  const supply1 = leftover0 + supply1base;
-  const bal1 = supply1 - demand1;
-  const combBal = (supply0 + supply1base) - (demand0 + demand1);
-  const deliveredToday = dashPlanWeekIdx === 0 ? deliveredTodayThisWk : 0;
-
-  const esc = s => String(s || '').replace(/'/g, "\\'");
-  const custList = sel.items.length
-    ? sel.items.map(c => `
-      <div class="deliv-row">
-        <span class="deliv-name">${c.delivered ? '✅ ' : (c.type === 'farm' ? '🚜 ' : '🧺 ')}${c.name}</span>
-        <span class="deliv-kg">${kg(c.kg)} กก.</span>
-        <button class="deliv-act" onclick="editDeliveryItem('${c.id}', ${sel.ordersMode}, ${c.kg}, '${esc(c.name)}')" aria-label="แก้ไข">✏️</button>
-        <button class="deliv-act del" onclick="deleteDeliveryItem('${c.id}', ${sel.ordersMode}, '${esc(c.name)}')" aria-label="ลบ">🗑</button>
-      </div>`).join('')
-    : `<div class="text-sub" style="padding:8px 0">ยังไม่มีออเดอร์${sel.label} (ตั้งได้ที่หน้าลูกค้า)</div>`;
-
+  // หน้าแรกโชว์แค่ผักที่จะเก็บได้ใน 7 วัน (ตัด 8–14 วัน/สรุป/รายชื่อส่งออกตามที่ขอ)
   wkEl.innerHTML = `
     <div class="savings-card" style="padding:14px 0">
       <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (ใน 7 วัน)</span><b style="color:var(--primary)">${kg(supplyKg)} กก.</b></div>
       ${h7List}
-      <div class="savings-row"><span>🌿 ผักที่จะเก็บได้ (8–14 วัน)</span><b style="color:var(--primary)">${kg(Math.max(0, supplyKg14 - supplyKg))} กก.</b></div>
-      ${h14List || ''}
-      <div class="savings-row savings-total"><span>🌿 รวม (7 + 14 วัน)</span><b style="color:var(--primary)">${kg(supplyKg14)} กก.</b></div>
-      <div class="savings-divider"></div>
-      ${tabs}
-      <div class="savings-row"><span>📦 ลูกค้าสั่ง (${sel.label})</span><b style="color:var(--accent)">${kg(sel.kg)} กก.</b></div>
-      ${deliveredToday > 0 ? `<div class="savings-row"><span>✅ ส่งแล้ววันนี้</span><b style="color:var(--primary)">− ${kg(deliveredToday)} กก.</b></div>` : ''}
-      <div class="savings-divider"></div>
-      <div class="savings-row"><span>สรุปสัปดาห์นี้<br><small style="font-weight:400;color:var(--ink-soft)">ผลผลิต 7 วัน (${kg(supply0)}) − ออเดอร์ (${kg(demand0)})</small></span><span>${balTxt(bal0)}</span></div>
-      <div class="savings-row"><span>สรุปสัปดาห์หน้า<br><small style="font-weight:400;color:var(--ink-soft)">เหลือจากสัปดาห์นี้ (${kg(leftover0)}) + เก็บ 8–14 วัน (${kg(supply1base)}) − ออเดอร์ (${kg(demand1)})</small></span><span>${balTxt(bal1)}</span></div>
-      <div class="savings-row savings-total"><span>รวม 2 สัปดาห์</span><span>${balTxt(combBal)}</span></div>
-    </div>
-    <div class="text-sub" style="margin:10px 0 4px;font-weight:700">รายชื่อที่ต้องส่ง · ${sel.label}</div>
-    <div class="card" style="padding:4px 14px">${custList}</div>`;
+    </div>`;
 }
 
 // แก้ไขจำนวน กก. ในรายชื่อที่ต้องส่ง (ออเดอร์ หรือ ยอด/สัปดาห์ของลูกค้า)
