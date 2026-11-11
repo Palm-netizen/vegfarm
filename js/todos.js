@@ -138,6 +138,7 @@ async function addDayOrder() {
   }
   if (error) return showToast('บันทึกไม่สำเร็จ: ' + (error.message || error), 'error');
   showToast(editDayOrderId ? 'แก้ไขออเดอร์แล้ว' : 'เพิ่มออเดอร์แล้ว');
+  if (editDayOrderId) await vfSyncOrderIncomeToast(editDayOrderId);   // ส่งแล้ว → อัปเดตรายรับตามกิโลใหม่
   editDayOrderId = null;
   const btn = document.getElementById('dorder-add-btn'); if (btn) btn.textContent = 'เพิ่ม';
   document.getElementById('dorder-kg').value = '';
@@ -155,12 +156,15 @@ async function editDayOrder(id) {
 }
 
 async function toggleDayOrder(id, val) {
-  await db.from('orders').update({ delivered: val }).eq('id', id);
+  const { error } = await db.from('orders').update({ delivered: val }).eq('id', id);
+  if (error) return showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
   loadDayOrders();
+  await vfSyncOrderIncomeToast(id);   // ส่งแล้ว → บันทึกรายรับ · ยกเลิก → ลบรายรับ
 }
 
 async function deleteDayOrder(id) {
-  if (!(await vfConfirm('ลบออเดอร์นี้?', { okLabel: 'ลบ' }))) return;
+  if (!(await vfConfirm('ลบออเดอร์นี้? (ถ้าส่งแล้ว รายรับของออเดอร์นี้จะถูกลบด้วย)', { okLabel: 'ลบ' }))) return;
   await db.from('orders').delete().eq('id', id);
+  await vfSyncOrderIncomeToast(id, true);
   showToast('ลบแล้ว'); loadDayOrders();
 }

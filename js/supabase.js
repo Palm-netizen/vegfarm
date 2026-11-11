@@ -329,6 +329,67 @@ async function vfDoUndo() {
 }
 
 // เพิ่มแถวใหม่แบบย้อนกลับได้ (ย้อน = ลบแถวที่เพิ่ง insert) — คืน { data, error }
+// ===== ออเดอร์ "ส่งแล้ว" → บันทึกรายรับอัตโนมัติ =====
+// ผูกรายรับกับออเดอร์ด้วยช่อง notes (ไม่ต้องเพิ่มคอลัมน์ในฐานข้อมูล)
+function vfOrderIncomeNote(orderId) { return `จากออเดอร์ [order:${orderId}]`; }
+
+// ทำให้รายรับตรงกับสถานะออเดอร์: ส่งแล้ว = มีรายรับ 1 แถว (ตามวันที่ส่ง) · ยังไม่ส่ง/ลบออเดอร์ = ไม่มีรายรับ
+// คืน { action: 'added'|'updated'|'removed'|'none', amount }
+async function vfSyncOrderIncome(orderId) {
+  const note = vfOrderIncomeNote(orderId);
+  const [{ data: o }, { data: linked }] = await Promise.all([
+    db.from('orders').select('*').eq('id', orderId).single(),
+    db.from('income').select('id').eq('notes', note)
+  ]);
+  const rows = linked || [];
+  let action = 'none', amount = 0;
+  if (!o || !o.delivered) {
+    for (const r of rows) await db.from('income').delete().eq('id', r.id);
+    if (rows.length) action = 'removed';
+  } else {
+    const price = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
+    const kg = parseFloat(o.kg) || 0;
+    amount = parseFloat((kg * price).toFixed(2));
+    const payload = {
+      income_date: o.order_date || new Date().toISOString().split('T')[0],
+      vegetable_type: o.vegetable_type || null,
+      kg_sold: kg, price_per_kg: price, total_amount: amount,
+      buyer: o.customer_name, channel: 'delivery', notes: note
+    };
+    let error;
+    if (rows.length) {
+      ({ error } = await db.from('income').update(payload).eq('id', rows[0].id));
+      for (const r of rows.slice(1)) await db.from('income').delete().eq('id', r.id);   // กันซ้ำ
+      action = 'updated';
+    } else {
+      ({ error } = await db.from('income').insert(payload));
+      action = 'added';
+    }
+    if (error) throw error;
+  }
+  // รีเฟรชหน้าการเงินถ้าเคยเปิดแล้ว
+  if (typeof initialized !== 'undefined' && initialized.has('finance')) {
+    if (typeof loadIncomeList === 'function') loadIncomeList();
+    if (typeof loadFinanceSummary === 'function') loadFinanceSummary();
+  }
+  return { action, amount };
+}
+
+// เรียกหลังเปลี่ยนสถานะ/แก้/ลบออเดอร์ — แจ้งผลสั้น ๆ
+async function vfSyncOrderIncomeToast(orderId, quiet) {
+  try {
+    const { action, amount } = await vfSyncOrderIncome(orderId);
+    if (quiet) return;
+    const baht = '฿' + amount.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+    if (action === 'added') showToast(`✅ ส่งแล้ว · บันทึกรายรับ ${baht} อัตโนมัติ`);
+    else if (action === 'updated') showToast(`อัปเดตรายรับเป็น ${baht} แล้ว`);
+    else if (action === 'removed') showToast('ยกเลิกส่ง · ลบรายรับของออเดอร์นี้แล้ว');
+  } catch (e) {
+    console.error(e);
+    showToast('บันทึกรายรับอัตโนมัติไม่สำเร็จ: ' + (e.message || e), 'error');
+  }
+}
+
 async function vfInsertUndoable(table, payload, msg, onDone) {
   const { data, error } = await db.from(table).insert(payload).select();
   if (error) return { data: null, error };

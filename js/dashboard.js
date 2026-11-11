@@ -466,7 +466,9 @@ async function toggleDashOrder(id, val) {
     renderTodayOrders();
     renderWeeklyPlan();
     showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
+    return;
   }
+  await vfSyncOrderIncomeToast(id);   // ส่งแล้ว → บันทึกรายรับอัตโนมัติ
 }
 
 // ===== Helpers =====

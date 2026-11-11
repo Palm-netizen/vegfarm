@@ -85,6 +85,7 @@ async function addOrder() {
   }
   if (error) return showToast('บันทึกไม่สำเร็จ: ' + (error.message || error), 'error');
   showToast(editOrderId ? 'แก้ไขออเดอร์แล้ว' : 'เพิ่มออเดอร์แล้ว');
+  if (editOrderId) await vfSyncOrderIncomeToast(editOrderId);
   editOrderId = null;
   const btn = document.getElementById('order-add-btn'); if (btn) btn.textContent = 'เพิ่ม';
   document.getElementById('order-kg').value = '';
@@ -101,13 +102,16 @@ async function editOrder(id) {
 }
 
 async function toggleOrderDelivered(id, val) {
-  await db.from('orders').update({ delivered: val }).eq('id', id);
+  const { error } = await db.from('orders').update({ delivered: val }).eq('id', id);
+  if (error) return showToast('อัปเดตไม่สำเร็จ: ' + (error.message || error), 'error');
   loadOrders();
+  await vfSyncOrderIncomeToast(id);
 }
 
 async function deleteOrder(id) {
-  if (!(await vfConfirm('ลบออเดอร์นี้?', { okLabel: 'ลบ' }))) return;
+  if (!(await vfConfirm('ลบออเดอร์นี้? (ถ้าส่งแล้ว รายรับของออเดอร์นี้จะถูกลบด้วย)', { okLabel: 'ลบ' }))) return;
   await db.from('orders').delete().eq('id', id);
+  await vfSyncOrderIncomeToast(id, true);
   showToast('ลบแล้ว'); loadOrders();
 }
 
