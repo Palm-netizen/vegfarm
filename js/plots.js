@@ -7,6 +7,20 @@ let vfPendingPlant = null;     // ข้อมูลจากล็อต Weekly
 // เป้าหมายการปลูกต่อสัปดาห์ (เพื่อให้พอส่งออเดอร์)
 // เป้าออเดอร์/สัปดาห์ และจำนวนแปลง/สัปดาห์ มาจากเป้าที่ตั้งในหน้าเพาะ (vfWeeklyTargetKg / vfPlotsPerWeek)
 
+// ===== helper: ISO week ของวันที่ (จันทร์–อาทิตย์) — ใช้จัดล็อตแปลง =====
+function isoWeekInfo(dateStr) {
+  const date = new Date(dateStr + 'T00:00:00');
+  const day = (date.getDay() + 6) % 7;               // 0 = จันทร์
+  const monday = new Date(date); monday.setDate(date.getDate() - day);
+  const thursday = new Date(monday); thursday.setDate(monday.getDate() + 3);
+  const isoYear = thursday.getFullYear();
+  const firstThursday = new Date(isoYear, 0, 4);
+  const ftDay = (firstThursday.getDay() + 6) % 7;
+  const firstMonday = new Date(firstThursday); firstMonday.setDate(firstThursday.getDate() - ftDay);
+  const week = Math.round((monday - firstMonday) / (7 * 86400000)) + 1;
+  return { year: isoYear, week, monday: monday.toISOString().split('T')[0] };
+}
+
 function initPlots() {
   renderPlotGrid();
   // ชนิดผัก (เลือกหลายชนิด) — sync .checked class จากสถานะ checkbox
