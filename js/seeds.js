@@ -74,6 +74,46 @@ async function renderSeedGoal() {
   }
 }
 
+// ===== ตารางผลผลิตแต่ละฤดู (ฤดู / อัตรารอด / เมล็ดที่เพาะ / ได้กี่ กก. / เทียบเป้า) =====
+function openSeasonTable() {
+  renderSeasonTable();
+  document.getElementById('season-modal').style.display = 'flex';
+}
+function closeSeasonTable() { document.getElementById('season-modal').style.display = 'none'; }
+function renderSeasonTable() {
+  const el = document.getElementById('season-table-body');
+  if (!el) return;
+  const t = vfTarget, now = vfSeasonKey();
+  const cnt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  const seasons = [['hot', '☀️ หน้าร้อน', 'มี.ค.–พ.ค.'], ['rainy', '🌧️ หน้าฝน', 'มิ.ย.–ต.ค.'], ['cold', '❄️ หน้าหนาว', 'พ.ย.–ก.พ.']];
+  const rows = seasons.map(([k, name, months]) => {
+    const kg = vfKgFromSeeds(t.seedsPerWeek, k);
+    const need = vfSeedsNeeded(t.weeklyKg, k);
+    const spare = Math.round((t.seedsPerWeek / need - 1) * 100);
+    const cls = spare >= VF_SPARE_GOAL ? 'ok' : spare >= 0 ? 'warn' : 'bad';
+    const verdict = spare >= 0 ? `เผื่อ ${spare}%` : `ขาด ${cnt(need - t.seedsPerWeek)} เมล็ด`;
+    return `<tr class="${k === now ? 'st-now' : ''}">
+      <td><b>${name}</b><small>${months}${k === now ? ' · ตอนนี้' : ''}</small></td>
+      <td>${getSurvivalRate(k)}%</td>
+      <td>${cnt(t.seedsPerWeek)}</td>
+      <td>~${cnt(kg)}</td>
+      <td class="st-${cls}">${verdict}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="text-sub" style="margin-bottom:8px">เพาะ <b>${cnt(t.seedsPerWeek)}</b> เมล็ด/สัปดาห์ (มาริโอ้ ${cnt(vfSowerTargets()['มาริโอ้'])} · 애플 ${cnt(vfSowerTargets()['애플'])}) · เป้าผลผลิต <b>${cnt(t.weeklyKg)} กก./สัปดาห์</b></div>
+    <div class="season-table-wrap"><table class="season-table">
+      <thead><tr><th>ฤดู</th><th>อัตรารอด</th><th>เมล็ดที่เพาะ</th><th>ได้ (กก.)</th><th>เทียบเป้า ${cnt(t.weeklyKg)} กก.</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="season-note">
+      ผลผลิต = เมล็ด × อัตรารอด ÷ ต้นต่อกิโล (หน้าหนาว 10 ต้น/กก. · ฤดูอื่น 12 ต้น/กก.)<br>
+      ควรเผื่อไว้อย่างน้อย ${VF_SPARE_GOAL}% กันโรค/แมลงระหว่างทาง ·
+      <span class="st-ok">เขียว = เผื่อพอ</span> · <span class="st-warn">เหลือง = เผื่อน้อย</span> · <span class="st-bad">แดง = ไม่ถึงเป้า</span>
+    </div>
+    <button class="btn btn-outline btn-sm" style="width:100%;margin-top:10px" onclick="closeSeasonTable();openTargetEditor()">✏️ แก้ไขเป้าเพาะเมล็ด</button>`;
+}
+
 // ===== แก้ไขเป้าหมายรายสัปดาห์ =====
 function openTargetEditor() {
   document.getElementById('target-seeds').value = vfTarget.seedsPerWeek;
@@ -103,7 +143,7 @@ function previewTarget() {
     const need = vfSeedsNeeded(t.weeklyKg, k);
     const spare = Math.round((t.seedsPerWeek / need - 1) * 100);
     return `<div class="tp-row ${k === now ? 'tp-now' : ''}"><span>${lbl}${k === now ? ' (ตอนนี้)' : ''}</span>
-      <b style="color:${spare >= 0 ? 'var(--primary)' : 'var(--danger)'}">~${cnt(kg)} กก. · ${spare >= 0 ? 'เผื่อ ' + spare + '%' : 'ขาด ' + cnt(need - t.seedsPerWeek) + ' เมล็ด'}</b></div>`;
+      <b class="${spare >= VF_SPARE_GOAL ? 'st-ok' : spare >= 0 ? 'st-warn' : 'st-bad'}">~${cnt(kg)} กก. · ${spare >= 0 ? 'เผื่อ ' + spare + '%' : 'ขาด ' + cnt(need - t.seedsPerWeek) + ' เมล็ด'}</b></div>`;
   }).join('');
   el.innerHTML = `<div class="target-preview">
     <div class="tp-row"><span>👤 มาริโอ้</span><b>${cnt(t.marioSeeds)} เมล็ด</b></div>

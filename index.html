@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=57">
+<link rel="stylesheet" href="css/style.css?v=58">
 </head>
 <body>
 
@@ -232,6 +232,10 @@ if('serviceWorker' in navigator){
       <div class="goal-status" id="seed-goal-status"></div>
       <div class="goal-plan" id="seed-goal-plan"></div>
       <div class="goal-season" id="seed-season"></div>
+      <div class="goal-actions">
+        <button type="button" class="btn btn-outline btn-sm" onclick="openTargetEditor()">✏️ แก้ไขเป้าเพาะเมล็ด</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="openSeasonTable()">📊 ดูผลผลิตแต่ละฤดู</button>
+      </div>
     </div>
 
     <!-- ดูยอดการเพาะรายคน (เลือกชื่อ + ช่วงวันที่) -->
@@ -1144,6 +1148,17 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== ตารางผลผลิตแต่ละฤดู ===== -->
+<div class="modal-overlay" id="season-modal" onclick="if(event.target===this)closeSeasonTable()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
+    <div class="modal-title">📊 ผลผลิตที่คาดได้แต่ละฤดู</div>
+    <div id="season-table-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="closeSeasonTable()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== ตารางฉีดบำรุงใบ ===== -->
 <div class="modal-overlay" id="foliar-modal" onclick="if(event.target===this)closeFoliarLog()">
   <div class="modal-sheet">
@@ -1284,9 +1299,9 @@ if('serviceWorker' in navigator){
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=12"></script>
+<script defer src="js/supabase.js?v=13"></script>
 <script defer src="js/dashboard.js?v=33"></script>
-<script defer src="js/seeds.js?v=17"></script>
+<script defer src="js/seeds.js?v=18"></script>
 <script defer src="js/batches.js?v=5"></script>
 <script defer src="js/plots.js?v=22"></script>
 <script defer src="js/problems.js?v=11"></script>

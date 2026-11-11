@@ -285,11 +285,16 @@ function vfVegName(key) { return VF_VEG[key] || key || ''; }
 // ===== เป้าหมายรายสัปดาห์ (แก้ได้ที่หน้าเพาะ) — ทุกตัวเลขคำนวณจากค่านี้ =====
 // weeklyKg = เป้าผลผลิต/ออเดอร์ (กก./สัปดาห์) · seedsPerWeek = เป้าเพาะฟิกทุกฤดู (เผื่อเสียหายจากโรค/แมลง)
 // marioSeeds = มาริโอ้เพาะฟิก/สัปดาห์ ส่วนที่เหลือเป็นของ 애플
-const VF_TARGET_DEFAULT = { weeklyKg: 90, seedsPerWeek: 1500, marioSeeds: 200 };
+// 2,000 เมล็ด = หน้าร้อน/ฝนเผื่อ ~29% (เกิน 20%) · หน้าหนาวเผื่อ ~100%
+const VF_TARGET_DEFAULT = { weeklyKg: 90, seedsPerWeek: 2000, marioSeeds: 200, rev: 2 };
 const VF_KG_PER_PLOT = 22.5;                                   // 1 แปลง ≈ 22.5 กก. (90 กก. = 4 แปลง)
+const VF_SPARE_GOAL = 20;                                      // % ที่ควรเผื่อไว้ (โรค/แมลง)
 function vfCleanTarget(t) {
   const x = { ...VF_TARGET_DEFAULT, ...(t || {}) };
-  return { weeklyKg: +x.weeklyKg || 90, seedsPerWeek: +x.seedsPerWeek || 0, marioSeeds: Math.min(+x.marioSeeds || 0, +x.seedsPerWeek || 0) };
+  // ค่าที่บันทึกก่อนเปลี่ยนเป็น 2,000 (rev < 2) → ปรับเป็น 2,000 ครั้งเดียว หลังจากนั้นใช้ค่าที่แก้เอง
+  if ((+(t && t.rev) || 0) < 2) x.seedsPerWeek = VF_TARGET_DEFAULT.seedsPerWeek;
+  const seeds = +x.seedsPerWeek || 0;
+  return { weeklyKg: +x.weeklyKg || 90, seedsPerWeek: seeds, marioSeeds: Math.min(+x.marioSeeds || 0, seeds), rev: 2 };
 }
 let vfTarget = (() => {
   try { return vfCleanTarget(JSON.parse(localStorage.getItem('vf_target') || '{}')); }
@@ -318,7 +323,7 @@ function vfSowerTargets(t = vfTarget) {
 }
 // บันทึก: เก็บในเครื่องทันที + ซิงก์ขึ้นคลาวด์ (ถ้ามีตาราง app_settings)
 async function vfSaveTarget(t) {
-  vfTarget = vfCleanTarget(t);
+  vfTarget = vfCleanTarget({ ...t, rev: 2 });   // ค่าที่ผู้ใช้แก้เอง — ไม่ต้องปรับเป็น 2,000
   try { localStorage.setItem('vf_target', JSON.stringify(vfTarget)); } catch (e) {}
   try {
     const { data } = await db.from('app_settings').select('id').eq('key', 'weekly_target');
