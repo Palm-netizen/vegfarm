@@ -19,7 +19,7 @@ function assistCtx() {
   const rate = getSurvivalRate(weather);
   const kgPerPlant = weather === 'cold' ? (1 / 10) : (1 / 12);
   const yps = (rate / 100) * kgPerPlant;
-  const target = (typeof WEEKLY_TARGET_KG !== 'undefined') ? WEEKLY_TARGET_KG : 90;
+  const target = vfWeeklyTargetKg();
   return { season, weather, rate, kgPerPlant, yps, target };
 }
 

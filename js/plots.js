@@ -5,8 +5,7 @@ let plotPhotoDataUrl = null;   // รูปแปลงปลูก (data URL �
 let vfPendingPlant = null;     // ข้อมูลจากล็อต Weekly Batch ที่กด "ย้ายลงปลูก" มา
 
 // เป้าหมายการปลูกต่อสัปดาห์ (เพื่อให้พอส่งออเดอร์)
-const LOT_ORDER_TARGET_KG = 90;   // ออเดอร์ต่อสัปดาห์ 90 กก.
-const LOT_PLOTS_PER_WEEK = 4;     // ต้องปลูก 4 แปลง/สัปดาห์
+// เป้าออเดอร์/สัปดาห์ และจำนวนแปลง/สัปดาห์ มาจากเป้าที่ตั้งในหน้าเพาะ (vfWeeklyTargetKg / vfPlotsPerWeek)
 
 function initPlots() {
   renderPlotGrid();
@@ -204,16 +203,16 @@ function renderPlotLots(plots) {
   // สรุปเป้าหมายด้านบน
   const headHtml = `
     <div class="lot-target">
-      <div class="lt-row"><span>🎯 เป้าหมายออเดอร์/สัปดาห์</span><b>${LOT_ORDER_TARGET_KG} กก.</b></div>
-      <div class="lt-row"><span>🌱 ต้องปลูกให้ครบ/สัปดาห์</span><b>${LOT_PLOTS_PER_WEEK} แปลง</b></div>
-      <div class="lt-note">ปลูกให้ครบ ${LOT_PLOTS_PER_WEEK} แปลงทุกสัปดาห์ ไม่งั้นผักจะไม่พอส่งออเดอร์</div>
+      <div class="lt-row"><span>🎯 เป้าหมายออเดอร์/สัปดาห์</span><b>${vfWeeklyTargetKg()} กก.</b></div>
+      <div class="lt-row"><span>🌱 ต้องปลูกให้ครบ/สัปดาห์</span><b>${vfPlotsPerWeek()} แปลง</b></div>
+      <div class="lt-note">ปลูกให้ครบ ${vfPlotsPerWeek()} แปลงทุกสัปดาห์ ไม่งั้นผักจะไม่พอส่งออเดอร์</div>
     </div>`;
 
   // เน้น 4 แปลงที่จะเก็บได้ก่อน (ทั้งฟาร์ม) — วางแผนขายตามลำดับ
   const allH = plots.filter(p => p.plant_date && !p.is_harvested)
     .map(p => ({ p, h: p.harvest_date || addDays(p.plant_date, Math.max(0, 45 - (p.plant_age_days || 0))) }))
     .sort((a, b) => (a.h < b.h ? -1 : (a.h > b.h ? 1 : 0)));
-  const focus4 = allH.slice(0, LOT_PLOTS_PER_WEEK);
+  const focus4 = allH.slice(0, vfPlotsPerWeek());
   const focusHtml = focus4.length ? `
     <div class="focus-card">
       <div class="focus-head">🎯 ${focus4.length} แปลงที่จะเก็บได้ก่อน — ขายตามลำดับนี้</div>
@@ -228,12 +227,12 @@ function renderPlotLots(plots) {
 
     // เช็คว่าปลูกครบเป้า 4 แปลงในสัปดาห์นี้หรือยัง
     const cnt = w.plots.length;
-    const complete = cnt >= LOT_PLOTS_PER_WEEK;
-    const pct = Math.min(100, Math.round(cnt / LOT_PLOTS_PER_WEEK * 100));
-    const need = Math.max(0, LOT_PLOTS_PER_WEEK - cnt);
+    const complete = cnt >= vfPlotsPerWeek();
+    const pct = Math.min(100, Math.round(cnt / vfPlotsPerWeek() * 100));
+    const need = Math.max(0, vfPlotsPerWeek() - cnt);
     const barHtml = `
       <div class="batch-bar"><div class="batch-bar-fill ${complete ? 'ok' : 'warn'}" style="width:${pct}%"></div></div>
-      <div class="batch-bar-label ${complete ? '' : 'danger'}">ปลูกแล้ว ${cnt}/${LOT_PLOTS_PER_WEEK} แปลง · ${
+      <div class="batch-bar-label ${complete ? '' : 'danger'}">ปลูกแล้ว ${cnt}/${vfPlotsPerWeek()} แปลง · ${
         complete ? 'ครบเป้าแล้ว ✅' : `🔴 ยังไม่ครบ! ปลูกอีก ${need} แปลง ไม่งั้นผักไม่พอขาย`}</div>`;
 
     // เรียงแปลงตามวันเก็บเกี่ยว (เก็บก่อน → เก็บทีหลัง) แล้วไล่สีจากอุ่น→เขียว เพื่อวางแผนขาย
@@ -553,5 +552,5 @@ async function startNewCycle() {
 }
 
 function vegLabel(type) {
-  return { green_oak: 'กรีนโอ๊ค', red_oak: 'เรดโอ๊ค', finley: 'ฟินเลย์', cos: 'คอส', butterhead: 'บัตเตอร์เฮด' }[type] || type || '-';
+  return VF_VEG[type] || type || '-';
 }

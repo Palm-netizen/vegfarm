@@ -3,7 +3,7 @@
 // ล็อต = 1 สัปดาห์ (จันทร์–อาทิตย์ ตาม ISO week) + ชนิดผัก  ไม่ต้องกรอกข้อมูลเพิ่ม
 // สถานะ (อนุบาล 1/2/ลงแปลง) + เป้าหมาย เก็บเป็น overlay ในตาราง weekly_batches
 
-const BATCH_PREFIX = { green_oak:'GO', red_oak:'RO', finley:'FL', cos:'CO', butterhead:'BH' };
+const BATCH_PREFIX = { green_oak:'GO', red_oak:'RO', finley:'FL', cos:'CO', green_batavia:'GB', butterhead:'BH' };
 const NURSERY1_DAYS = 15;   // ครบ 15 วัน → ย้ายลงอนุบาล 2
 const PLANT_DAYS    = 25;   // ครบ 25 วัน → ย้ายลงปลูก
 const HARVEST_DAYS  = 45;   // เก็บเกี่ยวครบ 45 วันจากวันเพาะ

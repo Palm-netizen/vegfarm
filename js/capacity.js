@@ -3,7 +3,7 @@
 
 function openCapacity() {
   const set = (id, v) => { const e = document.getElementById(id); if (e && !e.value) e.value = v; };
-  set('cap-order', (typeof LOT_ORDER_TARGET_KG !== 'undefined') ? LOT_ORDER_TARGET_KG : 90);
+  set('cap-order', vfWeeklyTargetKg());
   set('cap-ppk', 12);      // ต้นต่อกิโล
   set('cap-ppp', 270);     // ต้นต่อแปลง
   set('cap-plots', 15);    // จำนวนแปลง

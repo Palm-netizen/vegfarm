@@ -192,9 +192,18 @@ CREATE TABLE IF NOT EXISTS foliar_sprays (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 14. การตั้งค่าแอป (เช่น เป้าหมาย กก./สัปดาห์) — ให้ทุกเครื่องใช้ค่าเดียวกัน
+CREATE TABLE IF NOT EXISTS app_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  key TEXT NOT NULL UNIQUE,
+  value JSONB,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ===========================
 -- Row Level Security (RLS) — allow all (ปรับให้รัดกุมขึ้นได้ภายหลัง)
 -- ===========================
+ALTER TABLE app_settings        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE foliar_sprays       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE weekly_batches      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seed_batches        ENABLE ROW LEVEL SECURITY;
@@ -215,7 +224,7 @@ DECLARE t TEXT;
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'seed_batches','plots','plot_cycles','problems','todos',
-    'calendar_activities','income','expenses','customers','personal_expenses','orders','weekly_batches','foliar_sprays'
+    'calendar_activities','income','expenses','customers','personal_expenses','orders','weekly_batches','foliar_sprays','app_settings'
   ] LOOP
     EXECUTE format('DROP POLICY IF EXISTS "Allow all" ON %I;', t);
     EXECUTE format('DROP POLICY IF EXISTS "Allow all for authenticated" ON %I;', t);

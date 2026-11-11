@@ -1,6 +1,6 @@
 // js/app.js — App router & init
 
-const APP_VERSION = 'v2026.07.06 · build 67';
+const APP_VERSION = 'v2026.07.06 · build 68';
 
 const PAGE_INIT = {
   dashboard: loadDashboard,
@@ -70,6 +70,14 @@ function vfStartApp() {
   // Initial page from hash or default
   const hash = location.hash.replace('#', '');
   showPage(PAGE_INIT[hash] ? hash : 'dashboard');
+  // ดึงเป้าหมายรายสัปดาห์จากคลาวด์ (ทุกเครื่องใช้ค่าเดียวกัน) → ถ้าเปลี่ยนให้วาดหน้าใหม่
+  vfLoadTargetCloud().then(changed => { if (changed) vfRefreshTargetViews(); });
+}
+
+// วาดส่วนที่ใช้เป้าหมายรายสัปดาห์ใหม่ (หลังแก้เป้า/โหลดจากคลาวด์)
+function vfRefreshTargetViews() {
+  if (initialized.has('seeds') && typeof renderSeedGoal === 'function') renderSeedGoal();
+  if (initialized.has('dashboard')) loadDashboard();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

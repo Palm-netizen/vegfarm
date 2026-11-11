@@ -81,7 +81,7 @@ async function deleteTodo(id) {
 }
 
 // ===== ออเดอร์ผักวันนี้ที่ต้องส่ง (รายวัน) =====
-const DORDER_VEG = { green_oak:'กรีนโอ๊ค', red_oak:'เรดโอ๊ค', finley:'ฟินเลย์', cos:'คอส', butterhead:'บัตเตอร์เฮด' };
+const DORDER_VEG = VF_VEG;
 const DORDER_PRICE = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
 let editDayOrderId = null;
 

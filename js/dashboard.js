@@ -288,7 +288,7 @@ function renderTodayOrders() {
   const toEl = document.getElementById('dash-today-orders');
   if (!toEl) return;
   const ords = dashTodayOrders || [];
-  const VEG = { green_oak:'กรีนโอ๊ค', red_oak:'เรดโอ๊ค', finley:'ฟินเลย์', cos:'คอส', butterhead:'บัตเตอร์เฮด' };
+  const VEG = VF_VEG;
   const price = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
   const kgN = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   if (!ords.length) {
@@ -364,10 +364,13 @@ async function deleteDeliveryItem(id, ordersMode, name) {
 }
 
 // ===== คำแนะนำ/แจ้งเตือนอัจฉริยะ — แปลงข้อมูลเป็นคำแนะนำในการตัดสินใจ =====
-const WEEKLY_TARGET_KG = (typeof LOT_ORDER_TARGET_KG !== 'undefined') ? LOT_ORDER_TARGET_KG : 90;
 const SEED_TO_HARVEST_DAYS = 45;
 // ตารางเพาะประจำ: มาริโอ้ เพาะทุกวันพุธ(3) กับ ศุกร์(5) วันละ 250 เมล็ด (รวม 500/สัปดาห์)
-const SEED_SCHEDULE = { sower: 'มาริโอ้', days: [3, 5], perDay: 250 };
+const SEED_SCHEDULE = {
+  sower: 'มาริโอ้', days: [3, 5],
+  // เมล็ด/วัน = เป้ามาริโอ้ต่อสัปดาห์ ÷ จำนวนวันเพาะ (ตามเป้าที่ตั้งในหน้าเพาะ)
+  get perDay() { return Math.ceil(vfSowerTargets()['มาริโอ้'] / this.days.length / 10) * 10; }
+};
 
 // จำนวนเมล็ดที่ต้องเพาะเพื่อให้ได้ผลผลิต kg ที่ต้องการ (ตามฤดูปัจจุบัน) ปัดขึ้นเป็นหลัก 50
 function seedsForKg(kg) {
@@ -395,7 +398,7 @@ function renderAdvice(d) {
     const supply = (d.futureSeeds || [])
       .filter(b => b.harvest_date >= ws && b.harvest_date < we)
       .reduce((s, b) => s + (parseFloat(b.estimated_kg) || 0), 0);
-    weeks.push({ i, ws, supply, gap: WEEKLY_TARGET_KG - supply });
+    weeks.push({ i, ws, supply, gap: vfWeeklyTargetKg() - supply });
   }
   // เมล็ดที่เพาะ "สัปดาห์นี้" จะไปเก็บอีก ~lead สัปดาห์ (45 วัน) — แนะช่วงเวลาเพาะให้ตรงสัปดาห์ที่ขาด
   const lead = Math.round(SEED_TO_HARVEST_DAYS / 7);   // ≈ 6 สัปดาห์
@@ -404,7 +407,7 @@ function renderAdvice(d) {
     const sowIn = firstShort.i - lead;   // ต้องเพาะอีกกี่สัปดาห์ข้างหน้า (0 = สัปดาห์นี้)
     const seeds = seedsForKg(firstShort.gap);
     // แจ้งล่วงหน้าแบบ "ป้องกันก่อนเกิด" — บอกว่าอีก N สัปดาห์จะเก็บได้แค่เท่าไหร่ + ทางเลือก
-    const head = `อีก ${firstShort.i} สัปดาห์ (${shortDate(firstShort.ws)}) จะเก็บได้แค่ ~${fmt(firstShort.supply)} กก. (เป้า ${WEEKLY_TARGET_KG})`;
+    const head = `อีก ${firstShort.i} สัปดาห์ (${shortDate(firstShort.ws)}) จะเก็บได้แค่ ~${fmt(firstShort.supply)} กก. (เป้า ${vfWeeklyTargetKg()})`;
     if (sowIn < 0) {
       items.push({ level: 'danger', icon: '⚠️', title: head, action: `เพาะไม่ทันรอบนี้ (ต้องใช้ ~45 วัน) → ปรับแผนส่งลูกค้า · ลดรับออเดอร์ชั่วคราว · หรือหาผักเสริม` });
     } else {

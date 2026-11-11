@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=55">
+<link rel="stylesheet" href="css/style.css?v=56">
 </head>
 <body>
 
@@ -216,14 +216,21 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">บันทึกการเพาะ ระบบคำนวณอัตรารอดและวันเก็บเกี่ยวให้อัตโนมัติ</div>
 
-    <!-- เป้าหมายเพาะรายเดือน (ฟิก 360 กก./เดือน = 90 กก./สัปดาห์) -->
+    <!-- เป้าหมายเพาะ (แก้ได้) — ทุกตัวเลขคำนวณจากเป้า กก./สัปดาห์ -->
     <div class="card seed-goal-card">
       <div class="goal-head">
-        <span class="card-title" style="margin:0">เป้าหมายเพาะเดือนนี้ (กก. คาดการณ์)</span>
-        <span class="goal-fixed">360 กก./เดือน<br><small>(90 กก./สัปดาห์)</small></span>
+        <span class="card-title" style="margin:0">เป้าหมายเพาะ (กก. คาดการณ์)</span>
+        <button type="button" class="goal-edit-btn" onclick="openTargetEditor()" aria-label="แก้ไขเป้าหมาย">
+          <span id="seed-goal-target">90 กก./สัปดาห์</span> ✏️
+        </button>
       </div>
+      <div class="goal-label">สัปดาห์นี้</div>
+      <div class="goal-bar"><div class="goal-bar-fill" id="seed-week-fill"></div></div>
+      <div class="goal-status" id="seed-week-status"></div>
+      <div class="goal-label">เดือนนี้</div>
       <div class="goal-bar"><div class="goal-bar-fill" id="seed-goal-fill"></div></div>
       <div class="goal-status" id="seed-goal-status"></div>
+      <div class="goal-plan" id="seed-goal-plan"></div>
       <div class="goal-season" id="seed-season"></div>
     </div>
 
@@ -257,6 +264,8 @@ if('serviceWorker' in navigator){
           <label class="checkbox-item veg-checkbox"><input type="checkbox" value="green_oak"> กรีนโอ๊ค</label>
           <label class="checkbox-item veg-checkbox"><input type="checkbox" value="red_oak"> เรดโอ๊ค</label>
           <label class="checkbox-item veg-checkbox"><input type="checkbox" value="finley"> ฟินเลย์</label>
+          <label class="checkbox-item veg-checkbox"><input type="checkbox" value="cos"> กรีนคอส</label>
+          <label class="checkbox-item veg-checkbox"><input type="checkbox" value="green_batavia"> กรีนบัตตาเวีย</label>
         </div>
       </div>
       <div class="form-group">
@@ -373,7 +382,8 @@ if('serviceWorker' in navigator){
           <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="green_oak"> กรีนโอ๊ค</label>
           <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="red_oak"> เรดโอ๊ค</label>
           <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="finley"> ฟินเลย์</label>
-          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="cos"> คอส</label>
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="cos"> กรีนคอส</label>
+          <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="green_batavia"> กรีนบัตตาเวีย</label>
           <label class="checkbox-item veg-checkbox-plot"><input type="checkbox" value="butterhead"> บัตเตอร์เฮด</label>
         </div>
       </div>
@@ -607,7 +617,8 @@ if('serviceWorker' in navigator){
             <option value="green_oak">กรีนโอ๊ค</option>
             <option value="red_oak">เรดโอ๊ค</option>
             <option value="finley">ฟินเลย์</option>
-            <option value="cos">คอส</option>
+            <option value="cos">กรีนคอส</option>
+            <option value="green_batavia">กรีนบัตตาเวีย</option>
             <option value="butterhead">บัตเตอร์เฮด</option>
           </select>
         </div>
@@ -1107,6 +1118,25 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== แก้ไขเป้าหมายรายสัปดาห์ ===== -->
+<div class="modal-overlay" id="target-modal" onclick="if(event.target===this)closeTargetEditor()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
+    <div class="modal-title">🎯 ตั้งเป้าหมายรายสัปดาห์</div>
+    <div class="form-group">
+      <label class="form-label">เป้าผลผลิตต่อสัปดาห์ (กก.)</label>
+      <input type="number" id="target-kg" class="form-control" min="1" step="1" oninput="previewTarget()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">สัดส่วนการเพาะ: มาริโอ้ <b id="target-share-lbl">20%</b> · 애플 <b id="target-share-lbl2">80%</b></label>
+      <input type="range" id="target-share" min="0" max="100" step="5" style="width:100%;accent-color:var(--primary)" oninput="previewTarget()">
+    </div>
+    <div id="target-preview"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveTargetEditor()">บันทึกเป้าหมาย</button>
+  </div>
+</div>
+
 <!-- ===== ตารางฉีดบำรุงใบ ===== -->
 <div class="modal-overlay" id="foliar-modal" onclick="if(event.target===this)closeFoliarLog()">
   <div class="modal-sheet">
@@ -1247,19 +1277,19 @@ if('serviceWorker' in navigator){
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=10"></script>
-<script defer src="js/dashboard.js?v=32"></script>
-<script defer src="js/seeds.js?v=15"></script>
-<script defer src="js/batches.js?v=4"></script>
-<script defer src="js/plots.js?v=21"></script>
+<script defer src="js/supabase.js?v=11"></script>
+<script defer src="js/dashboard.js?v=33"></script>
+<script defer src="js/seeds.js?v=16"></script>
+<script defer src="js/batches.js?v=5"></script>
+<script defer src="js/plots.js?v=22"></script>
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/foliar.js?v=2"></script>
 <script defer src="js/calendar.js?v=5"></script>
-<script defer src="js/todos.js?v=3"></script>
+<script defer src="js/todos.js?v=4"></script>
 <script defer src="js/finance.js?v=16"></script>
 <script defer src="js/customers.js?v=10"></script>
-<script defer src="js/assistant.js?v=10"></script>
-<script defer src="js/capacity.js?v=2"></script>
-<script defer src="js/app.js?v=10"></script>
+<script defer src="js/assistant.js?v=11"></script>
+<script defer src="js/capacity.js?v=3"></script>
+<script defer src="js/app.js?v=11"></script>
 </body>
 </html>

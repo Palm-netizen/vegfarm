@@ -223,7 +223,7 @@ async function vfSignOut() {
 const VF_TABLES = [
   'plots', 'seed_batches', 'plot_cycles', 'problems', 'todos',
   'calendar_activities', 'income', 'expenses', 'personal_expenses', 'customers', 'orders',
-  'weekly_batches', 'foliar_sprays', '_storage_photos'
+  'weekly_batches', 'foliar_sprays', 'app_settings', '_storage_photos'
 ];
 
 function exportAllData() {
@@ -273,6 +273,60 @@ function addDays(dateStr, days) {
 function getSurvivalRate(weather) {
   const rates = { hot: 70, rainy: 70, cold: 90 };
   return rates[weather] || 70;
+}
+
+// ===== ชนิดผัก (รายการเดียว ใช้ทั้งแอป) =====
+const VF_VEG = {
+  green_oak: 'กรีนโอ๊ค', red_oak: 'เรดโอ๊ค', finley: 'ฟินเลย์',
+  cos: 'กรีนคอส', green_batavia: 'กรีนบัตตาเวีย', butterhead: 'บัตเตอร์เฮด'
+};
+function vfVegName(key) { return VF_VEG[key] || key || ''; }
+
+// ===== เป้าหมายรายสัปดาห์ (แก้ได้ที่หน้าเพาะ) — ทุกตัวเลขคำนวณจากค่านี้ =====
+const VF_TARGET_DEFAULT = { weeklyKg: 90, marioShare: 20 };   // marioShare = % ของเมล็ดที่มาริโอ้เพาะ (ที่เหลือ 애플)
+const VF_KG_PER_PLOT = 22.5;                                   // 1 แปลง ≈ 22.5 กก. (90 กก. = 4 แปลง)
+let vfTarget = (() => {
+  try { return { ...VF_TARGET_DEFAULT, ...JSON.parse(localStorage.getItem('vf_target') || '{}') }; }
+  catch (e) { return { ...VF_TARGET_DEFAULT }; }
+})();
+function vfSeasonKey(d = new Date()) {
+  const m = d.getMonth() + 1;
+  return (m >= 11 || m <= 2) ? 'cold' : (m >= 3 && m <= 5) ? 'hot' : 'rainy';
+}
+function vfWeeklyTargetKg() { return vfTarget.weeklyKg; }
+function vfPlotsPerWeek(kg = vfTarget.weeklyKg) { return Math.max(1, Math.ceil(kg / VF_KG_PER_PLOT)); }
+function vfPlantsPerKg(season) { return season === 'cold' ? 10 : 12; }
+// เมล็ดที่ต้องเพาะ/สัปดาห์ = กก. × ต้น/กก. ÷ อัตรารอด (ปัดขึ้นหลักสิบ)
+function vfSeedsPerWeek(kg = vfTarget.weeklyKg, season = vfSeasonKey()) {
+  return Math.ceil(kg * vfPlantsPerKg(season) / (getSurvivalRate(season) / 100) / 10) * 10;
+}
+function vfSowerTargets(t = vfTarget, season = vfSeasonKey()) {
+  const total = vfSeedsPerWeek(t.weeklyKg, season);
+  const mario = Math.round(total * t.marioShare / 100 / 10) * 10;
+  return { 'มาริโอ้': mario, '애플': total - mario };
+}
+// บันทึก: เก็บในเครื่องทันที + ซิงก์ขึ้นคลาวด์ (ถ้ามีตาราง app_settings)
+async function vfSaveTarget(t) {
+  vfTarget = { ...VF_TARGET_DEFAULT, ...t };
+  try { localStorage.setItem('vf_target', JSON.stringify(vfTarget)); } catch (e) {}
+  try {
+    const { data } = await db.from('app_settings').select('id').eq('key', 'weekly_target');
+    if (data && data.length) await db.from('app_settings').update({ value: vfTarget }).eq('id', data[0].id);
+    else await db.from('app_settings').insert({ key: 'weekly_target', value: vfTarget });
+  } catch (e) { /* ยังไม่มีตารางบนคลาวด์ — ใช้ค่าในเครื่องไปก่อน */ }
+}
+// โหลดค่าจากคลาวด์ (ให้ทุกเครื่องใช้เป้าเดียวกัน) — คืน true ถ้าค่าเปลี่ยน
+async function vfLoadTargetCloud() {
+  try {
+    const { data, error } = await db.from('app_settings').select('value').eq('key', 'weekly_target');
+    if (error || !data || !data.length || !data[0].value) return false;
+    const v = typeof data[0].value === 'string' ? JSON.parse(data[0].value) : data[0].value;
+    const next = { ...VF_TARGET_DEFAULT, ...v };
+    if (JSON.stringify(next) === JSON.stringify(vfTarget)) return false;
+    vfTarget = next;
+    try { localStorage.setItem('vf_target', JSON.stringify(vfTarget)); } catch (e) {}
+    return true;
+  } catch (e) { return false; }
 }
 
 function calcEstimatedKg(seedCount, weather, survivalRate) {
