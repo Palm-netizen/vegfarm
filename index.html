@@ -52,7 +52,7 @@ if('serviceWorker' in navigator){
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="css/style.css?v=56">
+<link rel="stylesheet" href="css/style.css?v=57">
 </head>
 <body>
 
@@ -219,7 +219,7 @@ if('serviceWorker' in navigator){
     <!-- เป้าหมายเพาะ (แก้ได้) — ทุกตัวเลขคำนวณจากเป้า กก./สัปดาห์ -->
     <div class="card seed-goal-card">
       <div class="goal-head">
-        <span class="card-title" style="margin:0">เป้าหมายเพาะ (กก. คาดการณ์)</span>
+        <span class="card-title" style="margin:0">เป้าหมายเพาะ</span>
         <button type="button" class="goal-edit-btn" onclick="openTargetEditor()" aria-label="แก้ไขเป้าหมาย">
           <span id="seed-goal-target">90 กก./สัปดาห์</span> ✏️
         </button>
@@ -1124,13 +1124,20 @@ if('serviceWorker' in navigator){
     <div class="modal-handle"></div>
     <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
     <div class="modal-title">🎯 ตั้งเป้าหมายรายสัปดาห์</div>
-    <div class="form-group">
-      <label class="form-label">เป้าผลผลิตต่อสัปดาห์ (กก.)</label>
-      <input type="number" id="target-kg" class="form-control" min="1" step="1" oninput="previewTarget()">
+    <div class="text-sub" style="margin-bottom:10px">เป้าเพาะเป็นจำนวนเมล็ดฟิกทุกฤดู (เผื่อเสียหายจากโรค/แมลงระหว่างทาง)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label class="form-label">เป้าเพาะรวม (เมล็ด/สัปดาห์)</label>
+        <input type="number" id="target-seeds" class="form-control" min="1" step="10" oninput="previewTarget()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">มาริโอ้เพาะ (เมล็ด/สัปดาห์)</label>
+        <input type="number" id="target-mario" class="form-control" min="0" step="10" oninput="previewTarget()">
+      </div>
     </div>
     <div class="form-group">
-      <label class="form-label">สัดส่วนการเพาะ: มาริโอ้ <b id="target-share-lbl">20%</b> · 애플 <b id="target-share-lbl2">80%</b></label>
-      <input type="range" id="target-share" min="0" max="100" step="5" style="width:100%;accent-color:var(--primary)" oninput="previewTarget()">
+      <label class="form-label">เป้าผลผลิต/ออเดอร์ (กก./สัปดาห์)</label>
+      <input type="number" id="target-kg" class="form-control" min="1" step="1" oninput="previewTarget()">
     </div>
     <div id="target-preview"></div>
     <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveTargetEditor()">บันทึกเป้าหมาย</button>
@@ -1277,9 +1284,9 @@ if('serviceWorker' in navigator){
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=11"></script>
+<script defer src="js/supabase.js?v=12"></script>
 <script defer src="js/dashboard.js?v=33"></script>
-<script defer src="js/seeds.js?v=16"></script>
+<script defer src="js/seeds.js?v=17"></script>
 <script defer src="js/batches.js?v=5"></script>
 <script defer src="js/plots.js?v=22"></script>
 <script defer src="js/problems.js?v=11"></script>

@@ -1326,6 +1326,8 @@ select.form-control { cursor: pointer; }
 .tp-row { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink); padding: 3px 0; }
 .tp-row b { color: var(--primary); font-family: var(--font-display); }
 .tp-sub { font-size: 11px; color: var(--ink-soft); margin: -2px 0 6px; }
+.tp-row.tp-now { background: var(--primary-tint); border-radius: 8px; padding: 3px 6px; margin: 0 -6px; }
+.goal-kg { font-weight: 600; color: var(--ink-soft); font-size: 12px; }
 
 /* ===== Styled confirm dialog ===== */
 #vf-confirm { align-items: center; }

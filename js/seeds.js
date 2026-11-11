@@ -24,7 +24,7 @@ async function renderSeedGoal() {
     const s = currentSeason();
     ssEl.innerHTML = `🌤️ ฤดูนี้: <b>${s.label}</b> · อัตรารอด <b style="color:var(--primary)">${s.rate}%</b>`;
   }
-  const weekGoal = vfWeeklyTargetKg();
+  const weekGoal = vfSeedsPerWeek();               // เป้าเพาะ (เมล็ด/สัปดาห์) ฟิกทุกฤดู
   const goal = weekGoal * 4;                       // เป้าเดือน = เป้าสัปดาห์ × 4
   const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
   const start = `${yr}-${mo}-01`;
@@ -35,79 +35,92 @@ async function renderSeedGoal() {
   const weekStart = wd.toISOString().split('T')[0], weekEnd = addDays(weekStart, 7);
   const qFrom = weekStart < start ? weekStart : start;
 
-  const { data } = await db.from('seed_batches').select('estimated_kg,seed_date')
+  const { data } = await db.from('seed_batches').select('estimated_kg,seed_date,seed_count')
     .gte('seed_date', qFrom).lt('seed_date', next > weekEnd ? next : weekEnd);
+  const inMonth = (data || []).filter(b => b.seed_date >= start && b.seed_date < next);
+  const inWeek = (data || []).filter(b => b.seed_date >= weekStart && b.seed_date < weekEnd);
+  const sumSeeds = rows => rows.reduce((s, b) => s + (parseInt(b.seed_count) || 0), 0);
   const sumKg = rows => rows.reduce((s, b) => s + parseFloat(b.estimated_kg || 0), 0);
-  const done = sumKg((data || []).filter(b => b.seed_date >= start && b.seed_date < next));
-  const doneWeek = sumKg((data || []).filter(b => b.seed_date >= weekStart && b.seed_date < weekEnd));
 
   const fmt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
   const cnt = n => n.toLocaleString('th-TH');
   const tEl = document.getElementById('seed-goal-target');
-  if (tEl) tEl.textContent = `${fmt(weekGoal)} กก./สัปดาห์`;
+  if (tEl) tEl.textContent = `${cnt(weekGoal)} เมล็ด/สัปดาห์`;
 
-  const paint = (fillId, statusId, got, g) => {
+  const paint = (fillId, statusId, got, g, kg) => {
     const fill = document.getElementById(fillId), status = document.getElementById(statusId);
     if (!fill || !status) return;
     const pct = g > 0 ? Math.min(100, (got / g) * 100) : 0;
     fill.style.width = pct + '%';
     fill.classList.toggle('done', g > 0 && got >= g);
+    const kgTxt = ` <span class="goal-kg">(~${fmt(kg)} กก.)</span>`;
     status.innerHTML = got >= g
-      ? `เพาะแล้ว <b style="color:var(--primary)">${fmt(got)}</b> / ${fmt(g)} กก. · <b style="color:var(--primary)">ครบเป้าแล้ว 🎉</b>`
-      : `เพาะแล้ว <b style="color:var(--primary)">${fmt(got)}</b> / ${fmt(g)} กก. · ขาดอีก <b style="color:var(--accent)">${fmt(g - got)}</b> กก. (${pct.toFixed(0)}%)`;
+      ? `เพาะแล้ว <b style="color:var(--primary)">${cnt(got)}</b> / ${cnt(g)} เมล็ด${kgTxt} · <b style="color:var(--primary)">ครบเป้าแล้ว 🎉</b>`
+      : `เพาะแล้ว <b style="color:var(--primary)">${cnt(got)}</b> / ${cnt(g)} เมล็ด${kgTxt} · ขาดอีก <b style="color:var(--accent)">${cnt(g - got)}</b> เมล็ด`;
   };
-  paint('seed-week-fill', 'seed-week-status', doneWeek, weekGoal);
-  paint('seed-goal-fill', 'seed-goal-status', done, goal);
+  paint('seed-week-fill', 'seed-week-status', sumSeeds(inWeek), weekGoal, sumKg(inWeek));
+  paint('seed-goal-fill', 'seed-goal-status', sumSeeds(inMonth), goal, sumKg(inMonth));
 
-  // ปริมาณที่ต้องเพาะ/ปลูก ให้ได้ตามเป้า (คำนวณตามฤดูปัจจุบัน)
+  // แบ่งเป้ารายคน + เทียบกับขั้นต่ำที่ต้องใช้ให้ได้ตามเป้า กก. (ดูว่าเผื่อไว้พอไหม)
   const planEl = document.getElementById('seed-goal-plan');
   if (planEl) {
     const st = vfSowerTargets();
-    planEl.innerHTML = `🌱 ต้องเพาะ <b>${cnt(vfSeedsPerWeek())}</b> เมล็ด/สัปดาห์
-      <span>(มาริโอ้ ${cnt(st['มาริโอ้'])} · 애플 ${cnt(st['애플'])})</span> · ปลูก <b>${vfPlotsPerWeek()}</b> แปลง/สัปดาห์`;
+    const need = vfSeedsNeeded();
+    const spare = need > 0 ? Math.round((weekGoal / need - 1) * 100) : 0;
+    const s = currentSeason();
+    planEl.innerHTML = `👤 มาริโอ้ <b>${cnt(st['มาริโอ้'])}</b> · 애플 <b>${cnt(st['애플'])}</b> เมล็ด/สัปดาห์<br>
+      <span>คาดได้ ~${fmt(vfKgFromSeeds(weekGoal))} กก./สัปดาห์ (${s.label}) · เป้าผลผลิต ${cnt(vfWeeklyTargetKg())} กก. ต้องใช้ขั้นต่ำ ${cnt(need)} เมล็ด</span>
+      ${spare >= 0 ? `<b style="color:var(--primary)">→ เผื่อไว้ ${spare}%</b>` : `<b style="color:var(--danger)">→ ไม่พอ ขาด ${cnt(need - weekGoal)} เมล็ด</b>`}`;
   }
 }
 
 // ===== แก้ไขเป้าหมายรายสัปดาห์ =====
 function openTargetEditor() {
+  document.getElementById('target-seeds').value = vfTarget.seedsPerWeek;
+  document.getElementById('target-mario').value = vfTarget.marioSeeds;
   document.getElementById('target-kg').value = vfTarget.weeklyKg;
-  document.getElementById('target-share').value = vfTarget.marioShare;
   previewTarget();
   document.getElementById('target-modal').style.display = 'flex';
 }
 function closeTargetEditor() { document.getElementById('target-modal').style.display = 'none'; }
 function readTargetForm() {
   return {
-    weeklyKg: parseFloat(document.getElementById('target-kg').value) || 0,
-    marioShare: parseInt(document.getElementById('target-share').value, 10) || 0
+    seedsPerWeek: parseInt(document.getElementById('target-seeds').value, 10) || 0,
+    marioSeeds: parseInt(document.getElementById('target-mario').value, 10) || 0,
+    weeklyKg: parseFloat(document.getElementById('target-kg').value) || 0
   };
 }
 function previewTarget() {
   const t = readTargetForm();
-  document.getElementById('target-share-lbl').textContent = t.marioShare + '%';
-  document.getElementById('target-share-lbl2').textContent = (100 - t.marioShare) + '%';
   const el = document.getElementById('target-preview');
-  if (!(t.weeklyKg > 0)) { el.innerHTML = '<div class="text-sub">กรอกเป้า กก./สัปดาห์</div>'; return; }
-  const season = vfSeasonKey();
-  const s = currentSeason();
-  const seeds = vfSeedsPerWeek(t.weeklyKg, season);
-  const st = vfSowerTargets(t, season);
-  const cnt = n => n.toLocaleString('th-TH');
+  if (!(t.seedsPerWeek > 0) || !(t.weeklyKg > 0)) { el.innerHTML = '<div class="text-sub">กรอกเป้าเพาะและเป้าผลผลิต</div>'; return; }
+  if (t.marioSeeds > t.seedsPerWeek) { el.innerHTML = '<div class="text-sub" style="color:var(--danger)">มาริโอ้ต้องไม่เกินเป้าเพาะรวม</div>'; return; }
+  const cnt = n => n.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  const seasons = [['hot', '☀️ หน้าร้อน'], ['rainy', '🌧️ หน้าฝน'], ['cold', '❄️ หน้าหนาว']];
+  const now = vfSeasonKey();
+  const rows = seasons.map(([k, lbl]) => {
+    const kg = vfKgFromSeeds(t.seedsPerWeek, k);
+    const need = vfSeedsNeeded(t.weeklyKg, k);
+    const spare = Math.round((t.seedsPerWeek / need - 1) * 100);
+    return `<div class="tp-row ${k === now ? 'tp-now' : ''}"><span>${lbl}${k === now ? ' (ตอนนี้)' : ''}</span>
+      <b style="color:${spare >= 0 ? 'var(--primary)' : 'var(--danger)'}">~${cnt(kg)} กก. · ${spare >= 0 ? 'เผื่อ ' + spare + '%' : 'ขาด ' + cnt(need - t.seedsPerWeek) + ' เมล็ด'}</b></div>`;
+  }).join('');
   el.innerHTML = `<div class="target-preview">
-    <div class="tp-row"><span>🌱 ต้องเพาะ/สัปดาห์</span><b>${cnt(seeds)} เมล็ด</b></div>
-    <div class="tp-sub">${cnt(t.weeklyKg)} กก. × ${vfPlantsPerKg(season)} ต้น/กก. ÷ อัตรารอด ${s.rate}% (${s.label})</div>
-    <div class="tp-row"><span>👤 มาริโอ้</span><b>${cnt(st['มาริโอ้'])} เมล็ด</b></div>
-    <div class="tp-row"><span>👤 애플</span><b>${cnt(st['애플'])} เมล็ด</b></div>
+    <div class="tp-row"><span>👤 มาริโอ้</span><b>${cnt(t.marioSeeds)} เมล็ด</b></div>
+    <div class="tp-row"><span>👤 애플 (ที่เหลือ)</span><b>${cnt(t.seedsPerWeek - t.marioSeeds)} เมล็ด</b></div>
+    <div class="tp-sub" style="margin-top:8px">ผลผลิตที่คาดได้/สัปดาห์ เทียบเป้า ${cnt(t.weeklyKg)} กก.</div>
+    ${rows}
     <div class="tp-row"><span>🪴 ต้องปลูก/สัปดาห์</span><b>${vfPlotsPerWeek(t.weeklyKg)} แปลง</b></div>
-    <div class="tp-row"><span>📅 เป้าเดือน</span><b>${cnt(t.weeklyKg * 4)} กก.</b></div>
   </div>`;
 }
 async function saveTargetEditor() {
   const t = readTargetForm();
-  if (!(t.weeklyKg > 0)) return showToast('กรุณาใส่เป้า กก./สัปดาห์', 'error');
+  if (!(t.seedsPerWeek > 0)) return showToast('กรุณาใส่เป้าเพาะ (เมล็ด/สัปดาห์)', 'error');
+  if (!(t.weeklyKg > 0)) return showToast('กรุณาใส่เป้าผลผลิต (กก./สัปดาห์)', 'error');
+  if (t.marioSeeds > t.seedsPerWeek) return showToast('มาริโอ้ต้องไม่เกินเป้าเพาะรวม', 'error');
   await vfSaveTarget(t);
   closeTargetEditor();
-  showToast(`บันทึกเป้า ${t.weeklyKg} กก./สัปดาห์ แล้ว`);
+  showToast(`บันทึกเป้าเพาะ ${t.seedsPerWeek.toLocaleString('th-TH')} เมล็ด/สัปดาห์ แล้ว`);
   vfRefreshTargetViews();
   const sw = document.getElementById('seed-sower')?.value;
   if (sw) checkSowerTarget(sw);
