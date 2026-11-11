@@ -271,7 +271,7 @@ function addDays(dateStr, days) {
 }
 
 function getSurvivalRate(weather) {
-  const rates = { hot: 70, rainy: 70, cold: 90 };
+  const rates = { hot: 70, rainy: 70, cold: 80 };
   return rates[weather] || 70;
 }
 
@@ -285,7 +285,7 @@ function vfVegName(key) { return VF_VEG[key] || key || ''; }
 // ===== เป้าหมายรายสัปดาห์ (แก้ได้ที่หน้าเพาะ) — ทุกตัวเลขคำนวณจากค่านี้ =====
 // weeklyKg = เป้าผลผลิต/ออเดอร์ (กก./สัปดาห์) · seedsPerWeek = เป้าเพาะฟิกทุกฤดู (เผื่อเสียหายจากโรค/แมลง)
 // marioSeeds = มาริโอ้เพาะฟิก/สัปดาห์ ส่วนที่เหลือเป็นของ 애플
-// 2,000 เมล็ด = หน้าร้อน/ฝนเผื่อ ~29% (เกิน 20%) · หน้าหนาวเผื่อ ~100%
+// 2,000 เมล็ด = หน้าร้อน/ฝนเผื่อ ~29% (เกิน 20%) · หน้าหนาว (รอด 80%) เผื่อ ~77%
 const VF_TARGET_DEFAULT = { weeklyKg: 90, seedsPerWeek: 2000, marioSeeds: 200, rev: 2 };
 const VF_KG_PER_PLOT = 22.5;                                   // 1 แปลง ≈ 22.5 กก. (90 กก. = 4 แปลง)
 const VF_SPARE_GOAL = 20;                                      // % ที่ควรเผื่อไว้ (โรค/แมลง)
