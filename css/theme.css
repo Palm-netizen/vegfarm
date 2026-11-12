@@ -1,0 +1,250 @@
+/* =============================================================
+   VegFarm — "Soft Dashboard" theme (โหลดหลัง style.css)
+   แนวทาง: พื้นเทาอมม่วงอ่อน · การ์ดขาวมุมโค้ง เงาบาง · สีหลักม่วง-คราม
+   ปุ่มเมนูที่เลือก = แคปซูลดำ · แท็ก/ชิปแบบพาสเทล · โหมดมืดใช้ได้ครบ
+   หมายเหตุ: สีเขียวที่ใช้บอก "เสร็จ/เก็บผัก/ฉีดแล้ว" คงไว้ตามความหมายเดิม
+   ============================================================= */
+
+:root {
+  --primary:      #6D5DF6;
+  --primary-dark: #5444E0;
+  --primary-light:#9D90FF;
+  --lime:         #3B9DF6;
+  --gradient:     linear-gradient(135deg, #6D5DF6 0%, #8F82FF 100%);
+  --gradient-soft:linear-gradient(135deg, #F1EFFF 0%, #EAF3FF 100%);
+
+  --primary-tint:        #EFECFF;
+  --primary-tint-strong: #E0DBFF;
+  --lime-tint:           #E7F2FE;
+  --blue:                #3B9DF6;
+  --blue-tint:           #E4F1FE;
+
+  --accent:       #F59E0B;
+  --accent-tint:  #FFF4E0;
+  --danger:       #EF4444;
+  --danger-tint:  #FDECEC;
+
+  --ink:          #1B1B26;
+  --ink-soft:     #7A7A8C;
+  --ink-faint:    #ABABBA;
+
+  --bg:           #F1F1F6;
+  --paper:        #FFFFFF;
+  --line:         #E9E9F0;
+  --night:        #1D1D24;   /* การ์ด/แคปซูลสีดำ */
+
+  --radius:    20px;
+  --radius-sm: 12px;
+  --radius-lg: 26px;
+  --shadow:    0 1px 2px rgba(24,24,48,.04), 0 4px 16px rgba(24,24,48,.05);
+  --shadow-lg: 0 6px 14px rgba(24,24,48,.06), 0 20px 44px rgba(24,24,48,.12);
+  --shadow-primary: 0 6px 16px rgba(109,93,246,.28);
+}
+
+[data-theme="dark"] {
+  --primary:      #8B7DFF;
+  --primary-dark: #A79DFF;
+  --primary-light:#B3AAFF;
+  --gradient:     linear-gradient(135deg, #7A6BFF 0%, #A093FF 100%);
+  --gradient-soft:linear-gradient(135deg, #1E1B33 0%, #172433 100%);
+  --primary-tint:        #221F3A;
+  --primary-tint-strong: #2D2852;
+  --lime-tint:           #16273A;
+  --blue-tint:           #16273A;
+  --accent-tint:  #2B2414;
+  --danger-tint:  #2E1719;
+  --ink:          #F1F1F7;
+  --ink-soft:     #A1A1B3;
+  --ink-faint:    #6E6E82;
+  --bg:           #0F0F14;
+  --paper:        #18181F;
+  --line:         #272730;
+  --night:        #23232D;
+  --shadow:    0 1px 2px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.35);
+  --shadow-lg: 0 8px 16px rgba(0,0,0,.45), 0 24px 48px rgba(0,0,0,.6);
+  --shadow-primary: 0 6px 16px rgba(139,125,255,.25);
+}
+
+body { background: var(--bg); letter-spacing: 0; }
+
+/* ---------- หัวแอป: การ์ดสีดำ มุมโค้ง (อ่านแถบสถานะ iPhone ได้ทั้ง 2 โหมด) ---------- */
+.top-nav {
+  background: var(--night);
+  border-radius: 0 0 26px 26px;
+  min-height: 0;
+  padding: calc(14px + env(safe-area-inset-top)) 18px 18px;
+  box-shadow: 0 10px 30px rgba(20,20,40,.18);
+}
+.top-nav::before {
+  top: -70px; right: -50px; width: 190px; height: 190px;
+  background: radial-gradient(circle, rgba(109,93,246,.45) 0%, rgba(109,93,246,0) 70%);
+}
+.top-nav::after {
+  bottom: -90px; left: 30%; width: 170px; height: 170px;
+  background: radial-gradient(circle, rgba(59,157,246,.30) 0%, rgba(59,157,246,0) 70%);
+}
+.top-nav .logo { font-weight: 700; letter-spacing: -0.4px; }
+.top-nav .logo-mark {
+  background: var(--gradient);
+  box-shadow: 0 6px 16px rgba(109,93,246,.45);
+  border-radius: 13px;
+}
+.top-nav .logo-sub { color: rgba(255,255,255,.55); letter-spacing: 1.6px; }
+.top-nav .nav-date { color: rgba(255,255,255,.85); }
+.theme-toggle { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.10); }
+.theme-toggle:hover { background: rgba(255,255,255,.18); }
+[data-theme="dark"] .top-nav { border-bottom: 1px solid var(--line); }
+
+/* ---------- เมนูล่าง: แถบขาว · ปุ่มที่เลือก = แคปซูลดำ ---------- */
+.bottom-nav,
+[data-theme="dark"] .bottom-nav {
+  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+  border-radius: 24px;
+}
+.bottom-nav a { color: var(--ink-faint); border-radius: 16px; }
+.bottom-nav a.active { background: var(--night); color: #fff; box-shadow: 0 6px 16px rgba(20,20,40,.25); }
+[data-theme="dark"] .bottom-nav a.active { background: var(--primary); box-shadow: var(--shadow-primary); }
+.bottom-nav a.active .nav-icon { transform: none; }
+
+/* ---------- หัวข้อหน้า ---------- */
+.section-eyebrow { color: var(--ink-faint); letter-spacing: 1.5px; font-weight: 700; }
+.section-title { font-weight: 700; letter-spacing: -0.6px; font-size: 26px; }
+.section-title .title-icon {
+  background: var(--primary-tint) !important;
+  color: var(--primary) !important;
+  box-shadow: none !important;
+  border-radius: 14px;
+}
+.section-sub { color: var(--ink-soft); }
+
+/* หัวข้อย่อย = ข้อความหนาชิดซ้าย (แบบหัวการ์ด) */
+.growth-divider { margin: 24px 2px 12px; }
+.growth-divider::before { display: none; }
+.growth-divider .gd-label {
+  font-size: 15px; font-weight: 700; letter-spacing: -0.2px; text-transform: none;
+  color: var(--ink);
+}
+
+/* ---------- การ์ด ---------- */
+.card, .stat-card, .kpi-card, .plots-summary .ps-item {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.card { border-radius: var(--radius); }
+.card-title { color: var(--ink-soft); letter-spacing: .4px; text-transform: none; font-size: 13px; font-weight: 700; }
+.card-value { font-weight: 700; letter-spacing: -1px; }
+
+/* การ์ดสถิติ: ไอคอนพาสเทล ไม่มีแถบสีด้านบน */
+.stat-card::before, .stat-card::after { display: none !important; }
+.stat-card .stat-icon { background: var(--primary-tint); color: var(--primary); box-shadow: none; }
+.stat-card.accent .stat-icon { background: var(--blue-tint); color: var(--blue); box-shadow: none; }
+.stat-card.warn .stat-icon   { background: var(--accent-tint); color: var(--accent); box-shadow: none; }
+.stat-card.danger .stat-icon { background: var(--danger-tint); color: var(--danger); box-shadow: none; }
+.stat-card .card-value        { color: var(--ink); }
+.stat-card.accent .card-value { color: var(--ink); }
+
+/* KPI การเงิน: จุดสีแทนแถบด้านบน */
+.kpi-card { border-top: 1px solid var(--line) !important; position: relative; }
+.kpi-card::after { content: ''; position: absolute; top: 16px; right: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+.kpi-card.income-card::after  { background: #22A06B; }
+.kpi-card.expense-card::after { background: var(--accent); }
+.kpi-card.profit-card::after  { background: var(--primary); }
+.kpi-card.margin-card::after  { background: var(--blue); }
+
+/* การ์ดกำไรเด่น (การเงิน) = การ์ดดำ */
+.fin-hero, .fin-hero.negative {
+  background: var(--night);
+  box-shadow: 0 10px 28px rgba(20,20,40,.22);
+}
+.fin-hero::after { background: radial-gradient(circle, rgba(109,93,246,.45), rgba(109,93,246,0) 70%); }
+.fin-hero.negative .fin-hero-profit { color: #FF8A8A; }
+[data-theme="dark"] .fin-hero { border: 1px solid var(--line); }
+
+/* ---------- ฟอร์ม ---------- */
+.form-control { background: var(--bg); border: 1.5px solid var(--line); border-radius: var(--radius-sm); }
+.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); background: var(--paper); }
+.form-label { font-weight: 600; }
+
+/* ชิปเลือก (ชนิดผัก/ประเภทปัญหา ฯลฯ) — เลือกแล้วเป็นพาสเทลม่วง */
+.checkbox-item { border-radius: 999px; }
+.checkbox-item.checked {
+  background: var(--primary-tint) !important;
+  color: var(--primary) !important;
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
+  box-shadow: none !important;
+}
+.weather-option.selected {
+  background: var(--primary-tint) !important;
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- ปุ่ม ---------- */
+.btn { border-radius: 14px; font-weight: 700; }
+.btn-primary { background: var(--primary); box-shadow: var(--shadow-primary); }
+.btn-outline { background: var(--paper); border: 1.5px solid var(--line); color: var(--ink); }
+.btn-outline:active { background: var(--bg); }
+
+/* ป้ายรหัสแปลง (T1…) และแท็ก = พาสเทลม่วงแบบสถานะ "In progress" */
+.badge-green { background: var(--primary-tint); color: var(--primary); }
+.badge { font-weight: 700; }
+
+/* ---------- ปฏิทิน ---------- */
+.cal-day.today { background: var(--night); }
+[data-theme="dark"] .cal-day.today { background: var(--primary); }
+
+/* ---------- แถบความคืบหน้าเป้าหมาย ---------- */
+.goal-bar { background: var(--bg); }
+.goal-bar-fill { background: linear-gradient(90deg, var(--blue), var(--primary)); }
+
+/* ---------- ป๊อปอัพ ---------- */
+.modal-sheet { border-radius: 26px 26px 0 0; background: var(--paper); }
+.modal-x { background: var(--bg); color: var(--ink-soft); }
+
+/* ---------- คำแนะนำ ---------- */
+.advice-card { border-radius: 16px; }
+.advice-card.info { border-left-color: var(--blue); }
+
+/* ---------- หน้าล็อกอิน ---------- */
+.login-logo { background: var(--gradient) !important; box-shadow: var(--shadow-primary) !important; }
+
+/* =============================================================
+   จอใหญ่ (แท็บเล็ต/คอม): เมนูเป็นแถบด้านซ้ายแบบในภาพตัวอย่าง
+   ============================================================= */
+@media (min-width: 1024px) {
+  body { padding-bottom: 32px; padding-left: 256px; }
+  .top-nav { margin: 16px 16px 0 0; border-radius: 24px; }
+  .bottom-nav {
+    top: 16px; bottom: 16px; left: 16px; right: auto;
+    width: 224px; height: auto; max-width: none; margin: 0;
+    flex-direction: column; justify-content: flex-start; gap: 4px;
+    padding: 18px 12px; border-radius: 24px;
+  }
+  .bottom-nav a {
+    flex: 0 0 auto; flex-direction: row; justify-content: flex-start;
+    gap: 12px; padding: 12px 14px; margin: 0;
+    color: var(--ink-soft);
+  }
+  .bottom-nav a .nav-label { font-size: 14px; font-weight: 600; }
+  .bottom-nav a .nav-icon { width: 20px; height: 20px; }
+  .bottom-nav a:hover:not(.active) { background: var(--bg); color: var(--ink); }
+  .page-content { max-width: 720px; padding-top: 26px; }
+}
+
+/* ---------- สีประจำตัวคนเพาะ (คงเดิม): มาริโอ้ = เขียว · 애플 = เหลือง ---------- */
+.sower-chip.sower-palm.active { background: #16A34A; border-color: #16A34A; box-shadow: 0 4px 12px rgba(22,163,74,.3); }
+
+/* ---------- หัวแอปบนมือถือ: เว้นระยะโลโก้กับปุ่ม ---------- */
+.top-nav-row { gap: 10px; }
+.top-nav .logo { min-width: 0; flex: none; }
+.nav-right { gap: 10px; min-width: 0; }
+@media (max-width: 420px) {
+  .top-nav .logo { font-size: 20px; gap: 9px; }
+  .top-nav .logo-mark { width: 38px; height: 38px; }
+  .top-nav .nav-date { font-size: 11px; }
+}

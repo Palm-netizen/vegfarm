@@ -242,7 +242,7 @@ async function checkSowerTarget(name) {
 
   // ยังไม่ครบ (รวมชดเชยอาทิตย์ที่แล้ว) → ป๊อปอัพแจ้งเตือนทันที
   if (need > 0) {
-    const color = name === 'มาริโอ้' ? 'var(--primary)' : '#EAB308';
+    const color = name === 'มาริโอ้' ? '#16A34A' : '#EAB308';   // สีประจำตัว: มาริโอ้เขียว · 애플เหลือง
     document.getElementById('sower-warn-body').innerHTML =
       `<div class="confirm-msg" style="margin-bottom:6px"><span class="sower-name-box" style="background:${color}">${name}</span> ${lastShort > 0 ? 'ต้องเพาะเพิ่ม (มีของค้างอาทิตย์ที่แล้ว)' : 'ยังเพาะไม่ครบเป้าสัปดาห์นี้'}</div>
        <div class="sower-warn-nums">

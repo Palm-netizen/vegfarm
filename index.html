@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#16A34A">
+<meta name="theme-color" content="#1D1D24">
 <title>VegFarm — Smart Farm</title>
 
 <!-- เร่งการเชื่อมต่อปลายทางตั้งแต่ต้น (ลดเวลาโหลดครั้งแรก) -->
@@ -42,8 +42,8 @@ if('serviceWorker' in navigator){
 }
 </script>
 
-<!-- Apply theme before paint (avoids flash). Default = dark unless user chose light. -->
-<script>try{if(localStorage.getItem('vf_theme')!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}</script>
+<!-- Apply theme before paint (avoids flash). Default = light (โทนสว่าง) unless user chose dark. -->
+<script>try{if(localStorage.getItem('vf_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 
 <!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
 <link rel="stylesheet" href="css/fonts.css">
@@ -53,6 +53,7 @@ if('serviceWorker' in navigator){
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="css/style.css?v=58">
+<link rel="stylesheet" href="css/theme.css?v=2">
 </head>
 <body>
 
@@ -1267,7 +1268,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=14"></script>
 <script defer src="js/dashboard.js?v=33"></script>
-<script defer src="js/seeds.js?v=18"></script>
+<script defer src="js/seeds.js?v=19"></script>
 <script defer src="js/plots.js?v=23"></script>
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/foliar.js?v=2"></script>
