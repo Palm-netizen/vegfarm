@@ -314,3 +314,48 @@ input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { box-sh
 .vf-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); overflow: visible; }
 .vf-legend { display: flex; justify-content: center; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--ink-soft); font-weight: 600; flex-wrap: wrap; }
 .vf-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+
+/* =============================================================
+   พยากรณ์อากาศ 7 วัน (หน้าแรก)
+   ============================================================= */
+.wx-card { padding: 14px; }
+.wx-setup { display: flex; align-items: center; gap: 12px; }
+.wx-setup-text { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 14px; color: var(--ink); }
+.wx-setup-text span { font-size: 12px; color: var(--ink-soft); }
+.wx-setup .btn { width: auto; flex: none; white-space: nowrap; }
+.wx-head { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--ink); margin-bottom: 10px; }
+.wx-head span { font-size: 11px; color: var(--ink-faint); display: flex; align-items: center; gap: 2px; }
+.wx-link { border: none; background: var(--bg); color: var(--ink-soft); border-radius: 8px; width: 26px; height: 26px; cursor: pointer; font-size: 13px; margin-left: 4px; }
+.wx-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-bottom: 10px; }
+.wx-day { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 1px; border-radius: 12px; background: var(--bg); min-width: 0; }
+.wx-day.rain { background: var(--blue-tint); }
+.wx-dn { font-size: 10.5px; font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
+.wx-ic { font-size: 20px; line-height: 1.2; }
+.wx-t { font-size: 11px; color: var(--ink-soft); display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.wx-t small { font-size: 10.5px; }
+.wx-t b { color: var(--ink); font-size: 12.5px; }
+.wx-r { font-size: 10px; font-weight: 700; color: #0E7490; white-space: nowrap; }
+[data-theme="dark"] .wx-r { color: #67E8F9; }
+.wx-tip { margin-bottom: 7px; }
+.wx-tip:last-child { margin-bottom: 0; }
+.wx-ok { font-size: 13px; color: var(--primary); font-weight: 700; text-align: center; padding: 4px 0; }
+
+/* =============================================================
+   ต้นทุนต่อกิโล & จุดคุ้มทุน (การเงิน → สรุป)
+   ============================================================= */
+.uc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.uc-box { background: var(--bg); border-radius: 14px; padding: 10px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.uc-box span { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+.uc-box b { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+.uc-box.pos { background: var(--primary-tint); } .uc-box.pos b { color: var(--primary); }
+.uc-box.neg { background: var(--danger-tint); } .uc-box.neg b { color: var(--danger); }
+.uc-sub { font-size: 11.5px; color: var(--ink-soft); margin: 8px 0 14px; line-height: 1.5; }
+.uc-be-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.uc-be-head b { font-family: var(--font-display); font-size: 17px; }
+.uc-be-status { font-size: 13px; color: var(--ink); margin-top: 6px; }
+.uc-pace { font-size: 12.5px; font-weight: 600; margin-top: 8px; padding: 8px 10px; border-radius: 10px; }
+.uc-pace.ok { background: var(--primary-tint); color: var(--primary-dark); }
+.uc-pace.bad { background: var(--accent-tint); color: #B45309; }
+[data-theme="dark"] .uc-pace.bad { color: #FBBF24; }
+.uc-note, .uc-year { font-size: 12px; color: var(--ink-soft); margin-top: 10px; line-height: 1.5; }
+.uc-year { padding-top: 10px; border-top: 1px solid var(--line); }

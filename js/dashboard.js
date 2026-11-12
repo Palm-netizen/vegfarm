@@ -3,6 +3,7 @@
 async function loadDashboard() {
   setLoading(true);
   if (typeof renderFoliarDash === 'function') renderFoliarDash();   // แจ้งเตือนฉีดบำรุงใบ (โหลดแยก ไม่รอ)
+  if (typeof renderWeatherDash === 'function') renderWeatherDash();  // พยากรณ์อากาศ (โหลดแยก ไม่รอ)
   try {
     const today = new Date().toISOString().split('T')[0];
     // วันจันทร์ของสัปดาห์นี้

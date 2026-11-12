@@ -484,8 +484,8 @@ async function loadFinanceSummary() {
   if (bLabel) bLabel.textContent = `รายจ่ายแยกหมวด (${isCurrentMonth ? 'เดือนนี้' : monthName})`;
 
   const [incM,incY,expM,expY,allInc,allExp,persM] = await Promise.all([
-    db.from('income').select('total_amount').gte('income_date',monthStart).lt('income_date',nextMonthStart),
-    db.from('income').select('total_amount').gte('income_date',yearStart).lte('income_date',yearEnd),
+    db.from('income').select('total_amount,kg_sold').gte('income_date',monthStart).lt('income_date',nextMonthStart),
+    db.from('income').select('total_amount,kg_sold').gte('income_date',yearStart).lte('income_date',yearEnd),
     db.from('expenses').select('amount').gte('expense_date',monthStart).lt('expense_date',nextMonthStart),
     db.from('expenses').select('amount').gte('expense_date',yearStart).lte('expense_date',yearEnd),
     db.from('income').select('income_date,total_amount').order('income_date',{ascending:true}).limit(12),
@@ -527,6 +527,10 @@ async function loadFinanceSummary() {
   document.getElementById('sum-inc-year').textContent    = fmt(iy);
   document.getElementById('sum-exp-year').textContent    = fmt(ey);
   document.getElementById('sum-profit-year').textContent = fmt(iy-ey);
+
+  // ต้นทุนต่อกิโล + จุดคุ้มทุน
+  const sk = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.kg_sold||0),0)||0;
+  renderUnitCost({ im, kg: sk(incM), expVar, em, isCurrentMonth, yr, moIdx, iy, kgY: sk(incY), ey });
 
   // รายจ่ายแยกประเภท: ต้นทุนซื้อของเข้า (ผันแปร) vs ค่าคงที่ · ส่วนตัวแยกบัญชี
   const personalM = se(persM);
@@ -625,6 +629,61 @@ function renderFinanceChart(incRows,expRows) {
       <span><i style="background:var(--accent)"></i>รายจ่าย</span>
       <span><i style="background:var(--ink);opacity:.75"></i>กำไรสุทธิ</span>
     </div>`;
+}
+
+
+// ===== ต้นทุนต่อกิโล & จุดคุ้มทุน =====
+// เดือนปัจจุบัน: คิดค่าคงที่ตามวันที่ผ่านไปแล้ว (ไม่งั้นต้นเดือนต้นทุน/กก. จะสูงเกินจริง)
+function renderUnitCost({ im, kg, expVar, em, isCurrentMonth, yr, moIdx, iy, kgY, ey }) {
+  const el = document.getElementById('sum-unit-cost');
+  if (!el) return;
+  const baht = n => '฿' + n.toLocaleString('th-TH', { maximumFractionDigits: 0 });
+  const bahtKg = n => '฿' + n.toLocaleString('th-TH', { maximumFractionDigits: n < 100 ? 1 : 0 });
+  const kgF = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  const now = new Date();
+  const daysInMonth = new Date(yr, moIdx + 1, 0).getDate();
+  const daysPassed = isCurrentMonth ? now.getDate() : daysInMonth;
+  const fixedSoFar = FIXED_MONTHLY * daysPassed / daysInMonth;
+  const costSoFar = expVar + fixedSoFar;
+  const price = kg > 0 ? im / kg : INCOME_PRICE_PER_KG;              // ราคาขายเฉลี่ยจริง
+  const needKg = price > 0 ? em / price : 0;                         // ต้องขายกี่ กก. ให้พอรายจ่ายทั้งเดือน
+  const fixedKg = price > 0 ? FIXED_MONTHLY / price : 0;
+  const pct = needKg > 0 ? Math.min(100, kg / needKg * 100) : 0;
+
+  let unit = '';
+  if (kg > 0) {
+    const cpk = costSoFar / kg, ppk = price - cpk;
+    unit = `
+      <div class="uc-grid">
+        <div class="uc-box"><span>ต้นทุน/กก.</span><b>${bahtKg(cpk)}</b></div>
+        <div class="uc-box"><span>ขายได้/กก.</span><b>${bahtKg(price)}</b></div>
+        <div class="uc-box ${ppk >= 0 ? 'pos' : 'neg'}"><span>${ppk >= 0 ? 'กำไร/กก.' : 'ขาดทุน/กก.'}</span><b>${bahtKg(Math.abs(ppk))}</b></div>
+      </div>
+      <div class="uc-sub">ขายแล้ว ${kgF(kg)} กก. · ต้นทุน ${baht(costSoFar)} = ซื้อของเข้า ${baht(expVar)} + ค่าคงที่ ${baht(fixedSoFar)}${isCurrentMonth ? ` (คิด ${daysPassed}/${daysInMonth} วัน)` : ''}</div>`;
+  } else {
+    unit = `<div class="uc-sub" style="margin-bottom:8px">ยังไม่มียอดขายที่ระบุกิโลในเดือนนี้ — คิดจุดคุ้มทุนจากราคา ${bahtKg(price)}/กก.</div>`;
+  }
+
+  let pace = '';
+  if (isCurrentMonth && kg > 0 && daysPassed < daysInMonth) {
+    const proj = kg / daysPassed * daysInMonth;
+    pace = proj >= needKg
+      ? `<div class="uc-pace ok">📈 ถ้าขายเท่านี้ทั้งเดือน ~${kgF(proj)} กก. → ผ่านจุดคุ้มทุน</div>`
+      : `<div class="uc-pace bad">📉 ถ้าขายเท่านี้ทั้งเดือน ~${kgF(proj)} กก. → ยังขาดอีก ~${kgF(needKg - proj)} กก. (≈${kgF((needKg - proj) / Math.max(1, (daysInMonth - daysPassed) / 7))} กก./สัปดาห์ที่เหลือ)</div>`;
+  }
+
+  const yearLine = kgY > 0 ? `<div class="uc-year">ทั้งปี ${yr + 543}: ต้นทุนเฉลี่ย <b>${bahtKg(ey / kgY)}/กก.</b> · ขายเฉลี่ย <b>${bahtKg(iy / kgY)}/กก.</b> (${kgF(kgY)} กก.)</div>` : '';
+
+  el.innerHTML = `
+    ${unit}
+    <div class="uc-be-head"><span>🎯 จุดคุ้มทุนเดือนนี้</span><b>${kgF(needKg)} กก.</b></div>
+    <div class="goal-bar"><div class="goal-bar-fill ${kg >= needKg ? 'done' : ''}" style="width:${pct}%"></div></div>
+    <div class="uc-be-status">${kg >= needKg
+      ? `ขายแล้ว ${kgF(kg)} กก. · <b style="color:var(--primary)">ผ่านจุดคุ้มทุนแล้ว 🎉 เกินมา ${kgF(kg - needKg)} กก.</b>`
+      : `ขายแล้ว ${kgF(kg)} / ${kgF(needKg)} กก. · <b style="color:var(--accent)">ต้องขายอีก ${kgF(needKg - kg)} กก.</b>`}</div>
+    ${pace}
+    <div class="uc-note">ค่าแรง+ค่าไฟ ${baht(FIXED_MONTHLY)}/เดือน ต้องขายอย่างน้อย <b>${kgF(fixedKg)} กก./เดือน</b> (≈${kgF(fixedKg / 4.33)} กก./สัปดาห์) ถึงจะพอ</div>
+    ${yearLine}`;
 }
 
 // ===== EXPORT =====

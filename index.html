@@ -9,6 +9,7 @@
 <!-- เร่งการเชื่อมต่อปลายทางตั้งแต่ต้น (ลดเวลาโหลดครั้งแรก) -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
 <link rel="preconnect" href="https://tdlbfnlnygxcgmwadcvj.supabase.co" crossorigin>
 
 <!-- PWA -->
@@ -53,7 +54,7 @@ if('serviceWorker' in navigator){
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="css/style.css?v=58">
-<link rel="stylesheet" href="css/theme.css?v=4">
+<link rel="stylesheet" href="css/theme.css?v=6">
 </head>
 <body>
 
@@ -117,6 +118,7 @@ if('serviceWorker' in navigator){
     <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
 
     <div id="dash-foliar"></div>
+    <div id="dash-weather"></div>
     <div id="dash-advice"></div>
     <button class="btn btn-outline" style="width:100%;margin-bottom:10px;gap:8px" onclick="openAssistant()">🤖 ถามผู้ช่วยฟาร์ม (เรื่องเพาะ/ผลผลิต/เป้าหมาย)</button>
     <button class="btn btn-outline" style="width:100%;margin-bottom:16px;gap:8px" onclick="openCapacity()">🧮 กำลังการผลิต (Capacity Planner)</button>
@@ -846,6 +848,9 @@ if('serviceWorker' in navigator){
         </div>
       </div>
 
+      <div class="growth-divider"><span class="gd-label">ต้นทุนต่อกิโล &amp; จุดคุ้มทุน</span></div>
+      <div class="card" id="sum-unit-cost"></div>
+
       <div class="growth-divider"><span class="gd-label">รายจ่ายแยกประเภท (เดือนนี้)</span></div>
       <div class="card savings-card">
         <div class="savings-row"><span>🛒 ต้นทุนซื้อของเข้า (ผันแปร)</span><span id="sum-exp-var" style="color:var(--accent)">–</span></div>
@@ -1258,17 +1263,18 @@ if('serviceWorker' in navigator){
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=15"></script>
-<script defer src="js/dashboard.js?v=35"></script>
+<script defer src="js/dashboard.js?v=36"></script>
 <script defer src="js/seeds.js?v=19"></script>
 <script defer src="js/plots.js?v=23"></script>
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/foliar.js?v=2"></script>
+<script defer src="js/weather.js?v=3"></script>
 <script defer src="js/calendar.js?v=5"></script>
 <script defer src="js/todos.js?v=5"></script>
-<script defer src="js/finance.js?v=19"></script>
+<script defer src="js/finance.js?v=20"></script>
 <script defer src="js/customers.js?v=11"></script>
 <script defer src="js/assistant.js?v=12"></script>
 <script defer src="js/capacity.js?v=3"></script>
-<script defer src="js/app.js?v=14"></script>
+<script defer src="js/app.js?v=15"></script>
 </body>
 </html>
