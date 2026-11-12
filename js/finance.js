@@ -609,7 +609,7 @@ function renderFinanceChart(incRows,expRows) {
   mArr.forEach((m,i)=>{
     const x=xFor(i);
     if(m.inc>0) bars+=pill(x-bW-3,m.inc,'fill:var(--blue)');
-    if(m.exp>0) bars+=pill(x+3,m.exp,'fill:var(--primary-light)');
+    if(m.exp>0) bars+=pill(x+3,m.exp,'fill:var(--accent)');
     labels+=`<text x="${x}" y="${H-12}" text-anchor="middle" font-size="12" font-weight="600" style="fill:var(--ink-soft)">${m.label}</text>`;
   });
   const pts=mArr.map((m,i)=>[+xFor(i).toFixed(1),+yFor(m.inc-m.exp).toFixed(1)]);
@@ -622,7 +622,7 @@ function renderFinanceChart(incRows,expRows) {
     </svg>
     <div class="vf-legend">
       <span><i style="background:var(--blue)"></i>รายรับ</span>
-      <span><i style="background:var(--primary-light)"></i>รายจ่าย</span>
+      <span><i style="background:var(--accent)"></i>รายจ่าย</span>
       <span><i style="background:var(--ink);opacity:.75"></i>กำไรสุทธิ</span>
     </div>`;
 }

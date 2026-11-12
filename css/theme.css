@@ -1,68 +1,72 @@
 /* =============================================================
    VegFarm — "Soft Dashboard" theme (โหลดหลัง style.css)
-   แนวทาง: พื้นเทาอมม่วงอ่อน · การ์ดขาวมุมโค้ง เงาบาง · สีหลักม่วง-คราม
+   แนวทาง: พื้นเทาอมเขียวอ่อน · การ์ดขาวมุมโค้ง เงาบาง · สีหลักเขียวสบายตา
    ปุ่มเมนูที่เลือก = แคปซูลดำ · แท็ก/ชิปแบบพาสเทล · โหมดมืดใช้ได้ครบ
    หมายเหตุ: สีเขียวที่ใช้บอก "เสร็จ/เก็บผัก/ฉีดแล้ว" คงไว้ตามความหมายเดิม
    ============================================================= */
 
 :root {
-  --primary:      #6D5DF6;
-  --primary-dark: #5444E0;
-  --primary-light:#9D90FF;
-  --lime:         #3B9DF6;
-  --gradient:     linear-gradient(135deg, #6D5DF6 0%, #8F82FF 100%);
-  --gradient-soft:linear-gradient(135deg, #F1EFFF 0%, #EAF3FF 100%);
+  /* โทนเขียวสบายตา (แบบเดิม) — คงรูปแบบดีไซน์ใหม่ */
+  --primary:      #16A34A;
+  --primary-dark: #15803D;
+  --primary-light:#6CCF94;
+  --lime:         #65A30D;
+  --gradient:     linear-gradient(135deg, #16A34A 0%, #65A30D 100%);
+  --gradient-soft:linear-gradient(135deg, #ECFDF3 0%, #F7FEE7 100%);
 
-  --primary-tint:        #EFECFF;
-  --primary-tint-strong: #E0DBFF;
-  --lime-tint:           #E7F2FE;
-  --blue:                #3B9DF6;
-  --blue-tint:           #E4F1FE;
+  --primary-tint:        #ECFDF3;
+  --primary-tint-strong: #D1FAE5;
+  --lime-tint:           #F7FEE7;
+  --blue:                #22A06B;   /* แท่งกราฟ / checkbox (เขียวสด) */
+  --blue-tint:           #E3F5EA;
+  --chart-line:          #0F766E;   /* เส้นกราฟ (เขียวอมฟ้าเข้ม) */
 
   --accent:       #F59E0B;
-  --accent-tint:  #FFF4E0;
+  --accent-tint:  #FEF3E2;
   --danger:       #EF4444;
-  --danger-tint:  #FDECEC;
+  --danger-tint:  #FEECEC;
 
-  --ink:          #1B1B26;
-  --ink-soft:     #7A7A8C;
-  --ink-faint:    #ABABBA;
+  --ink:          #0B1414;
+  --ink-soft:     #6B7A75;
+  --ink-faint:    #A3B0AB;
 
-  --bg:           #F1F1F6;
+  --bg:           #F2F6F3;
   --paper:        #FFFFFF;
-  --line:         #E9E9F0;
-  --night:        #1D1D24;   /* การ์ด/แคปซูลสีดำ */
+  --line:         #E5ECE8;
+  --night:        #1F4D35;   /* หัวแอป/แคปซูลเมนู = เขียวเข้ม */
 
   --radius:    20px;
   --radius-sm: 12px;
   --radius-lg: 26px;
-  --shadow:    0 1px 2px rgba(24,24,48,.04), 0 4px 16px rgba(24,24,48,.05);
-  --shadow-lg: 0 6px 14px rgba(24,24,48,.06), 0 20px 44px rgba(24,24,48,.12);
-  --shadow-primary: 0 6px 16px rgba(109,93,246,.28);
+  --shadow:    0 1px 2px rgba(11,20,20,.03), 0 4px 16px rgba(11,20,20,.05);
+  --shadow-lg: 0 6px 14px rgba(11,20,20,.05), 0 20px 44px rgba(11,20,20,.11);
+  --shadow-primary: 0 6px 16px rgba(22,163,74,.28);
 }
 
 [data-theme="dark"] {
-  --primary:      #8B7DFF;
-  --primary-dark: #A79DFF;
-  --primary-light:#B3AAFF;
-  --gradient:     linear-gradient(135deg, #7A6BFF 0%, #A093FF 100%);
-  --gradient-soft:linear-gradient(135deg, #1E1B33 0%, #172433 100%);
-  --primary-tint:        #221F3A;
-  --primary-tint-strong: #2D2852;
-  --lime-tint:           #16273A;
-  --blue-tint:           #16273A;
-  --accent-tint:  #2B2414;
-  --danger-tint:  #2E1719;
-  --ink:          #F1F1F7;
-  --ink-soft:     #A1A1B3;
-  --ink-faint:    #6E6E82;
-  --bg:           #0F0F14;
-  --paper:        #18181F;
-  --line:         #272730;
-  --night:        #23232D;
+  --primary:      #2EBD6B;
+  --primary-dark: #4ADE80;
+  --primary-light:#3E8F62;
+  --gradient:     linear-gradient(135deg, #16A34A 0%, #65A30D 100%);
+  --gradient-soft:linear-gradient(135deg, #13241B 0%, #15251A 100%);
+  --primary-tint:        #14271C;
+  --primary-tint-strong: #1C3A2A;
+  --lime-tint:           #1A2A12;
+  --blue:                #2EBD6B;
+  --blue-tint:           #16291F;
+  --chart-line:          #5EEAD4;
+  --accent-tint:  #2C2210;
+  --danger-tint:  #2C1717;
+  --ink:          #E7EEEB;
+  --ink-soft:     #9DB0A9;
+  --ink-faint:    #6E817A;
+  --bg:           #0E1513;
+  --paper:        #18211D;
+  --line:         #27332C;
+  --night:        #163A28;
   --shadow:    0 1px 2px rgba(0,0,0,.35), 0 6px 20px rgba(0,0,0,.35);
   --shadow-lg: 0 8px 16px rgba(0,0,0,.45), 0 24px 48px rgba(0,0,0,.6);
-  --shadow-primary: 0 6px 16px rgba(139,125,255,.25);
+  --shadow-primary: 0 6px 16px rgba(34,197,94,.22);
 }
 
 body { background: var(--bg); letter-spacing: 0; }
@@ -73,20 +77,20 @@ body { background: var(--bg); letter-spacing: 0; }
   border-radius: 0 0 26px 26px;
   min-height: 0;
   padding: calc(14px + env(safe-area-inset-top)) 18px 18px;
-  box-shadow: 0 10px 30px rgba(20,20,40,.18);
+  box-shadow: 0 10px 30px rgba(15,60,35,.20);
 }
 .top-nav::before {
   top: -70px; right: -50px; width: 190px; height: 190px;
-  background: radial-gradient(circle, rgba(109,93,246,.45) 0%, rgba(109,93,246,0) 70%);
+  background: radial-gradient(circle, rgba(132,204,22,.35) 0%, rgba(132,204,22,0) 70%);
 }
 .top-nav::after {
   bottom: -90px; left: 30%; width: 170px; height: 170px;
-  background: radial-gradient(circle, rgba(59,157,246,.30) 0%, rgba(59,157,246,0) 70%);
+  background: radial-gradient(circle, rgba(74,222,128,.22) 0%, rgba(74,222,128,0) 70%);
 }
 .top-nav .logo { font-weight: 700; letter-spacing: -0.4px; }
 .top-nav .logo-mark {
   background: var(--gradient);
-  box-shadow: 0 6px 16px rgba(109,93,246,.45);
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
   border-radius: 13px;
 }
 .top-nav .logo-sub { color: rgba(255,255,255,.55); letter-spacing: 1.6px; }
@@ -105,7 +109,7 @@ body { background: var(--bg); letter-spacing: 0; }
   border-radius: 24px;
 }
 .bottom-nav a { color: var(--ink-faint); border-radius: 16px; }
-.bottom-nav a.active { background: var(--night); color: #fff; box-shadow: 0 6px 16px rgba(20,20,40,.25); }
+.bottom-nav a.active { background: var(--night); color: #fff; box-shadow: 0 6px 16px rgba(15,60,35,.28); }
 [data-theme="dark"] .bottom-nav a.active { background: var(--primary); box-shadow: var(--shadow-primary); }
 .bottom-nav a.active .nav-icon { transform: none; }
 
@@ -158,9 +162,9 @@ body { background: var(--bg); letter-spacing: 0; }
 /* การ์ดกำไรเด่น (การเงิน) = การ์ดดำ */
 .fin-hero, .fin-hero.negative {
   background: var(--night);
-  box-shadow: 0 10px 28px rgba(20,20,40,.22);
+  box-shadow: 0 10px 28px rgba(15,60,35,.22);
 }
-.fin-hero::after { background: radial-gradient(circle, rgba(109,93,246,.45), rgba(109,93,246,0) 70%); }
+.fin-hero::after { background: radial-gradient(circle, rgba(132,204,22,.35), rgba(132,204,22,0) 70%); }
 .fin-hero.negative .fin-hero-profit { color: #FF8A8A; }
 [data-theme="dark"] .fin-hero { border: 1px solid var(--line); }
 
@@ -263,7 +267,7 @@ body { font-feature-settings: 'tnum' 0; }
 .gd-label, .card-title, .form-label, .btn { letter-spacing: -0.1px; }
 
 /* ---------- โลโก้สวนอิ่มพร้อมสุข ---------- */
-.top-nav .logo-mark { background: #fff; padding: 0; overflow: hidden; border-radius: 50%; box-shadow: 0 4px 14px rgba(151,52,202,.45); }
+.top-nav .logo-mark { background: #fff; padding: 0; overflow: hidden; border-radius: 50%; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 .top-nav .logo-mark img { width: 100%; height: 100%; display: block; }
 .login-logo { width: 84px !important; height: 84px !important; border-radius: 50% !important; overflow: hidden; background: #fff !important; }
 .login-logo img { width: 100%; height: 100%; display: block; }
@@ -274,11 +278,11 @@ body { font-feature-settings: 'tnum' 0; }
 input[type="checkbox"], input[type="radio"] {
   -webkit-appearance: none; appearance: none;
   width: 20px; height: 20px; margin: 0; flex: none; cursor: pointer;
-  border: 1.5px solid #CBCBD8; background-color: var(--paper);
+  border: 1.5px solid #C3D1C9; background-color: var(--paper);
   transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
   vertical-align: middle;
 }
-[data-theme="dark"] input[type="checkbox"], [data-theme="dark"] input[type="radio"] { border-color: #45455A; }
+[data-theme="dark"] input[type="checkbox"], [data-theme="dark"] input[type="radio"] { border-color: #3A4A41; }
 input[type="checkbox"] { border-radius: 6px; }
 input[type="checkbox"]:checked {
   background-color: var(--blue); border-color: var(--blue);
@@ -290,8 +294,8 @@ input[type="radio"]:checked { border: 6px solid var(--primary); background-color
 input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { box-shadow: 0 0 0 4px var(--primary-tint-strong); outline: none; }
 .todo-check { width: 22px; height: 22px; }
 /* ช่องติ๊กออเดอร์ในหน้าแรก (เป็น span) ให้หน้าตาเดียวกัน */
-.dash-ord-check { border: 1.5px solid #CBCBD8; border-radius: 6px; width: 22px; height: 22px; }
-[data-theme="dark"] .dash-ord-check { border-color: #45455A; }
+.dash-ord-check { border: 1.5px solid #C3D1C9; border-radius: 6px; width: 22px; height: 22px; }
+[data-theme="dark"] .dash-ord-check { border-color: #3A4A41; }
 .dash-ord-check.on {
   background: var(--blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 12.5 10 17.5 19 7'/%3E%3C/svg%3E") center/15px no-repeat;
   border-color: var(--blue); font-size: 0; color: transparent;

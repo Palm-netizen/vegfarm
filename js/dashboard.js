@@ -249,11 +249,11 @@ function renderDashboardChart(batches) {
   const pts = seedData.map((v, i) => [+xFor(i).toFixed(1), +yForSeed(v).toFixed(1)]);
   const line = vfSmoothPath(pts);
   const area = `${line} L${pts[pts.length - 1][0]},${base} L${pts[0][0]},${base} Z`;
-  const dots = pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" style="fill:var(--paper);stroke:var(--primary)" stroke-width="2.5"/>`).join('');
+  const dots = pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" style="fill:var(--paper);stroke:var(--chart-line)" stroke-width="2.5"/>`).join('');
   const last = pts[pts.length - 1], lastV = seedData[seedData.length - 1];
   const bubbleTxt = `${lastV.toLocaleString('th-TH')} เมล็ด`;
   const bw = 16 + bubbleTxt.length * 6.6, bx = Math.min(Math.max(last[0] - bw / 2, 2), W - bw - 2), by = Math.max(last[1] - 40, 2);
-  const bubble = `<rect x="${bx}" y="${by}" width="${bw}" height="26" rx="9" style="fill:var(--primary)"/>
+  const bubble = `<rect x="${bx}" y="${by}" width="${bw}" height="26" rx="9" style="fill:var(--chart-line)"/>
     <text x="${bx + bw / 2}" y="${by + 17}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${bubbleTxt}</text>`;
 
   const xLabels = labels.map((lab, i) =>
@@ -262,17 +262,17 @@ function renderDashboardChart(batches) {
   container.innerHTML = `
     <svg class="vf-chart" viewBox="0 0 ${W} ${H}">
       <defs><linearGradient id="dashSeedFill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" style="stop-color:var(--primary);stop-opacity:.28"/>
-        <stop offset="100%" style="stop-color:var(--primary);stop-opacity:0"/>
+        <stop offset="0%" style="stop-color:var(--chart-line);stop-opacity:.28"/>
+        <stop offset="100%" style="stop-color:var(--chart-line);stop-opacity:0"/>
       </linearGradient></defs>
       ${grid}${bars}
       <path d="${area}" fill="url(#dashSeedFill)"/>
-      <path d="${line}" fill="none" style="stroke:var(--primary)" stroke-width="3" stroke-linecap="round"/>
+      <path d="${line}" fill="none" style="stroke:var(--chart-line)" stroke-width="3" stroke-linecap="round"/>
       ${dots}${bubble}${xLabels}
     </svg>
     <div class="vf-legend">
       <span><i style="background:var(--blue)"></i>คาดการณ์ (กก.)</span>
-      <span><i style="background:var(--primary)"></i>จำนวนเมล็ด</span>
+      <span><i style="background:var(--chart-line)"></i>จำนวนเมล็ด</span>
     </div>`;
 }
 
