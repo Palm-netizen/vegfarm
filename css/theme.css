@@ -248,3 +248,65 @@ body { background: var(--bg); letter-spacing: 0; }
   .top-nav .logo-mark { width: 38px; height: 38px; }
   .top-nav .nav-date { font-size: 11px; }
 }
+
+/* =============================================================
+   ตัวอักษร: Plus Jakarta Sans (อังกฤษ/ตัวเลข) + Anuphan (ไทย) — โมเดิร์น อ่านง่าย
+   ============================================================= */
+:root {
+  --font-display: 'Plus Jakarta Sans', 'Anuphan', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+  --font-body:    'Plus Jakarta Sans', 'Anuphan', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+}
+body { font-feature-settings: 'tnum' 0; }
+.card-value, .kpi-val, .ps-num, .fin-hero-profit, .deliv-kg, .pe-amt { font-variant-numeric: tabular-nums; }
+.section-title { font-weight: 800; letter-spacing: -0.8px; }
+.card-value { font-weight: 800; letter-spacing: -1.2px; }
+.gd-label, .card-title, .form-label, .btn { letter-spacing: -0.1px; }
+
+/* ---------- โลโก้สวนอิ่มพร้อมสุข ---------- */
+.top-nav .logo-mark { background: #fff; padding: 0; overflow: hidden; border-radius: 50%; box-shadow: 0 4px 14px rgba(151,52,202,.45); }
+.top-nav .logo-mark img { width: 100%; height: 100%; display: block; }
+.login-logo { width: 84px !important; height: 84px !important; border-radius: 50% !important; overflow: hidden; background: #fff !important; }
+.login-logo img { width: 100%; height: 100%; display: block; }
+
+/* =============================================================
+   Checkbox / Radio แบบโมเดิร์น (สี่เหลี่ยมมุมมน · ติ๊กแล้วเป็นสีฟ้า + เครื่องหมายถูกสีขาว)
+   ============================================================= */
+input[type="checkbox"], input[type="radio"] {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; margin: 0; flex: none; cursor: pointer;
+  border: 1.5px solid #CBCBD8; background-color: var(--paper);
+  transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  vertical-align: middle;
+}
+[data-theme="dark"] input[type="checkbox"], [data-theme="dark"] input[type="radio"] { border-color: #45455A; }
+input[type="checkbox"] { border-radius: 6px; }
+input[type="checkbox"]:checked {
+  background-color: var(--blue); border-color: var(--blue);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 12.5 10 17.5 19 7'/%3E%3C/svg%3E");
+  background-size: 15px 15px; background-position: center; background-repeat: no-repeat;
+}
+input[type="radio"] { border-radius: 50%; }
+input[type="radio"]:checked { border: 6px solid var(--primary); background-color: #fff; }
+input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { box-shadow: 0 0 0 4px var(--primary-tint-strong); outline: none; }
+.todo-check { width: 22px; height: 22px; }
+/* ช่องติ๊กออเดอร์ในหน้าแรก (เป็น span) ให้หน้าตาเดียวกัน */
+.dash-ord-check { border: 1.5px solid #CBCBD8; border-radius: 6px; width: 22px; height: 22px; }
+[data-theme="dark"] .dash-ord-check { border-color: #45455A; }
+.dash-ord-check.on {
+  background: var(--blue) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 12.5 10 17.5 19 7'/%3E%3C/svg%3E") center/15px no-repeat;
+  border-color: var(--blue); font-size: 0; color: transparent;
+}
+
+/* ---------- ชิปสถานะแบบในภาพ (Done = เขียวพาสเทล · To do = เทา) ---------- */
+.status-pill { font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px; }
+.status-pill.done-pill { background: #E2F6EA; color: #1E9E5A; border: none; }
+.status-pill.wait-pill { background: var(--bg); color: var(--ink-soft); border: 1px solid var(--line); }
+[data-theme="dark"] .status-pill.done-pill { background: #143024; color: #4ADE80; }
+.status-pill.done-pill::before, .status-pill.wait-pill::before {
+  content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; background: currentColor;
+}
+
+/* ---------- กราฟ ---------- */
+.vf-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); overflow: visible; }
+.vf-legend { display: flex; justify-content: center; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--ink-soft); font-weight: 600; flex-wrap: wrap; }
+.vf-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }

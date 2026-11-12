@@ -275,6 +275,25 @@ function getSurvivalRate(weather) {
   return rates[weather] || 70;
 }
 
+// ===== กราฟ: เส้นโค้งนุ่ม (Catmull-Rom → Bezier) ใช้ทั้งหน้าแรกและการเงิน =====
+function vfSmoothPath(pts) {
+  if (!pts.length) return '';
+  if (pts.length === 1) return `M${pts[0][0]},${pts[0][1]}`;
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0]},${p2[1]}`;
+  }
+  return d;
+}
+// ตัวเลขย่อบนกราฟ: 1,500 → 1.5K
+function vfShortNum(v) {
+  const a = Math.abs(v);
+  return (v < 0 ? '-' : '') + (a >= 1000 ? (a / 1000).toFixed(a >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'K' : String(Math.round(a * 10) / 10));
+}
+
 // ===== ชนิดผัก (รายการเดียว ใช้ทั้งแอป) =====
 const VF_VEG = {
   green_oak: 'กรีนโอ๊ค', red_oak: 'เรดโอ๊ค', finley: 'ฟินเลย์',

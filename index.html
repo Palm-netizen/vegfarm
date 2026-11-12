@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#1D1D24">
-<title>VegFarm — Smart Farm</title>
+<title>ImpromsukFarm — สวนอิ่มพร้อมสุข</title>
 
 <!-- เร่งการเชื่อมต่อปลายทางตั้งแต่ต้น (ลดเวลาโหลดครั้งแรก) -->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -13,13 +13,13 @@
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=2">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=2">
-<link rel="icon" type="image/png" href="icons/icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=3">
+<link rel="icon" type="image/png" href="icons/icon-192.png?v=3">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="VegFarm">
+<meta name="apple-mobile-web-app-title" content="ImpromsukFarm">
 <script>
 // ลงทะเบียน service worker + อัปเดตอัตโนมัติ (เจอเวอร์ชันใหม่ → รีโหลดให้เอง กันแคชค้าง)
 if('serviceWorker' in navigator){
@@ -46,26 +46,22 @@ if('serviceWorker' in navigator){
 <script>try{if(localStorage.getItem('vf_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 
 <!-- Fonts: self-hosted (Prompt + IBM Plex Sans Thai) — ทำงานออฟไลน์ -->
-<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/fonts.css?v=2">
 
 <!-- Supabase client (ใช้ก็ต่อเมื่อ js/config.js ถูกตั้งค่า; ออฟไลน์ก็ข้ามได้)
      defer = ไม่บล็อกการแสดงผล แต่ยังรันก่อนสคริปต์ของแอป (ตามลำดับเอกสาร) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="css/style.css?v=58">
-<link rel="stylesheet" href="css/theme.css?v=2">
+<link rel="stylesheet" href="css/theme.css?v=3">
 </head>
 <body>
 
 <!-- ===== LOGIN SCREEN (cloud mode only) ===== -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="login-logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22V12"/><path d="M12 12C12 7 8 4 4 4C4 9 7 13 12 13"/><path d="M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/>
-      </svg>
-    </div>
-    <div class="login-title">VegFarm</div>
+    <div class="login-logo"><img src="icons/logo.png?v=3" alt="สวนอิ่มพร้อมสุข"></div>
+    <div class="login-title">ImpromsukFarm</div>
     <div class="login-sub">เข้าสู่ระบบเพื่อจัดการฟาร์ม</div>
     <input id="login-email" type="text" class="form-control" placeholder="ชื่อผู้ใช้" autocomplete="username">
     <input id="login-password" type="password" class="form-control" placeholder="รหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')vfSignIn()">
@@ -78,13 +74,8 @@ if('serviceWorker' in navigator){
 <div class="top-nav">
   <div class="top-nav-row">
     <div class="logo">
-      <span class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22V12"/><path d="M12 12C12 7 8 4 4 4C4 9 7 13 12 13"/>
-          <path d="M12 12C12 8 15 5 19 5C19 9.5 16 13 12 13"/>
-        </svg>
-      </span>
-      <span>VegFarm<span class="logo-sub">Smart Farm</span></span>
+      <span class="logo-mark"><img src="icons/logo.png?v=3" alt="สวนอิ่มพร้อมสุข"></span>
+      <span>ImpromsukFarm<span class="logo-sub">สวนอิ่มพร้อมสุข</span></span>
     </div>
     <div class="nav-right">
       <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="สลับธีมสว่าง/มืด">🌙</button>
@@ -197,7 +188,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
-    <div class="text-sub" style="text-align:center;margin-top:16px;opacity:.6" id="app-version">VegFarm</div>
+    <div class="text-sub" style="text-align:center;margin-top:16px;opacity:.6" id="app-version">ImpromsukFarm</div>
   </div>
 </div>
 
@@ -1266,18 +1257,18 @@ if('serviceWorker' in navigator){
 
 <!-- ===== SCRIPTS (defer = โหลดขนานกัน ไม่บล็อกการแสดงผล รันตามลำดับ) ===== -->
 <script defer src="js/config.js"></script>
-<script defer src="js/supabase.js?v=14"></script>
-<script defer src="js/dashboard.js?v=33"></script>
+<script defer src="js/supabase.js?v=15"></script>
+<script defer src="js/dashboard.js?v=34"></script>
 <script defer src="js/seeds.js?v=19"></script>
 <script defer src="js/plots.js?v=23"></script>
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/foliar.js?v=2"></script>
 <script defer src="js/calendar.js?v=5"></script>
-<script defer src="js/todos.js?v=4"></script>
-<script defer src="js/finance.js?v=16"></script>
-<script defer src="js/customers.js?v=10"></script>
+<script defer src="js/todos.js?v=5"></script>
+<script defer src="js/finance.js?v=18"></script>
+<script defer src="js/customers.js?v=11"></script>
 <script defer src="js/assistant.js?v=12"></script>
 <script defer src="js/capacity.js?v=3"></script>
-<script defer src="js/app.js?v=12"></script>
+<script defer src="js/app.js?v=13"></script>
 </body>
 </html>

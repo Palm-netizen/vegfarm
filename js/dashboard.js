@@ -216,69 +216,63 @@ function renderDashboardChart(batches) {
     return;
   }
 
-  const labels = batches.map(b => formatDateTH(b.seed_date));
+  // สไตล์ใหม่: แท่งทรงแคปซูลบนรางสีอ่อน (กก.) + เส้นโค้งไล่สี (จำนวนเมล็ด) + ป้ายค่าจุดล่าสุด
+  const labels = batches.map(b => new Date(b.seed_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }));
   const kgData = batches.map(b => parseFloat(b.estimated_kg) || 0);
   const seedData = batches.map(b => b.seed_count || 0);
 
-  const W = 600, H = 280;
-  const padL = 50, padR = 50, padT = 20, padB = 50;
-  const chartW = W - padL - padR;
-  const chartH = H - padT - padB;
-  const n = labels.length;
-  const slot = chartW / n;
-  const barW = Math.min(38, slot * 0.45);
-
-  const maxKg = Math.max(...kgData, 1) * 1.2;
-  const maxSeed = Math.max(...seedData, 1) * 1.2;
-
+  const W = 600, H = 270, padL = 16, padR = 16, padT = 34, padB = 40;
+  const chartW = W - padL - padR, chartH = H - padT - padB;
+  const n = labels.length, slot = chartW / n;
+  const barW = Math.min(30, slot * 0.42);
+  const maxKg = Math.max(...kgData, 1) * 1.15;
+  const maxSeed = Math.max(...seedData, 1) * 1.25;
+  const base = padT + chartH;
   const xFor = i => padL + slot * i + slot / 2;
-  const yForKg = v => padT + chartH - (v / maxKg) * chartH;
-  const yForSeed = v => padT + chartH - (v / maxSeed) * chartH;
+  const yForKg = v => base - (v / maxKg) * chartH;
+  const yForSeed = v => base - (v / maxSeed) * chartH;
 
-  // Bars
-  let bars = '';
-  kgData.forEach((v, i) => {
-    const x = xFor(i) - barW / 2;
-    const y = yForKg(v);
-    const h = padT + chartH - y;
-    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="5" fill="#16A34A"/>`;
-    bars += `<text x="${xFor(i)}" y="${y - 6}" text-anchor="middle" font-size="11" fill="#1B3A2B" font-weight="700">${v}</text>`;
-  });
-
-  // Line
-  const points = seedData.map((v, i) => `${xFor(i)},${yForSeed(v)}`).join(' ');
-  const areaPoints = `${padL},${padT + chartH} ${points} ${padL + chartW},${padT + chartH}`;
-  let dots = '';
-  seedData.forEach((v, i) => {
-    dots += `<circle cx="${xFor(i)}" cy="${yForSeed(v)}" r="4" fill="#F59E0B"/>`;
-    dots += `<text x="${xFor(i)}" y="${yForSeed(v) - 10}" text-anchor="middle" font-size="11" fill="#F59E0B" font-weight="700">${v}</text>`;
-  });
-
-  // Gridlines
   let grid = '';
-  for (let g = 0; g <= 4; g++) {
-    const y = padT + (chartH / 4) * g;
-    grid += `<line x1="${padL}" y1="${y}" x2="${padL + chartW}" y2="${y}" stroke="#DDE3D7" stroke-width="1"/>`;
+  for (let g = 0; g <= 3; g++) {
+    const y = padT + (chartH / 3) * g;
+    grid += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="3 5"/>`;
   }
 
-  // X labels
-  let xLabels = '';
-  labels.forEach((lab, i) => {
-    xLabels += `<text x="${xFor(i)}" y="${H - padB + 22}" text-anchor="middle" font-size="11" fill="#6E7A6A">${lab}</text>`;
+  let bars = '';
+  kgData.forEach((v, i) => {
+    const x = xFor(i) - barW / 2, y = yForKg(v);
+    bars += `<rect x="${x}" y="${padT}" width="${barW}" height="${chartH}" rx="${barW / 2}" style="fill:var(--blue-tint)"/>`;
+    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${Math.max(barW, base - y)}" rx="${barW / 2}" style="fill:var(--blue)"/>`;
+    bars += `<text x="${xFor(i)}" y="${padT - 10}" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--ink-soft)">${vfShortNum(v)}</text>`;
   });
 
+  const pts = seedData.map((v, i) => [+xFor(i).toFixed(1), +yForSeed(v).toFixed(1)]);
+  const line = vfSmoothPath(pts);
+  const area = `${line} L${pts[pts.length - 1][0]},${base} L${pts[0][0]},${base} Z`;
+  const dots = pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" style="fill:var(--paper);stroke:var(--primary)" stroke-width="2.5"/>`).join('');
+  const last = pts[pts.length - 1], lastV = seedData[seedData.length - 1];
+  const bubbleTxt = `${lastV.toLocaleString('th-TH')} เมล็ด`;
+  const bw = 16 + bubbleTxt.length * 6.6, bx = Math.min(Math.max(last[0] - bw / 2, 2), W - bw - 2), by = Math.max(last[1] - 40, 2);
+  const bubble = `<rect x="${bx}" y="${by}" width="${bw}" height="26" rx="9" style="fill:var(--primary)"/>
+    <text x="${bx + bw / 2}" y="${by + 17}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${bubbleTxt}</text>`;
+
+  const xLabels = labels.map((lab, i) =>
+    `<text x="${xFor(i)}" y="${H - 12}" text-anchor="middle" font-size="12" font-weight="600" style="fill:var(--ink-soft)">${lab}</text>`).join('');
+
   container.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:var(--font-body)">
-      ${grid}
-      ${bars}
-      <polygon points="${areaPoints}" fill="rgba(192,112,59,0.10)" />
-      <polyline points="${points}" fill="none" stroke="#F59E0B" stroke-width="2.5"/>
-      ${dots}
-      ${xLabels}
+    <svg class="vf-chart" viewBox="0 0 ${W} ${H}">
+      <defs><linearGradient id="dashSeedFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" style="stop-color:var(--primary);stop-opacity:.28"/>
+        <stop offset="100%" style="stop-color:var(--primary);stop-opacity:0"/>
+      </linearGradient></defs>
+      ${grid}${bars}
+      <path d="${area}" fill="url(#dashSeedFill)"/>
+      <path d="${line}" fill="none" style="stroke:var(--primary)" stroke-width="3" stroke-linecap="round"/>
+      ${dots}${bubble}${xLabels}
     </svg>
-    <div style="display:flex;justify-content:center;gap:18px;margin-top:8px;font-size:12px;color:var(--ink-soft)">
-      <span><span style="display:inline-block;width:10px;height:10px;background:#16A34A;border-radius:2px;margin-right:5px"></span>คาดการณ์ KG</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#F59E0B;border-radius:50%;margin-right:5px"></span>จำนวนเมล็ด</span>
+    <div class="vf-legend">
+      <span><i style="background:var(--blue)"></i>คาดการณ์ (กก.)</span>
+      <span><i style="background:var(--primary)"></i>จำนวนเมล็ด</span>
     </div>`;
 }
 

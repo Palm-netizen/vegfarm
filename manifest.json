@@ -1,7 +1,7 @@
 {
-  "name": "VegFarm — Smart Farm",
-  "short_name": "VegFarm",
-  "description": "ระบบจัดการแปลงผัก เพาะ-ปลูก-ขาย-การเงิน",
+  "name": "ImpromsukFarm — สวนอิ่มพร้อมสุข",
+  "short_name": "ImpromsukFarm",
+  "description": "สวนอิ่มพร้อมสุข — ระบบจัดการแปลงผัก เพาะ-ปลูก-ขาย-การเงิน",
   "lang": "th",
   "start_url": "./",
   "scope": "./",
@@ -10,8 +10,8 @@
   "background_color": "#F1F1F6",
   "theme_color": "#1D1D24",
   "icons": [
-    { "src": "icons/icon-192.png?v=2", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-192.png?v=3", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png?v=3", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png?v=3", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

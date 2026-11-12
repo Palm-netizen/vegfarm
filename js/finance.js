@@ -147,7 +147,7 @@ function exportReportPDF() {
     <style>body{font-family:'Sarabun',sans-serif;padding:24px;color:#111}h2{margin:0 0 4px}.sub{color:#666;margin-bottom:16px;font-size:13px}
     table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:7px 9px;font-size:13px}th{background:#16A34A;color:#fff;text-align:left}
     .r{text-align:right}tfoot td{font-weight:bold;background:#f3f6f3}</style></head><body>
-    <h2>รายงานยอดขาย — VegFarm</h2>
+    <h2>รายงานยอดขาย — ImpromsukFarm (สวนอิ่มพร้อมสุข)</h2>
     <div class="sub">ช่วง ${range} · ${lastReportMeta.buyer || 'ลูกค้าทั้งหมด'}</div>
     <table><thead><tr><th>วันที่</th><th>ผู้ซื้อ</th><th class="r">น้ำหนัก</th><th class="r">ยอดรวม</th></tr></thead>
     <tbody>${rows}</tbody>
@@ -584,37 +584,46 @@ function renderFinanceChart(incRows,expRows) {
   expRows.forEach(r=>{const k=r.expense_date?.slice(0,7);if(months[k])months[k].exp+=parseFloat(r.amount||0);});
   Object.values(months).forEach(m=>m.exp+=FIXED_MONTHLY);  // ค่าคงที่อัตโนมัติทุกเดือน
   const mArr=Object.values(months);
-  const maxVal=Math.max(...mArr.map(m=>Math.max(m.inc,m.exp)),1000)*1.2;
-  const W=600,H=260,padL=60,padR=20,padT=20,padB=48;
+  // สไตล์ใหม่: แท่งแคปซูลคู่ (รายรับฟ้า · รายจ่ายม่วงอ่อน) + เส้นกำไรโค้งนุ่ม + เส้นกริดจาง
+  const W=600,H=270,padL=44,padR=14,padT=26,padB=40;
   const chartW=W-padL-padR,chartH=H-padT-padB;
-  const n=mArr.length,slot=chartW/n,bW=Math.min(28,slot*0.3);
-  const yFor=v=>padT+chartH-(v/maxVal)*chartH;
+  const profits=mArr.map(m=>m.inc-m.exp);
+  // แกนตัวเลขกลม ๆ (1/2/5 × 10^n) อ่านง่าย
+  const rawMax=Math.max(...mArr.map(m=>Math.max(m.inc,m.exp)),1000), rawMin=Math.min(0,...profits);
+  const niceStep=v=>{ const p=Math.pow(10,Math.floor(Math.log10(v))), f=v/p; return (f<=1?1:f<=2?2:f<=5?5:10)*p; };
+  const step=niceStep((rawMax-rawMin)/3);
+  const maxVal=Math.ceil(rawMax/step)*step, minVal=Math.floor(rawMin/step)*step;
+  const span=maxVal-minVal, ticks=Math.round(span/step);
+  const n=mArr.length,slot=chartW/n,bW=Math.min(18,slot*0.24);
+  const yFor=v=>padT+chartH-((v-minVal)/span)*chartH;
   const xFor=i=>padL+slot*i+slot/2;
+  const zeroY=yFor(0);
   let grid='',bars='',labels='';
-  for(let g=0;g<=4;g++){
-    const y=padT+(chartH/4)*g,val=Math.round(maxVal*(1-g/4));
-    grid+=`<line x1="${padL}" y1="${y}" x2="${padL+chartW}" y2="${y}" stroke="#E5ECE8" stroke-width="1"/>`;
-    grid+=`<text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#A3B0AB">${val>=1000?(val/1000).toFixed(0)+'K':val}</text>`;
+  for(let g=0;g<=ticks;g++){
+    const val=maxVal-step*g, y=yFor(val);
+    grid+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="3 5"/>`;
+    grid+=`<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="11" font-weight="600" style="fill:var(--ink-faint)">${vfShortNum(val)}</text>`;
   }
+  if(minVal<0) grid+=`<line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" style="stroke:var(--ink-faint)" stroke-width="1"/>`;
+  const pill=(x,v,style)=>{ const y=yFor(v), h=Math.max(bW, zeroY-y); return `<rect x="${x}" y="${zeroY-h}" width="${bW}" height="${h}" rx="${bW/2}" style="${style}"/>`; };
   mArr.forEach((m,i)=>{
-    const x=xFor(i),yi=yFor(m.inc),hi=padT+chartH-yi,ye=yFor(m.exp),he=padT+chartH-ye;
-    bars+=`<rect x="${x-bW-2}" y="${yi}" width="${bW}" height="${hi}" rx="5" fill="#16A34A" opacity="0.85"/>`;
-    bars+=`<rect x="${x+2}" y="${ye}" width="${bW}" height="${he}" rx="5" fill="#F59E0B" opacity="0.85"/>`;
-    if(m.inc>0)bars+=`<text x="${x-bW/2-2}" y="${yi-5}" text-anchor="middle" font-size="9" fill="#16A34A" font-weight="700">${m.inc>=1000?(m.inc/1000).toFixed(1)+'K':m.inc}</text>`;
-    if(m.exp>0)bars+=`<text x="${x+bW/2+2}" y="${ye-5}" text-anchor="middle" font-size="9" fill="#F59E0B" font-weight="700">${m.exp>=1000?(m.exp/1000).toFixed(1)+'K':m.exp}</text>`;
-    labels+=`<text x="${x}" y="${H-padB+18}" text-anchor="middle" font-size="10" fill="#6B7A75">${m.label}</text>`;
+    const x=xFor(i);
+    if(m.inc>0) bars+=pill(x-bW-3,m.inc,'fill:var(--blue)');
+    if(m.exp>0) bars+=pill(x+3,m.exp,'fill:var(--primary-light)');
+    labels+=`<text x="${x}" y="${H-12}" text-anchor="middle" font-size="12" font-weight="600" style="fill:var(--ink-soft)">${m.label}</text>`;
   });
-  const pts=mArr.map((m,i)=>`${xFor(i)},${yFor(m.inc-m.exp)}`).join(' ');
+  const pts=mArr.map((m,i)=>[+xFor(i).toFixed(1),+yFor(m.inc-m.exp).toFixed(1)]);
+  const line=vfSmoothPath(pts);
+  const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" style="fill:var(--paper);stroke:${profits[i]>=0?'#22A06B':'var(--danger)'}" stroke-width="2.5"/>`).join('');
   container.innerHTML=`
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto">${grid}${bars}
-      <polyline points="${pts}" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-dasharray="4,3"/>
-      ${mArr.map((m,i)=>`<circle cx="${xFor(i)}" cy="${yFor(m.inc-m.exp)}" r="3.5" fill="#8B5CF6"/>`).join('')}
-      ${labels}
+    <svg class="vf-chart" viewBox="0 0 ${W} ${H}">${grid}${bars}
+      <path d="${line}" fill="none" style="stroke:var(--ink)" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="1 0" opacity=".75"/>
+      ${dots}${labels}
     </svg>
-    <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:12px;color:var(--ink-soft);font-weight:600;flex-wrap:wrap">
-      <span><span style="display:inline-block;width:10px;height:10px;background:#16A34A;border-radius:2px;margin-right:4px"></span>รายรับ</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#F59E0B;border-radius:2px;margin-right:4px"></span>รายจ่าย</span>
-      <span><span style="display:inline-block;width:10px;height:10px;background:#8B5CF6;border-radius:50%;margin-right:4px"></span>กำไรสุทธิ</span>
+    <div class="vf-legend">
+      <span><i style="background:var(--blue)"></i>รายรับ</span>
+      <span><i style="background:var(--primary-light)"></i>รายจ่าย</span>
+      <span><i style="background:var(--ink);opacity:.75"></i>กำไรสุทธิ</span>
     </div>`;
 }
 

@@ -116,7 +116,7 @@ async function loadDayOrders() {
         <div class="pe-row">
           <span class="pe-desc"><strong>${o.customer_name}</strong> <span class="pe-date">${o.vegetable_type ? (DORDER_VEG[o.vegetable_type]||o.vegetable_type) : ''}</span></span>
           <span class="pe-amt" style="color:var(--primary)">${fmt(parseFloat(o.kg))} กก.</span>
-          <button class="status-pill ${o.delivered ? 'done-pill' : 'wait-pill'}" onclick="toggleDayOrder('${o.id}', ${!o.delivered})">${o.delivered ? '✅ ส่งแล้ว' : '⬜ ยังไม่ส่ง'}</button>
+          <button class="status-pill ${o.delivered ? 'done-pill' : 'wait-pill'}" onclick="toggleDayOrder('${o.id}', ${!o.delivered})">${o.delivered ? 'ส่งแล้ว' : 'ยังไม่ส่ง'}</button>
           <button class="pe-edit" onclick="editDayOrder('${o.id}')" aria-label="แก้ไข">✎</button>
           <button class="pe-del" onclick="deleteDayOrder('${o.id}')" aria-label="ลบ">×</button>
         </div>`).join('') + '</div>'

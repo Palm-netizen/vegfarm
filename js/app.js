@@ -1,6 +1,6 @@
 // js/app.js — App router & init
 
-const APP_VERSION = 'v2026.07.06 · build 74';
+const APP_VERSION = 'v2026.07.06 · build 75';
 
 const PAGE_INIT = {
   dashboard: loadDashboard,
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateThemeToggleIcon();
 
   const verEl = document.getElementById('app-version');
-  if (verEl) verEl.textContent = 'VegFarm · ' + APP_VERSION;
+  if (verEl) verEl.textContent = 'ImpromsukFarm · ' + APP_VERSION;
 
   // Set today's date in nav
   const today = new Date();

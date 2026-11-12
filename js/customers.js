@@ -63,7 +63,7 @@ async function loadOrders() {
         <div class="pe-row">
           <span class="pe-desc"><strong>${o.customer_name}</strong></span>
           <span class="pe-amt" style="color:var(--primary)">${parseFloat(o.kg).toLocaleString('th-TH',{maximumFractionDigits:1})} กก.</span>
-          <button class="status-pill ${o.delivered ? 'done-pill' : 'wait-pill'}" onclick="toggleOrderDelivered('${o.id}', ${!o.delivered})">${o.delivered ? '✅ ส่งแล้ว' : '⬜ ยังไม่ส่ง'}</button>
+          <button class="status-pill ${o.delivered ? 'done-pill' : 'wait-pill'}" onclick="toggleOrderDelivered('${o.id}', ${!o.delivered})">${o.delivered ? 'ส่งแล้ว' : 'ยังไม่ส่ง'}</button>
           <button class="pe-edit" onclick="editOrder('${o.id}')" aria-label="แก้ไข">✎</button>
           <button class="pe-del" onclick="deleteOrder('${o.id}')" aria-label="ลบ">×</button>
         </div>`).join('') + '</div>'
