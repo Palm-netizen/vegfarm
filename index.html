@@ -54,7 +54,7 @@ if('serviceWorker' in navigator){
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="css/style.css?v=58">
-<link rel="stylesheet" href="css/theme.css?v=6">
+<link rel="stylesheet" href="css/theme.css?v=8">
 </head>
 <body>
 
@@ -117,6 +117,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">สรุปสถานการณ์ฟาร์มทั้งหมดในที่เดียว</div>
 
+    <div class="wcols"><div class="wcol">
     <div id="dash-foliar"></div>
     <div id="dash-weather"></div>
     <div id="dash-advice"></div>
@@ -158,6 +159,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
+    </div><div class="wcol">
     <div class="growth-divider"><span class="gd-label">สิ่งที่ต้องทำ วันนี้ &amp; พรุ่งนี้</span></div>
     <div class="card"><div id="dash-todo-list"></div></div>
 
@@ -189,6 +191,7 @@ if('serviceWorker' in navigator){
         <input type="file" id="vf-import-file" accept="application/json" hidden onchange="importAllData(this.files[0])">
       </div>
     </div>
+    </div></div><!-- /wcols -->
 
     <div class="text-sub" style="text-align:center;margin-top:16px;opacity:.6" id="app-version">ImpromsukFarm</div>
   </div>
@@ -210,6 +213,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">บันทึกการเพาะ ระบบคำนวณอัตรารอดและวันเก็บเกี่ยวให้อัตโนมัติ</div>
 
+    <div class="wcols"><div class="wcol">
     <!-- เป้าหมายเพาะ (แก้ได้) — ทุกตัวเลขคำนวณจากเป้า กก./สัปดาห์ -->
     <div class="card seed-goal-card">
       <div class="goal-head">
@@ -313,8 +317,10 @@ if('serviceWorker' in navigator){
       <button class="btn btn-primary" id="seed-save-btn" onclick="saveSeedBatch()">บันทึกรอบเพาะเมล็ด</button>
     </div>
 
+    </div><div class="wcol">
     <div class="growth-divider"><span class="gd-label">ประวัติการเพาะเมล็ด</span></div>
     <div class="hist-list" id="seed-history-list"></div>
+    </div></div><!-- /wcols -->
   </div>
 </div>
 
@@ -417,6 +423,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">บันทึกปัญหาพร้อมวิธีแก้ไข สร้างฐานข้อมูลสำหรับค้นหาในอนาคต</div>
 
+    <div class="wcols"><div class="wcol">
     <button class="btn btn-outline" style="width:100%;margin-bottom:14px;gap:8px" onclick="openMonthLog()">📅 ประสบการณ์ปัญหารายเดือน (เตรียมรับมือปีหน้า)</button>
 
     <div class="card">
@@ -467,6 +474,7 @@ if('serviceWorker' in navigator){
       <button id="problem-cancel-edit" class="btn btn-outline" style="width:100%;margin-top:8px;display:none" onclick="cancelEditProblem()">ยกเลิกแก้ไข</button>
     </div>
 
+    </div><div class="wcol">
     <div class="growth-divider"><span class="gd-label">ฐานข้อมูลปัญหา</span></div>
     <div class="prob-tabs">
       <button class="prob-tab active" id="prob-tab-open" onclick="setProblemTab('open')">🔧 กำลังแก้ <span id="prob-count-open"></span></button>
@@ -493,6 +501,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
     <div id="problem-db-list"></div>
+    </div></div><!-- /wcols -->
   </div>
 </div>
 
@@ -513,6 +522,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">กิจกรรมเพาะเมล็ด ปลูก เก็บเกี่ยว และปัญหาในแต่ละวัน</div>
 
+    <div class="wcols"><div class="wcol">
     <button class="btn btn-outline" style="width:100%;margin-bottom:14px;gap:8px" onclick="openFoliarLog()">💧 ตารางฉีดบำรุงใบ (ทุกวันพุธ) — ดู/ติ๊กว่าฉีดแล้ว</button>
 
     <div class="card">
@@ -532,7 +542,9 @@ if('serviceWorker' in navigator){
         <span><span class="cal-foliar missed" style="display:inline-block">💧</span> ไม่ได้ฉีด</span>
       </div>
     </div>
+    </div><div class="wcol">
     <div id="cal-detail-panel"></div>
+    </div></div><!-- /wcols -->
   </div>
 </div>
 
@@ -552,6 +564,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">บันทึกงานที่ต้องทำ + ออเดอร์ผักที่ต้องส่ง</div>
 
+    <div class="wcols"><div class="wcol">
     <div class="card">
       <div class="form-group" style="margin:0">
         <label class="form-label">เลือกวันที่</label>
@@ -570,6 +583,7 @@ if('serviceWorker' in navigator){
       <div id="todo-list"></div>
     </div>
 
+    </div><div class="wcol">
     <!-- ออเดอร์ผักวันนี้ที่ต้องส่ง -->
     <div class="growth-divider"><span class="gd-label">ออเดอร์ผักวันนี้ที่ต้องส่ง</span></div>
     <div class="card">
@@ -601,6 +615,7 @@ if('serviceWorker' in navigator){
       <div id="dorder-total" class="text-sub" style="font-weight:700;margin-top:12px"></div>
       <div id="dorder-list"></div>
     </div>
+    </div></div><!-- /wcols -->
   </div>
 </div>
 
@@ -644,6 +659,7 @@ if('serviceWorker' in navigator){
 
     <!-- ===== INCOME PANEL ===== -->
     <div id="fpanel-income">
+    <div class="wcols"><div class="wcol">
       <div class="card">
         <div class="card-title">บันทึกรายรับ — ยอดขาย</div>
 
@@ -673,6 +689,7 @@ if('serviceWorker' in navigator){
         <button class="btn btn-primary" id="income-save-btn" onclick="saveIncome()">บันทึกรายรับ</button>
       </div>
 
+    </div><div class="wcol">
       <div class="growth-divider"><span class="gd-label">ประวัติรายรับ</span></div>
       <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
         <button class="btn btn-outline btn-sm" onclick="exportCSV('income')">
@@ -681,10 +698,12 @@ if('serviceWorker' in navigator){
         </button>
       </div>
       <div id="income-list"></div>
+    </div></div><!-- /wcols -->
     </div>
 
     <!-- ===== EXPENSE PANEL ===== -->
     <div id="fpanel-expense" class="hidden">
+    <div class="wcols"><div class="wcol">
       <div class="card">
         <div class="card-title">บันทึกรายจ่าย</div>
 
@@ -722,6 +741,7 @@ if('serviceWorker' in navigator){
         <button class="btn btn-primary" id="expense-save-btn" style="background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 8px 20px rgba(245,158,11,0.30)" onclick="saveExpense()">บันทึกรายจ่าย</button>
       </div>
 
+    </div><div class="wcol">
       <div class="growth-divider"><span class="gd-label">สรุปซื้อของเข้าเดือนนี้</span></div>
       <div id="expense-inputs-summary"></div>
 
@@ -733,10 +753,12 @@ if('serviceWorker' in navigator){
         </button>
       </div>
       <div id="expense-list"></div>
+    </div></div><!-- /wcols -->
     </div>
 
     <!-- ===== PERSONAL PANEL ===== -->
     <div id="fpanel-personal" class="hidden">
+    <div class="wcols"><div class="wcol">
       <div class="card">
         <div class="card-title">บันทึกรายจ่ายส่วนตัว</div>
         <div class="text-sub" style="margin-bottom:12px">แยกจากบัญชีฟาร์ม — ไม่กระทบกำไรฟาร์ม ใช้ดู “เงินเหลือเก็บ” จริง</div>
@@ -769,10 +791,12 @@ if('serviceWorker' in navigator){
         <button class="btn btn-primary" id="personal-save-btn" style="background:linear-gradient(135deg,#8B5CF6,#A78BFA);box-shadow:0 8px 20px rgba(139,92,246,0.30)" onclick="savePersonal()">บันทึกรายจ่ายส่วนตัว</button>
       </div>
 
+    </div><div class="wcol">
       <div class="growth-divider"><span class="gd-label">ประวัติรายจ่ายส่วนตัว</span></div>
       <input type="text" id="personal-search" class="form-control" placeholder="🔍 ค้นหาหมวด / รายละเอียด..." oninput="renderPersonalList()" style="margin-bottom:10px">
       <div id="personal-search-total" class="text-sub" style="margin-bottom:10px;font-weight:700"></div>
       <div id="personal-list"></div>
+    </div></div><!-- /wcols -->
     </div>
 
     <!-- ===== SUMMARY PANEL ===== -->
@@ -816,6 +840,7 @@ if('serviceWorker' in navigator){
 
     <div id="fpanel-summary" class="hidden">
 
+    <div class="wcols"><div class="wcol">
       <div class="form-group" style="margin-bottom:6px">
         <label class="form-label">เลือกเดือนดูสรุปย้อนหลัง</label>
         <div style="display:flex;gap:8px">
@@ -868,6 +893,7 @@ if('serviceWorker' in navigator){
         <div class="savings-row savings-total"><span>เงินเหลือเก็บ</span><span id="sum-savings-month">–</span></div>
       </div>
 
+    </div><div class="wcol">
       <div class="growth-divider"><span class="gd-label" id="sum-year-label">สะสมปีนี้</span></div>
       <div class="year-row">
         <div class="year-card">
@@ -880,7 +906,7 @@ if('serviceWorker' in navigator){
         </div>
         <div class="year-card">
           <div class="year-label">กำไร</div>
-          <div class="year-val" id="sum-profit-year" style="color:#8B5CF6">–</div>
+          <div class="year-val" id="sum-profit-year">–</div>
         </div>
       </div>
 
@@ -904,6 +930,7 @@ if('serviceWorker' in navigator){
           Export รายจ่าย
         </button>
       </div>
+    </div></div><!-- /wcols -->
     </div>
 
   </div>
@@ -926,6 +953,7 @@ if('serviceWorker' in navigator){
     </div>
     <div class="section-sub">จัดการรายชื่อลูกค้า ระบบวิเคราะห์และอัปเกรดแท็กอัตโนมัติ</div>
 
+    <div class="wcols"><div class="wcol">
     <!-- ออเดอร์รายสัปดาห์ -->
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
@@ -983,6 +1011,7 @@ if('serviceWorker' in navigator){
       </div>
     </div>
 
+    </div><div class="wcol">
     <!-- Search -->
     <div class="search-bar">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -1010,6 +1039,7 @@ if('serviceWorker' in navigator){
 
     <!-- List -->
     <div id="customer-list"></div>
+    </div></div><!-- /wcols -->
   </div>
 </div>
 
@@ -1271,10 +1301,10 @@ if('serviceWorker' in navigator){
 <script defer src="js/weather.js?v=3"></script>
 <script defer src="js/calendar.js?v=5"></script>
 <script defer src="js/todos.js?v=5"></script>
-<script defer src="js/finance.js?v=20"></script>
+<script defer src="js/finance.js?v=21"></script>
 <script defer src="js/customers.js?v=11"></script>
 <script defer src="js/assistant.js?v=12"></script>
 <script defer src="js/capacity.js?v=3"></script>
-<script defer src="js/app.js?v=15"></script>
+<script defer src="js/app.js?v=16"></script>
 </body>
 </html>

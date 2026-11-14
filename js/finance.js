@@ -427,7 +427,7 @@ function renderPersonalList() {
   const total = rows.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
   const totalEl = document.getElementById('personal-search-total');
   if (totalEl) totalEl.innerHTML = allPersonal.length
-    ? `${personalSearch ? 'ผลค้นหา' : 'รวมทั้งหมด'}: <b style="color:#8B5CF6">฿${total.toLocaleString('th-TH',{maximumFractionDigits:0})}</b> · ${rows.length} รายการ`
+    ? `${personalSearch ? 'ผลค้นหา' : 'รวมทั้งหมด'}: <b style="color:var(--primary)">฿${total.toLocaleString('th-TH',{maximumFractionDigits:0})}</b> · ${rows.length} รายการ`
     : '';
 
   if (!allPersonal.length) { el.innerHTML = '<div class="empty-state">ยังไม่มีรายจ่ายส่วนตัว</div>'; return; }
@@ -527,6 +527,7 @@ async function loadFinanceSummary() {
   document.getElementById('sum-inc-year').textContent    = fmt(iy);
   document.getElementById('sum-exp-year').textContent    = fmt(ey);
   document.getElementById('sum-profit-year').textContent = fmt(iy-ey);
+  document.getElementById('sum-profit-year').style.color = (iy-ey)>=0?'var(--primary)':'var(--danger)';
 
   // ต้นทุนต่อกิโล + จุดคุ้มทุน
   const sk = arr=>arr.data?.reduce((s,r)=>s+parseFloat(r.kg_sold||0),0)||0;

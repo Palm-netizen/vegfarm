@@ -237,7 +237,26 @@ body { background: var(--bg); letter-spacing: 0; }
   .bottom-nav a .nav-label { font-size: 14px; font-weight: 600; }
   .bottom-nav a .nav-icon { width: 20px; height: 20px; }
   .bottom-nav a:hover:not(.active) { background: var(--bg); color: var(--ink); }
-  .page-content { max-width: 720px; padding-top: 26px; }
+  /* เต็มพื้นที่ ไม่เหลือแถบว่าง 2 ข้าง · เนื้อหาแบ่ง 2 คอลัมน์ (มือถือเรียงลงเหมือนเดิม) */
+  .page-content { max-width: 1760px; padding: 26px 28px 40px; margin: 0 auto; }
+  .wcols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; align-items: start; }
+  #page-dashboard .wcols { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  #page-seeds .wcols, #page-problems .wcols, #page-customers .wcols { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+  #page-calendar .wcols { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .wcol > .growth-divider:first-child { margin-top: 0; }
+  .wcol > :first-child:not(.growth-divider) { margin-top: 0; }
+  .section-sub { margin-bottom: 22px; }
+  .plot-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .plots-summary { gap: 12px; }
+  /* ป๊อปอัพกลางพื้นที่เนื้อหา (ไม่ใช่แผ่นเลื่อนจากล่าง) */
+  .modal-overlay { align-items: center; padding-left: 256px; }
+  .modal-sheet { border-radius: 24px; max-width: 620px; max-height: 88vh; }
+  .modal-handle { display: none; }
+  .toast, #undo-bar { left: calc(50% + 128px); }
+}
+@media (min-width: 1600px) {
+  .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kpi-grid  { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 /* ---------- สีประจำตัวคนเพาะ (คงเดิม): มาริโอ้ = เขียว · 애플 = เหลือง ---------- */
@@ -359,3 +378,7 @@ input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible { box-sh
 [data-theme="dark"] .uc-pace.bad { color: #FBBF24; }
 .uc-note, .uc-year { font-size: 12px; color: var(--ink-soft); margin-top: 10px; line-height: 1.5; }
 .uc-year { padding-top: 10px; border-top: 1px solid var(--line); }
+
+/* รายจ่ายส่วนตัว: ป้ายหมวด/ยอดเงิน เป็นโทนเขียว (เดิมม่วง) */
+.pe-cat { color: var(--primary-dark); background: var(--primary-tint); }
+.pe-amt { color: var(--ink); }
