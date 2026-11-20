@@ -54,7 +54,7 @@ if('serviceWorker' in navigator){
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="css/style.css?v=58">
-<link rel="stylesheet" href="css/theme.css?v=8">
+<link rel="stylesheet" href="css/theme.css?v=9">
 </head>
 <body>
 
@@ -233,6 +233,7 @@ if('serviceWorker' in navigator){
       <div class="goal-actions">
         <button type="button" class="btn btn-outline btn-sm" onclick="openTargetEditor()">✏️ แก้ไขเป้าเพาะเมล็ด</button>
         <button type="button" class="btn btn-outline btn-sm" onclick="openSeasonTable()">📊 ดูผลผลิตแต่ละฤดู</button>
+        <button type="button" class="btn btn-primary btn-sm goal-wide" onclick="openSeedWeekly()">📅 ย้อนดูรายสัปดาห์ &amp; ผักจะออกกี่โล</button>
       </div>
     </div>
 
@@ -1145,6 +1146,21 @@ if('serviceWorker' in navigator){
   </div>
 </div>
 
+<!-- ===== ย้อนดูการเพาะรายสัปดาห์ + พยากรณ์ผลผลิต ===== -->
+<div class="modal-overlay" id="seedweek-modal" onclick="if(event.target===this)closeSeedWeekly()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-x" onclick="vfCloseModal(this)" aria-label="ปิด">✕</button>
+    <div class="modal-title">📅 การเพาะรายสัปดาห์</div>
+    <div class="sw-tabs">
+      <button type="button" class="sw-tab active" data-tab="past" onclick="setSeedWeekTab('past')">🌱 ย้อนดูที่เพาะไป</button>
+      <button type="button" class="sw-tab" data-tab="yield" onclick="setSeedWeekTab('yield')">🥬 ผักจะออกกี่โล</button>
+    </div>
+    <div id="seedweek-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:12px" onclick="closeSeedWeekly()">ปิด</button>
+  </div>
+</div>
+
 <!-- ===== ตารางผลผลิตแต่ละฤดู ===== -->
 <div class="modal-overlay" id="season-modal" onclick="if(event.target===this)closeSeasonTable()">
   <div class="modal-sheet">
@@ -1294,7 +1310,7 @@ if('serviceWorker' in navigator){
 <script defer src="js/config.js"></script>
 <script defer src="js/supabase.js?v=15"></script>
 <script defer src="js/dashboard.js?v=36"></script>
-<script defer src="js/seeds.js?v=19"></script>
+<script defer src="js/seeds.js?v=20"></script>
 <script defer src="js/plots.js?v=23"></script>
 <script defer src="js/problems.js?v=11"></script>
 <script defer src="js/foliar.js?v=2"></script>
@@ -1305,6 +1321,6 @@ if('serviceWorker' in navigator){
 <script defer src="js/customers.js?v=11"></script>
 <script defer src="js/assistant.js?v=12"></script>
 <script defer src="js/capacity.js?v=3"></script>
-<script defer src="js/app.js?v=16"></script>
+<script defer src="js/app.js?v=17"></script>
 </body>
 </html>

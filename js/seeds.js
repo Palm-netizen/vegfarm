@@ -488,3 +488,162 @@ async function deleteSeedBatch(id) {
     setLoading(false);
   }
 }
+
+// ===== ย้อนดูการเพาะรายสัปดาห์ + ผักจะออกกี่โล (รายสัปดาห์/รายเดือน) =====
+// สัปดาห์ = จันทร์–อาทิตย์ · กก. ที่คาดได้มาจาก estimated_kg ของแต่ละรอบเพาะ (คิดอัตรารอดตามฤดูแล้ว)
+// วันที่ผักออก = harvest_date ของรอบเพาะ (วันเพาะ + 45 วัน)
+let seedWeekTab = 'past';
+let seedWeekCount = 12;
+let seedWeekRows = [];
+
+function swISO(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+function swAdd(iso, n) { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return swISO(d); }
+function swMonday(iso) { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return swISO(d); }
+function swShort(iso) { return new Date(iso + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }); }
+function swRange(ws) { return `${swShort(ws)} – ${swShort(swAdd(ws, 6))}`; }
+function swMonthLabel(ym) { return new Date(ym + '-01T00:00:00').toLocaleDateString('th-TH', { month: 'long', year: 'numeric' }); }
+
+async function openSeedWeekly() {
+  seedWeekCount = 12;
+  document.getElementById('seedweek-modal').style.display = 'flex';
+  document.getElementById('seedweek-body').innerHTML = '<div class="text-sub" style="text-align:center;padding:20px">กำลังโหลด...</div>';
+  const { data } = await db.from('seed_batches').select('seed_date,seed_count,estimated_kg,harvest_date,sower');
+  seedWeekRows = data || [];
+  setSeedWeekTab(seedWeekTab);
+}
+function closeSeedWeekly() { document.getElementById('seedweek-modal').style.display = 'none'; }
+function setSeedWeekTab(tab) {
+  seedWeekTab = tab;
+  document.querySelectorAll('#seedweek-modal .sw-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'past') renderSeedWeekPast(); else renderSeedYield();
+}
+function seedWeekMore() { seedWeekCount += 12; renderSeedWeekPast(); }
+
+// แท็บ 1: ย้อนดูว่าแต่ละสัปดาห์เพาะไปเท่าไหร่
+function renderSeedWeekPast() {
+  const el = document.getElementById('seedweek-body');
+  const cnt = n => Math.round(n).toLocaleString('th-TH');
+  const kgF = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  const thisMon = swMonday(swISO(new Date()));
+  const target = vfSeedsPerWeek();
+  const byWeek = {};
+  seedWeekRows.forEach(b => {
+    if (!b.seed_date) return;
+    const ws = swMonday(b.seed_date);
+    const w = byWeek[ws] = byWeek[ws] || { seeds: 0, kg: 0, mario: 0, apple: 0, other: 0, hMin: null, hMax: null };
+    const n = parseInt(b.seed_count) || 0;
+    w.seeds += n; w.kg += parseFloat(b.estimated_kg) || 0;
+    const who = sowerName(b.sower);
+    if (who === 'มาริโอ้') w.mario += n; else if (who === '애플') w.apple += n; else w.other += n;
+    const h = b.harvest_date || addDays(b.seed_date, 45);
+    if (!w.hMin || h < w.hMin) w.hMin = h;
+    if (!w.hMax || h > w.hMax) w.hMax = h;
+  });
+
+  // สรุปเฉลี่ย 4 สัปดาห์ที่ผ่านมา (ไม่รวมสัปดาห์นี้ที่ยังไม่จบ)
+  const last4 = [1, 2, 3, 4].map(i => byWeek[swAdd(thisMon, -7 * i)] || { seeds: 0, kg: 0 });
+  const avgSeeds = last4.reduce((s, w) => s + w.seeds, 0) / 4;
+  const avgKg = last4.reduce((s, w) => s + w.kg, 0) / 4;
+  const metWeeks = last4.filter(w => w.seeds >= target).length;
+
+  let rows = '';
+  for (let i = 0; i < seedWeekCount; i++) {
+    const ws = swAdd(thisMon, -7 * i);
+    const w = byWeek[ws] || { seeds: 0, kg: 0, mario: 0, apple: 0, other: 0 };
+    const pct = target > 0 ? Math.min(100, w.seeds / target * 100) : 0;
+    const ok = w.seeds >= target;
+    const status = ok ? `<span class="sw-pill ok">ครบเป้า</span>`
+      : i === 0 ? `<span class="sw-pill now">ขาด ${cnt(target - w.seeds)}</span>`
+      : `<span class="sw-pill bad">ขาด ${cnt(target - w.seeds)}</span>`;
+    rows += `<div class="sw-row ${i === 0 ? 'current' : ''}">
+      <div class="sw-top"><b>${swRange(ws)}</b>${i === 0 ? '<span class="sw-now">สัปดาห์นี้</span>' : ''}${status}</div>
+      <div class="sw-nums"><span><b>${cnt(w.seeds)}</b> / ${cnt(target)} เมล็ด</span><span>คาดได้ <b>~${kgF(w.kg)} กก.</b></span></div>
+      <div class="goal-bar sw-bar"><div class="goal-bar-fill ${ok ? 'done' : ''}" style="width:${pct}%"></div></div>
+      <div class="sw-meta">${w.seeds
+        ? `👤 มาริโอ้ ${cnt(w.mario)} · 애플 ${cnt(w.apple)}${w.other ? ` · อื่นๆ ${cnt(w.other)}` : ''} · 🥬 ผักออกราว ${w.hMin === w.hMax ? swShort(w.hMin) : `${swShort(w.hMin)}–${swShort(w.hMax)}`}`
+        : '<span style="color:var(--danger)">ไม่ได้เพาะในสัปดาห์นี้</span>'}</div>
+    </div>`;
+  }
+
+  // สรุปรายเดือน (6 เดือนล่าสุด) ตามวันเพาะ
+  const byMonth = {};
+  seedWeekRows.forEach(b => {
+    if (!b.seed_date) return;
+    const ym = b.seed_date.slice(0, 7);
+    const m = byMonth[ym] = byMonth[ym] || { seeds: 0, kg: 0 };
+    m.seeds += parseInt(b.seed_count) || 0; m.kg += parseFloat(b.estimated_kg) || 0;
+  });
+  const now = new Date();
+  const months = [0, 1, 2, 3, 4, 5].map(i => swISO(new Date(now.getFullYear(), now.getMonth() - i, 1)).slice(0, 7));
+  const monthRows = months.map(ym => {
+    const m = byMonth[ym] || { seeds: 0, kg: 0 };
+    return `<tr><td>${swMonthLabel(ym)}</td><td>${cnt(m.seeds)}</td><td>~${kgF(m.kg)}</td></tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sw-summary">
+      <div><span>เฉลี่ย 4 สัปดาห์ที่ผ่านมา</span><b>${cnt(avgSeeds)} เมล็ด/สัปดาห์</b></div>
+      <div><span>คาดได้เฉลี่ย</span><b>~${kgF(avgKg)} กก./สัปดาห์</b></div>
+      <div><span>ครบเป้า</span><b>${metWeeks}/4 สัปดาห์</b></div>
+    </div>
+    ${rows}
+    <button class="btn btn-outline btn-sm" style="width:100%;margin:4px 0 14px" onclick="seedWeekMore()">⬇️ ดูย้อนหลังเพิ่มอีก 12 สัปดาห์</button>
+    <div class="sw-h">📆 สรุปรายเดือน (ตามวันเพาะ)</div>
+    <div class="season-table-wrap"><table class="season-table sw-table">
+      <thead><tr><th>เดือน</th><th>เพาะ (เมล็ด)</th><th>คาดได้ (กก.)</th></tr></thead>
+      <tbody>${monthRows}</tbody></table></div>`;
+}
+
+// แท็บ 2: ผักจะออกกี่โล (ตามวันเก็บของรอบเพาะ) — 8 สัปดาห์ข้างหน้า + 3 เดือน
+function renderSeedYield() {
+  const el = document.getElementById('seedweek-body');
+  const kgF = n => n.toLocaleString('th-TH', { maximumFractionDigits: 1 });
+  const thisMon = swMonday(swISO(new Date()));
+  const goalW = vfWeeklyTargetKg();
+  const harvestOf = b => b.harvest_date || (b.seed_date ? addDays(b.seed_date, 45) : null);
+  const kgIn = (from, toExcl) => seedWeekRows.reduce((s, b) => {
+    const h = harvestOf(b);
+    return (h && h >= from && h < toExcl) ? s + (parseFloat(b.estimated_kg) || 0) : s;
+  }, 0);
+
+  const weeks = [0, 1, 2, 3, 4, 5, 6, 7].map(i => {
+    const ws = swAdd(thisMon, 7 * i);
+    return { ws, kg: kgIn(ws, swAdd(ws, 7)) };
+  });
+  const total8 = weeks.reduce((s, w) => s + w.kg, 0);
+  const shortWeeks = weeks.filter(w => w.kg < goalW).length;
+
+  const weekRows = weeks.map((w, i) => {
+    const pct = goalW > 0 ? Math.min(100, w.kg / goalW * 100) : 0;
+    const ok = w.kg >= goalW;
+    return `<div class="sw-row ${i === 0 ? 'current' : ''}">
+      <div class="sw-top"><b>${swRange(w.ws)}</b>${i === 0 ? '<span class="sw-now">สัปดาห์นี้</span>' : i === 1 ? '<span class="sw-now soft">สัปดาห์หน้า</span>' : ''}
+        <span class="sw-pill ${ok ? 'ok' : 'bad'}">${ok ? `เหลือ ${kgF(w.kg - goalW)} กก.` : `ขาด ${kgF(goalW - w.kg)} กก.`}</span></div>
+      <div class="sw-nums"><span>ผักออก <b>~${kgF(w.kg)} กก.</b></span><span>เป้า ${kgF(goalW)} กก.</span></div>
+      <div class="goal-bar sw-bar"><div class="goal-bar-fill ${ok ? 'done' : ''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  const now = new Date();
+  const monthRows = [0, 1, 2].map(i => {
+    const start = swISO(new Date(now.getFullYear(), now.getMonth() + i, 1));
+    const next = swISO(new Date(now.getFullYear(), now.getMonth() + i + 1, 1));
+    const kg = kgIn(start, next), goalM = goalW * 4;
+    return `<tr><td>${swMonthLabel(start.slice(0, 7))}</td><td><b>~${kgF(kg)}</b></td><td>${kgF(goalM)}</td>
+      <td class="${kg >= goalM ? 'st-ok' : 'st-bad'}">${kg >= goalM ? `เหลือ ${kgF(kg - goalM)}` : `ขาด ${kgF(goalM - kg)}`}</td></tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="sw-summary">
+      <div><span>8 สัปดาห์ข้างหน้า ผักออกรวม</span><b>~${kgF(total8)} กก.</b></div>
+      <div><span>เฉลี่ย</span><b>~${kgF(total8 / 8)} กก./สัปดาห์</b></div>
+      <div><span>สัปดาห์ที่ไม่ถึงเป้า</span><b style="color:${shortWeeks ? 'var(--danger)' : 'var(--primary)'}">${shortWeeks}/8</b></div>
+    </div>
+    <div class="sw-h">🥬 ผักจะออกรายสัปดาห์</div>
+    ${weekRows}
+    <div class="sw-h">📆 ผักจะออกรายเดือน</div>
+    <div class="season-table-wrap"><table class="season-table sw-table">
+      <thead><tr><th>เดือน</th><th>ผักออก (กก.)</th><th>เป้า (กก.)</th><th>เทียบเป้า</th></tr></thead>
+      <tbody>${monthRows}</tbody></table></div>
+    <div class="season-note">คำนวณจากรอบเพาะที่บันทึกไว้: ผักออก ≈ วันเพาะ + 45 วัน · กก. คิดอัตรารอดตามฤดูแล้ว · เป็นค่าประมาณ ของจริงขึ้นกับโรค/แมลง/อากาศ</div>`;
+}
