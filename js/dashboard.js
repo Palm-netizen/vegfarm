@@ -5,10 +5,10 @@ async function loadDashboard() {
   if (typeof renderFoliarDash === 'function') renderFoliarDash();   // แจ้งเตือนฉีดบำรุงใบ (โหลดแยก ไม่รอ)
   if (typeof renderWeatherDash === 'function') renderWeatherDash();  // พยากรณ์อากาศ (โหลดแยก ไม่รอ)
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().vfDay();
     // วันจันทร์ของสัปดาห์นี้
     const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
-    const weekStart = wd.toISOString().split('T')[0];
+    const weekStart = wd.vfDay();
 
     // ยิงทุก query พร้อมกัน (parallel) แทนที่จะรอทีละอัน → หน้าแรกโหลดเร็วขึ้นมาก
     const [
@@ -107,7 +107,7 @@ async function loadDashboard() {
       growingPlots, todayOrders,
       thisWeekPlots: activePlots.filter(p => {
         const wd = new Date(p.plant_date); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
-        return wd.toISOString().split('T')[0] === weekStart;
+        return wd.vfDay() === weekStart;
       }).length,
       overdue: growingPlots.filter(p => p.daysLeft < 0).length,
       nearHarvest: growingPlots.filter(p => p.daysLeft >= 0 && p.daysLeft <= 5).length

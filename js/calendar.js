@@ -28,8 +28,8 @@ async function renderCalendar() {
   const lastDay = new Date(year, month + 1, 0);
   const startOffset = firstDay.getDay(); // 0=Sun
 
-  const startDateStr = new Date(year, month, 1 - startOffset).toISOString().split('T')[0];
-  const endDateStr = new Date(year, month + 1, 6 - lastDay.getDay()).toISOString().split('T')[0];
+  const startDateStr = new Date(year, month, 1 - startOffset).vfDay();
+  const endDateStr = new Date(year, month + 1, 6 - lastDay.getDay()).vfDay();
 
   // Fetch activities + แปลงที่กำลังปลูก (เพื่อคำนวณวันเก็บผัก)
   const [{ data: activities }, { data: plots }] = await Promise.all([
@@ -57,7 +57,7 @@ async function renderCalendar() {
   const dayNames = ['อา','จ','อ','พ','พฤ','ศ','ส'];
   let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().vfDay();
 
   // Leading empty days
   for (let i = 0; i < startOffset; i++) {
@@ -91,7 +91,7 @@ function calSeedSchedule() {
 }
 
 function renderCalDay(date, todayStr, isOtherMonth) {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = date.vfDay();
   const events = calActivitiesCache[dateStr] || [];
   const harvest = calHarvestCache[dateStr] || [];
   const isSeedDay = calSeedSchedule().days.includes(date.getDay());

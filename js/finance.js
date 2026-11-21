@@ -10,7 +10,7 @@ const FIXED_MONTHLY = LABOR_FIXED + UTILITY_FIXED;  // ค่าใช้จ่�
 const INCOME_PRICE_PER_KG = 100;  // ราคาขายคงที่ ฿/กก.
 
 function initFinance() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
   document.getElementById('finance-date-income').value  = today;
   document.getElementById('finance-date-expense').value = today;
   const pd = document.getElementById('personal-date'); if (pd) pd.value = today;
@@ -56,7 +56,7 @@ let lastReportMeta = {};
 
 function setReportRange(preset) {
   const now = new Date(), yr = now.getFullYear(), mo = String(now.getMonth() + 1).padStart(2, '0');
-  let from, to = now.toISOString().split('T')[0];
+  let from, to = now.vfDay();
   if (preset === 'month') from = `${yr}-${mo}-01`;
   else if (preset === 'year') from = `${yr}-01-01`;
   else { from = '2000-01-01'; to = '2999-12-31'; }
@@ -195,7 +195,7 @@ async function saveIncome() {
 function resetIncomeForm() {
   editIncomeId = null;
   const btn = document.getElementById('income-save-btn'); if (btn) btn.textContent = 'บันทึกรายรับ';
-  document.getElementById('finance-date-income').value = new Date().toISOString().split('T')[0];
+  document.getElementById('finance-date-income').value = new Date().vfDay();
   ['finance-kg','finance-buyer','finance-notes-income'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
@@ -267,7 +267,7 @@ async function saveExpense() {
 function resetExpenseForm() {
   editExpenseId = null;
   const btn = document.getElementById('expense-save-btn'); if (btn) btn.textContent = 'บันทึกรายจ่าย';
-  document.getElementById('finance-date-expense').value = new Date().toISOString().split('T')[0];
+  document.getElementById('finance-date-expense').value = new Date().vfDay();
   ['expense-amount','expense-desc','finance-notes-expense'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });

@@ -25,13 +25,13 @@ function assistCtx() {
 
 // ช่วงเวลา
 function assistDates() {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const nmD = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   const nextMonth = `${nmD.getFullYear()}-${String(nmD.getMonth() + 1).padStart(2, '0')}-01`;
   const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
-  const weekStart = wd.toISOString().split('T')[0];
+  const weekStart = wd.vfDay();
   return { today, monthStart, nextMonth, weekStart };
 }
 

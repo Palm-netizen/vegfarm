@@ -38,7 +38,7 @@ function initProblems() {
     });
   });
 
-  document.getElementById('problem-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('problem-date').value = new Date().vfDay();
 
   document.getElementById('problem-photo-input').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -155,7 +155,7 @@ async function saveProblem() {
 
 function resetProblemForm() {
   setProblemPlots([]);
-  document.getElementById('problem-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('problem-date').value = new Date().vfDay();
   document.getElementById('problem-description').value = '';
   document.getElementById('problem-solution').value = '';
   document.getElementById('problem-photo-input').value = '';
@@ -347,7 +347,7 @@ function showFollowupForm() {
   if (btn) btn.style.display = 'none';
   if (form) form.style.display = 'block';
   const d = document.getElementById('fu-date');
-  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+  if (d && !d.value) d.value = new Date().vfDay();
 }
 
 async function onFollowupPhoto(idx, input) {

@@ -20,7 +20,7 @@ function weekStartStr(d = new Date()) {
   const x = new Date(d);
   const day = (x.getDay() + 6) % 7; // 0 = Monday
   x.setDate(x.getDate() - day);
-  return x.toISOString().split('T')[0];
+  return x.vfDay();
 }
 
 function onOrderWeekChange() {
@@ -36,7 +36,7 @@ async function loadOrders() {
   if (picker && !picker.value) picker.value = ws;
   // label: ช่วงสัปดาห์ พร้อมชื่อวัน (วันจันทร์ – วันอาทิตย์)
   const endD = new Date(ws); endD.setDate(endD.getDate() + 6);
-  const end = endD.toISOString().split('T')[0];
+  const end = endD.vfDay();
   const lblEl = document.getElementById('order-week-label');
   if (lblEl) lblEl.textContent = `${thDay(ws)} ${formatDateTH(ws)} – ${thDay(end)} ${formatDateTH(end)}`;
 
@@ -227,7 +227,7 @@ function renderCustomerList() {
 // ===== SUMMARY =====
 async function loadCustomerSummary() {
   const now = new Date();
-  const weekAgo  = new Date(now - 7*24*60*60*1000).toISOString().split('T')[0];
+  const weekAgo  = new Date(now - 7*24*60*60*1000).vfDay();
   const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const monthStart = `${monthStr}-01`;
 
@@ -262,7 +262,7 @@ async function openCustomerDetail(id) {
   if (!c) return;
 
   const now = new Date();
-  const weekAgo  = new Date(now - 7*24*60*60*1000).toISOString().split('T')[0];
+  const weekAgo  = new Date(now - 7*24*60*60*1000).vfDay();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
 
   const { data: rows } = await db.from('income')

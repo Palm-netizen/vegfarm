@@ -1,4 +1,11 @@
 // js/supabase.js — Local data layer (offline)
+// ===== วันที่ตามเวลาเครื่อง (เวลาไทย) — แทน toISOString() ที่เป็นเวลาสากล UTC (ช้ากว่าไทย 7 ชม. ทำให้วันที่เลื่อน 1 วัน) =====
+if (!Date.prototype.vfDay) {
+  Object.defineProperty(Date.prototype, 'vfDay', { value: function () {
+    return `${this.getFullYear()}-${String(this.getMonth() + 1).padStart(2, '0')}-${String(this.getDate()).padStart(2, '0')}`;
+  } });
+}
+
 //
 // เดิมไฟล์นี้เชื่อมต่อ Supabase ออนไลน์ แต่ในสภาพแวดล้อมที่ไม่มีเน็ต
 // (หรือยังไม่ได้ตั้งค่า Supabase) เราใช้ data layer ในเครื่องที่เก็บข้อมูล
@@ -232,7 +239,7 @@ function exportAllData() {
   const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `vegfarm-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `vegfarm-backup-${new Date().vfDay()}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -267,7 +274,7 @@ function formatDateTH(dateStr) {
 function addDays(dateStr, days) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  return d.vfDay();
 }
 
 function getSurvivalRate(weather) {
@@ -440,7 +447,7 @@ async function vfSyncOrderIncome(orderId) {
     const kg = parseFloat(o.kg) || 0;
     amount = parseFloat((kg * price).toFixed(2));
     const payload = {
-      income_date: o.order_date || new Date().toISOString().split('T')[0],
+      income_date: o.order_date || new Date().vfDay(),
       vegetable_type: o.vegetable_type || null,
       kg_sold: kg, price_per_kg: price, total_amount: amount,
       buyer: o.customer_name, channel: 'delivery', notes: note
@@ -585,7 +592,7 @@ function vfConfirmResolve(val) {
   const iso = (offsetDays) => {
     const d = new Date(today);
     d.setDate(d.getDate() + offsetDays);
-    return d.toISOString().split('T')[0];
+    return d.vfDay();
   };
   const VEG = ['green_oak', 'red_oak', 'finley', 'cos', 'butterhead'];
 

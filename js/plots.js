@@ -18,7 +18,7 @@ function isoWeekInfo(dateStr) {
   const ftDay = (firstThursday.getDay() + 6) % 7;
   const firstMonday = new Date(firstThursday); firstMonday.setDate(firstThursday.getDate() - ftDay);
   const week = Math.round((monday - firstMonday) / (7 * 86400000)) + 1;
-  return { year: isoYear, week, monday: monday.toISOString().split('T')[0] };
+  return { year: isoYear, week, monday: monday.vfDay() };
 }
 
 function initPlots() {
@@ -114,7 +114,7 @@ async function loadAllPlots() {
     ).join('');
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
 
   plots?.forEach(p => {
     const card = document.getElementById(`plot-card-${p.plot_code}`);
@@ -193,7 +193,7 @@ function renderPlotLots(plots) {
     return s[0] === s[s.length - 1] ? formatDateTH(s[0]) : `${short(s[0])}–${short(s[s.length - 1])}`;
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
   const whenLabel = h => {
     const dl = Math.round((new Date(h) - new Date(today)) / 86400000);
     return dl < 0 ? `เลยกำหนด ${-dl} วัน` : dl === 0 ? 'เก็บวันนี้' : `อีก ${dl} วัน`;
@@ -290,7 +290,7 @@ function applyPendingPlant() {
   if (!vfPendingPlant) return;
   setPlotVeg(vfPendingPlant.veg);
   document.getElementById('plot-seedling-age').value = vfPendingPlant.age;
-  document.getElementById('plot-plant-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('plot-plant-date').value = new Date().vfDay();
   updatePlotHarvestDisplay();
   showToast(`กรอกข้อมูลจากล็อต ${vfPendingPlant.lot} แล้ว — ตรวจสอบและกดบันทึก`);
   vfPendingPlant = null;
@@ -479,13 +479,13 @@ async function savePlot() {
         cycle_number: current?.cycle_count || 1,
         vegetable_type: vegType,
         plant_date: plantDate,
-        harvest_date: new Date().toISOString().split('T')[0],
+        harvest_date: new Date().vfDay(),
         actual_kg: actualKg,
         notes: harvestNotes
       });
 
       await db.from('calendar_activities').insert({
-        activity_date: new Date().toISOString().split('T')[0],
+        activity_date: new Date().vfDay(),
         activity_type: 'harvesting',
         plot_code: selectedPlotCode,
         summary: `เก็บเกี่ยว ${selectedPlotCode} ได้ ${actualKg || 0} kg`

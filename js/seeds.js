@@ -30,9 +30,9 @@ async function renderSeedGoal() {
   const start = `${yr}-${mo}-01`;
   const nm = new Date(yr, now.getMonth() + 1, 1);
   const next = `${nm.getFullYear()}-${String(nm.getMonth() + 1).padStart(2, '0')}-01`;
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
   const wd = new Date(today); wd.setDate(wd.getDate() - ((wd.getDay() + 6) % 7));
-  const weekStart = wd.toISOString().split('T')[0], weekEnd = addDays(weekStart, 7);
+  const weekStart = wd.vfDay(), weekEnd = addDays(weekStart, 7);
   const qFrom = weekStart < start ? weekStart : start;
 
   const { data } = await db.from('seed_batches').select('estimated_kg,seed_date,seed_count')
@@ -168,7 +168,7 @@ async function saveTargetEditor() {
 
 function initSeeds() {
   // Set default date to today
-  document.getElementById('seed-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('seed-date').value = new Date().vfDay();
 
   // Checkbox veg types — sync the visual .checked class from the real
   // checkbox state via its change event (clicking the wrapping <label>
@@ -211,9 +211,9 @@ async function selectSower(name) {
 
 // นับจำนวนเมล็ดที่คนนี้เพาะในสัปดาห์ (weekOffset 0 = สัปดาห์นี้, -1 = อาทิตย์ที่แล้ว)
 async function sowerWeekSeeds(name, weekOffset = 0) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
   const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow);
-  const weekStart = addDays(wd.toISOString().split('T')[0], weekOffset * 7);
+  const weekStart = addDays(wd.vfDay(), weekOffset * 7);
   const weekEnd = addDays(weekStart, 7);
   const raws = new Set(sowerRawNames(name));
   const { data } = await db.from('seed_batches').select('seed_count,seed_date,sower');
@@ -266,9 +266,9 @@ function reportSower(name) {
   renderSowerReport();
 }
 function reportRange(period) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().vfDay();
   let from = '';
-  if (period === 'week') { const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow); from = wd.toISOString().split('T')[0]; }
+  if (period === 'week') { const wd = new Date(today); const dow = (wd.getDay() + 6) % 7; wd.setDate(wd.getDate() - dow); from = wd.vfDay(); }
   else if (period === 'month') { from = today.slice(0, 8) + '01'; }
   document.getElementById('report-from').value = from;
   document.getElementById('report-to').value = period === 'all' ? '' : today;
@@ -377,7 +377,7 @@ async function saveSeedBatch() {
 
 function resetSeedForm() {
   editSeedId = null;
-  document.getElementById('seed-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('seed-date').value = new Date().vfDay();
   document.getElementById('seed-count').value = '';
   document.getElementById('seed-sower').value = '';
   document.querySelectorAll('#seed-sower-group .sower-chip').forEach(b => b.classList.remove('active'));

@@ -1,7 +1,7 @@
 // js/todos.js — To-do list รายวัน
 
 function initTodos() {
-  document.getElementById('todo-date-picker').value = new Date().toISOString().split('T')[0];
+  document.getElementById('todo-date-picker').value = new Date().vfDay();
   document.getElementById('todo-date-picker').addEventListener('change', () => { loadTodos(); loadDayOrders(); });
   document.getElementById('todo-add-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -85,7 +85,7 @@ const DORDER_VEG = VF_VEG;
 const DORDER_PRICE = (typeof INCOME_PRICE_PER_KG !== 'undefined') ? INCOME_PRICE_PER_KG : 100;
 let editDayOrderId = null;
 
-function dorderWeekStart(d) { const x = new Date(d); const day = (x.getDay()+6)%7; x.setDate(x.getDate()-day); return x.toISOString().split('T')[0]; }
+function dorderWeekStart(d) { const x = new Date(d); const day = (x.getDay()+6)%7; x.setDate(x.getDate()-day); return x.vfDay(); }
 
 async function loadDayOrders() {
   const date = document.getElementById('todo-date-picker').value;
